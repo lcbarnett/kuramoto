@@ -7,7 +7,6 @@ To build the Matlab interface, in Matlab navigate to the Matlab directory and ru
 
 (Tested in Linux with gcc, MacOS with gcc and Clang, and Windows with MinGW.)
 
-If someone would like to contribute a Python (Numpy) interface, please contact the maintainer:
+If someone would like to contribute a Python (Numpy) interface, please contact the maintainer.
 
-Lionel Barnett
-email: lionelb@sussex.ac.uk
+Lionel Barnett: lionelb@sussex.ac.uk
