@@ -1,2 +1,2 @@
 # kuramoto
-An efficient implementation of the standard Kuramoto coupled oscillators system, writen in C, with a Matlab interface.
+An efficient C implementation of the standard Kuramoto coupled oscillators system, with Matlab interface.
