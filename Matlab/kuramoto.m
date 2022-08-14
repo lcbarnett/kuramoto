@@ -33,7 +33,7 @@ assert(isa(w,'double') && isvector(w) && length(w) == N,'Frequencies must be a v
 
 assert(isa(K,'double'),'Coupling constants must be a scalar double, or a vector of doubles matching the specified number of oscillators');
 if isscalar(K)
-	K = (K/N)*ones(N,1); % uniform coupling
+	K = K*ones(N,1); % uniform coupling
 else
 	assert(isvector(K)  && length(K) == N,'Coupling constants must be a scalar double, or a vector of doubles matching matching the specified number of oscillators');
 end
