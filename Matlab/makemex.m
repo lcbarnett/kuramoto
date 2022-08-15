@@ -10,7 +10,7 @@ else    % Linux (gcc), MacOS (gcc or Clang)
 	cfstr = 'CFLAGS';
 end
 
-CFLAGS = '-std=c99 -march=native -O3 -Wall -Wextra -Wconversion -Winline -pedantic-errors -I../C -D_POSIX_C_SOURCE=199309L -D_DEFAULT_SOURCE';
+CFLAGS = '-std=c99 -march=native -O3 -Wall -Wextra -Wconversion -Winline -pedantic-errors -I../C -D_DEFAULT_SOURCE -D_POSIX_C_SOURCE=200809L';
 
 mexinvoc = ['mex -O -R2018a ' cfstr '="\$' cfstr ' ' CFLAGS '" ../C/kuramoto.o'];
 

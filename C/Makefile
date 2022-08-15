@@ -21,15 +21,14 @@ endif
 SRC = kuramoto.c
 OBJ = $(patsubst %.c,%.o,$(SRC))
 
-MFLAGS  = -std=c99 -march=native
-WFLAGS  = -Wall -Wextra -Wconversion -Winline -pedantic-errors
-DFLAGS  = -D_POSIX_C_SOURCE=199309L -D_DEFAULT_SOURCE
+MFLAGS = -std=c99 -march=native
+WFLAGS = -Wall -Wextra -Wconversion -Winline -pedantic-errors
+DFLAGS = -D_DEFAULT_SOURCE -D_POSIX_C_SOURCE=200809L
+OFLAGS = -O3
 ifeq ($(OS),WIN)
-	OFLAGS    = -O3
-	RM        = del /F /Q
+	RM = del /F /Q
 else
-	OFLAGS    = -O3 -flto
-	RM        = rm -f
+	RM = rm -f
 endif
 CFLAGS = $(MFLAGS) $(OFLAGS) $(WFLAGS) $(DFLAGS)
 

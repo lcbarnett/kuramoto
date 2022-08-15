@@ -36,12 +36,13 @@ void kuramoto_rk4 // Classic Runge-Kutta ("RK4" - slower, more accurate)
 	double*       const h   // oscillator phases computed by numerical ODE
 )
 {
-	// allocate intermmediates (k1, k2, k3, k4) buffers
+	// allocate buffer for intermediates (k1, k2, k3, k4)
 
-	double* const k1dt = calloc(N,sizeof(double));
-	double* const k2dt = calloc(N,sizeof(double));
-	double* const k3dt = calloc(N,sizeof(double));
-	double* const k4dt = calloc(N,sizeof(double));
+	double* const kbuff = calloc(4*N,sizeof(double));
+	double* const k1dt = kbuff;
+	double* const k2dt = kbuff+N;
+	double* const k3dt = kbuff+2*N;
+	double* const k4dt = kbuff+3*N;
 
 	// classic Runge-Kutta ("RK4" - slower, more accurate)
 
@@ -89,8 +90,7 @@ void kuramoto_rk4 // Classic Runge-Kutta ("RK4" - slower, more accurate)
 		}
 	}
 
-	free(k4dt);
-	free(k3dt);
-	free(k2dt);
-	free(k1dt);
+	// free buffer
+
+	free(kbuff);
 }

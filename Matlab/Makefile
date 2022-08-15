@@ -24,22 +24,21 @@ SRC = kuramoto_euler_mex.c kuramoto_rk4_mex.c
 BIN = $(patsubst %.c,%.$(MEXEXT),$(SRC))
 OBJ = ../C/kuramoto.o
 
-MFLAGS  = -std=c99 -march=native
-WFLAGS  = -Wall -Wextra -Wconversion -Winline -pedantic-errors
-IFLAGS  = -I../C
-DFLAGS  = -D_POSIX_C_SOURCE=199309L -D_DEFAULT_SOURCE
+MFLAGS = -std=c99 -march=native
+WFLAGS = -Wall -Wextra -Wconversion -Winline -pedantic-errors
+IFLAGS = -I../C
+DFLAGS = -D_DEFAULT_SOURCE -D_POSIX_C_SOURCE=200809L
+OFLAG  = -O3
 ifeq ($(OS),WIN)
-	OFLAGS    = -O3
 #	MATLAB () say to use 'CFLAGS' for MinGW, but 'COMPFLAGS' seems to work
 #   See: https://uk.mathworks.com/help/matlab/matlab_external/compiling-c-mex-files-with-mingw.html
-	MEXCFLAGS = COMPFLAGS
-	RM        = del /F /Q
-	RMBIN     = $(subst /,\,$(BIN))
+	MCFLAGS = COMPFLAGS
+	RM      = del /F /Q
+	RMBIN   = $(subst /,\,$(BIN))
 else
-	OFLAGS    = -O3 -flto
-	MEXCFLAGS = CFLAGS
-	RM        = rm -f
-	RMBIN     = $(BIN)
+	MCFLAGS = CFLAGS
+	RM      = rm -f
+	RMBIN   = $(BIN)
 endif
 GCCFLAGS = $(MFLAGS) $(OFLAGS) $(WFLAGS) $(IFLAGS) $(DFLAGS)
 MEXFLAGS = -O -R2018a
@@ -60,4 +59,4 @@ diag:
 	@echo "*** MEXEXT = " $(MEXEXT)
 
 %.$(MEXEXT): %.c
-	$(MEX) $(MEXFLAGS) $(MEXCFLAGS)="\$$CFLAGS $(GCCFLAGS)" $(OBJ) $<
+	$(MEX) $(MEXFLAGS) $(MCFLAGS)="\$$CFLAGS $(GCCFLAGS)" $(OBJ) $<
