@@ -1,7 +1,9 @@
 # kuramoto
-An efficient C implementation of the standard Kuramoto coupled oscillators system, with Matlab interface.
+An efficient C implementation of the standard Kuramoto coupled oscillators system
 
 <img src="formula.png">
+
+with Matlab interface.
 
 To compile the C code, in a terminal navigate to the kuramoto/C directory and type 'make' (assuming the 'make' program is installed on your system).
 
