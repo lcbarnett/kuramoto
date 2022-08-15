@@ -1,6 +1,8 @@
 # kuramoto
 An efficient C implementation of the standard Kuramoto coupled oscillators system, with Matlab interface.
 
+<img src="formula.png">
+
 To compile the C code, in a terminal navigate to the kuramoto/C directory and type 'make' (assuming the 'make' program is installed on your system).
 
 To build the Matlab interface, in Matlab navigate to the kuramoto/Matlab directory and run 'makemex' at the Matlab prompt. Alternatively, you can also run 'make' at a terminal in the kuramoto/Matlab directory; you will need the 'mex' and 'makemex' executables on your system executable path (these can be found in the 'bin' directory of your Matlab installation).
