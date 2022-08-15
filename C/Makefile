@@ -30,7 +30,7 @@ ifeq ($(OS),WIN)
 else
 	RM = rm -f
 endif
-CFLAGS = $(MFLAGS) $(OFLAGS) $(WFLAGS) $(DFLAGS)
+CFLAGS = $(MFLAGS) -fPIC $(OFLAGS) $(WFLAGS) $(DFLAGS)
 
 CC  = gcc
 

@@ -1,6 +1,7 @@
 #include <math.h>   // for maths functions
 #include <string.h> // for memcpy
 #include <stdlib.h> // for malloc, etc.
+#include <stdio.h>
 
 void kuramoto_euler	// Euler method (fast, less accurate)
 (
