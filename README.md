@@ -3,7 +3,7 @@ An efficient C implementation of the standard Kuramoto coupled oscillators syste
 
 <img src="formula.png">
 
-with Matlab interface.
+with Matlab interface. Simulations using the Euler and classic Runge-Kutta ("RK4") methods are available.
 
 To compile the C code, in a terminal navigate to the kuramoto/C directory and type 'make' (assuming the 'make' program is installed on your system).
 
