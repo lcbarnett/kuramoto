@@ -1,12 +1,30 @@
 
 % Default parameters (override on command line)
 
-defvar('N',  10                 ); % number of oscillators
-defvar('w',  0.5*randn(N,1)     ); % oscillator frequencies
-defvar('K',  0.8/N              ); % oscillator coupling constants
-defvar('h0', pi*(2*rand(N,1)-1) ); % initial phases of oscillators
-defvar('T',  100                ); % simulation time
-defvar('dt', 0.01               ); % integration time increment
+defvar('N',     20    ); % number of oscillators
+defvar('wmean', 0     ); % oscillator frequencies mean
+defvar('wsdev', 0.5   ); % oscillator frequencies std. dev.
+defvar('wseed', []    ); % oscillator frequencies random seed (empty for no seeding)
+defvar('Kmean', 0.8/N ); % oscillator coupling constants mean
+defvar('Ksdev', 0.1/N ); % oscillator coupling constants std. dev.
+defvar('Kseed', []    ); % oscillator coupling constants random seed (empty for no seeding)
+defvar('hseed', []    ); % oscillator initial phases random seed (empty for no seeding)
+defvar('T',     200   ); % simulation time
+defvar('dt',    0.01  ); % integration time increment
+
+% Random Kuramoto parameters
+
+if ~isempty(wseed), rstate = rng(wseed); end
+w = wmean + wsdev*randn(N,1); % oscillator frequencies normally distributed with mean wmean and std. dev wsdev
+if ~isempty(wseed), rng(rstate); end
+
+if ~isempty(Kseed), rstate = rng(Kseed); end
+K = Kmean + Ksdev*randn(N,1); % coupling constants normally distributed with mean Kmean and std. dev. Ksdev
+if ~isempty(Kseed), rng(rstate); end
+
+if ~isempty(hseed), rstate = rng(hseed); end
+h0 = pi*(2*rand(N,1)-1);      % initial phases uniform on [-pi,pi]
+if ~isempty(hseed), rng(rstate); end
 
 % Run Kuramoto Euler and Rung-Kutta simulations with specified parameters
 
@@ -31,8 +49,8 @@ figure(1); clf;
 plot(linspace(0,T,n)',[r1;r2]');
 legend({'Euler','RK4'});
 xlabel('time');
-ylabel('order parameter');
-title('Kuramoto system');
+ylabel('order parameter magnitude (r)');
+title(sprintf('\nKuramoto system: N = %d\n',N));
 
 % Display order parameter (animation)
 
@@ -49,7 +67,7 @@ ylim([-1.1 1.1]);
 set(gca,'XTick',[])
 set(gca,'YTick',[])
 box on
-title('Order parameter');
+title(sprintf('\nOrder parameter (z)\n'));
 ln1 = line([0;0],[0;0],'LineWidth',1,'Color','b');
 ln2 = line([0;0],[0;0],'LineWidth',1,'Color','r');
 ts = xlabel('t = 0');
