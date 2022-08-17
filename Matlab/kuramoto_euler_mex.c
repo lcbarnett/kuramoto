@@ -3,6 +3,8 @@
 
 #define UNUSED __attribute__ ((unused))
 
+// NOTE: C is row-major; since Matlab is column-major, transpose K matrix before calling the mex function
+
 void mexFunction(int UNUSED nlhs, mxArray *plhs[], int UNUSED nrhs, const mxArray *prhs[])
 {
 	// read input parameters

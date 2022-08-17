@@ -1,5 +1,7 @@
 function [h,r,psi,T,n] = kuramoto(N,w,K,h0,T,dt,RK4)
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
 % Wrapper for kuramoto C mex functions - all input checking happens here!
 %
 % To compile "mex" files, see kuramoto_mex.c and kuramoto_rk4_mex.c
@@ -18,11 +20,13 @@ function [h,r,psi,T,n] = kuramoto(N,w,K,h0,T,dt,RK4)
 % T     simulation time (possibly adjusted)  (positive double)
 % n     integration time steps               (positive integer)
 %
-% NOTE: Euler method is faster (by a factor of about 5), but RK4 is more accurate.
+% NOTE 1: K(i,j) is connection strength from oscillator j to oscillator i.
 %
-% E.g.:
+% NOTE 2: Euler method is faster (by a factor of about 5), but RK4 is more accurate.
 %
-% N = 10; w = 0.5*randn(N,1); K = 0.1; h0 = pi*(2*rand(N,1)-1); T = 100; dt = 0.01; [h,r,psi,T,n] = kuramoto(N,w,K,h0,T,dt);
+% See kuramoto_demo.m script for usage.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Input checks - essential, as the mex functions do NO error checking!
 
@@ -63,11 +67,13 @@ T = n*dt; % adjusted simulation time (<= T)
 assert(isscalar(RK4),'Runge-Kutta flag must be a scalar (logical)');
 
 % Call mex ODE simulation (returned phase matrix h is N x n)
+%
+% We transpose K so that K(i,j) is connection strength j --> i
 
 if RK4
-	h = kuramoto_rk4_mex(N,n,w*dt,K*dt,h0);
+	h = kuramoto_rk4_mex(N,n,w*dt,K'*dt,h0);
 else
-	h = kuramoto_euler_mex(N,n,w*dt,K*dt,h0);
+	h = kuramoto_euler_mex(N,n,w*dt,K'*dt,h0);
 end
 
 % Order parameter (if requested)

@@ -2,6 +2,8 @@
 #include <string.h> // for memcpy
 #include <stdlib.h> // for malloc, etc.
 
+// NOTE: C is row-major! Bear in mind when writing interfaces, e.g. for Matlab (column-major)
+
 void kuramoto_euler	// Euler method (fast, less accurate)
 (
 	const size_t        N,  // number of oscillators
