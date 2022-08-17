@@ -6,7 +6,7 @@ function [h,r,psi,T,n] = kuramoto(N,w,K,h0,T,dt,RK4)
 %
 % N     number of oscillators                (positive integer)
 % w     oscillator frequencies               (vector of length N)
-% K     oscillator coupling constants        (scalar or vector of length N)
+% K     oscillator coupling constants        (scalar or square matrix of size N)
 % h0    initial phases of oscillators        (scalar or vector of length N)
 % T     simulation time                      (positive double; or, if negative, number of integration time steps is n = -T)
 % dt    integration time increment           (positive double)
@@ -33,9 +33,9 @@ assert(isa(w,'double') && isvector(w) && length(w) == N,'Frequencies must be a v
 
 assert(isa(K,'double'),'Coupling constants must be a scalar double, or a vector of doubles matching the specified number of oscillators');
 if isscalar(K)
-	K = K*ones(N,1); % uniform coupling
+	K = K*ones(N); % uniform coupling
 else
-	assert(isvector(K)  && length(K) == N,'Coupling constants must be a scalar double, or a vector of doubles matching matching the specified number of oscillators');
+	assert(ismatrix(K) && size(K,1) == N && size(K,2) == N,'Coupling constants must be a scalar double, or a square matrix of doubles matching matching the specified number of oscillators');
 end
 
 assert(isa(h0,'double'),'Initial oscillator phases must be a vector of doubles matching the specified number of oscillators');

@@ -19,7 +19,7 @@ w = wmean + wsdev*randn(N,1); % oscillator frequencies normally distributed with
 if ~isempty(wseed), rng(rstate); end
 
 if ~isempty(Kseed), rstate = rng(Kseed); end
-K = Kmean + Ksdev*randn(N,1); % coupling constants normally distributed with mean Kmean and std. dev. Ksdev
+K = Kmean + Ksdev*randn(N); % coupling constants normally distributed with mean Kmean and std. dev. Ksdev
 if ~isempty(Kseed), rng(rstate); end
 
 if ~isempty(hseed), rstate = rng(hseed); end

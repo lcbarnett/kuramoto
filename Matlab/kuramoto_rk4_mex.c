@@ -3,7 +3,6 @@
 
 #define UNUSED __attribute__ ((unused))
 
-
 void mexFunction(int UNUSED nlhs, mxArray *plhs[], int UNUSED nrhs, const mxArray *prhs[])
 {
 	// read input parameters

@@ -18,9 +18,10 @@ void kuramoto_euler	// Euler method (fast, less accurate)
 		const double* const ht = h+N*t;
 		double* const ht1 = (double* const)ht+N;
 		for (size_t i=0; i<N; ++i) {
+			const double* const Ki = K+N*i;
 			const double hti = ht[i];
 			double ht1i = hti+w[i];
-			for (size_t j=0; j<N; ++j) ht1i += K[j]*sin(ht[j]-hti);
+			for (size_t j=0; j<N; ++j) ht1i += Ki[j]*sin(ht[j]-hti);
 			ht1[i] = ht1i; // update next time step
 		}
 	}
@@ -53,33 +54,37 @@ void kuramoto_rk4 // Classic Runge-Kutta ("RK4" - slower, more accurate)
 
 		// k1
 		for (size_t i=0; i<N; ++i) {
+			const double* const Ki = K+N*i;
 			const double hti = ht[i];
 			double ki = w[i];
-			for (size_t j=0; j<N; ++j) ki += K[j]*sin(ht[j]-hti);
+			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(ht[j]-hti);
 			k1dt[i] = ki;
 		}
 
 		// k2
 		for (size_t i=0; i<N; ++i) {
+			const double* const Ki = K+N*i;
 			const double htpk1dti = ht[i]+k1dt[i];
 			double ki = w[i];
-			for (size_t j=0; j<N; ++j) ki += K[j]*sin(ht[j]+k1dt[j]-htpk1dti);
+			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(ht[j]+k1dt[j]-htpk1dti);
 			k2dt[i] = ki/2.0;
 		}
 
 		// k3
 		for (size_t i=0; i<N; ++i) {
+			const double* const Ki = K+N*i;
 			const double htpk2dti = ht[i]+k2dt[i];
 			double ki = w[i];
-			for (size_t j=0; j<N; ++j) ki += K[j]*sin(ht[j]+k2dt[j]-htpk2dti);
+			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(ht[j]+k2dt[j]-htpk2dti);
 			k3dt[i] = ki/2.0;
 		}
 
 		// k4
 		for (size_t i=0; i<N; ++i) {
+			const double* const Ki = K+N*i;
 			const double htpk3dti = ht[i]+k3dt[i];
 			double ki = w[i];
-			for (size_t j=0; j<N; ++j) ki += K[j]*sin(ht[j]+k3dt[j]-htpk3dti);
+			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(ht[j]+k3dt[j]-htpk3dti);
 			k4dt[i] = ki;
 		}
 
