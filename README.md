@@ -11,7 +11,7 @@ To build the Matlab interface, in Matlab navigate to the kuramoto/Matlab directo
 
 Building has been tested on gcc (Linux 64-bit), mingw-w64 (Windows 64-bit) and Clang/LLVM (macOS). Note that MSVC (still) does not fully support the C99 standard, so may have problems building.
 
-To test the Matlab interface, we recommend that you run the kuramto_demo.m script in the Matlab directory.
+To test the Matlab interface, we recommend that you run the kuramoto_demo.m script in the Matlab directory.
 
 If someone would like to contribute a Python (NumPy) interface, please contact the maintainer.
 
