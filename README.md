@@ -7,7 +7,7 @@ with Matlab interface. Simulations using the Euler and classic Runge-Kutta ("RK4
 
 To compile the C code, in a terminal navigate to the kuramoto/C directory and type 'make' (assuming the 'make' program is installed on your system).
 
-To build the Matlab interface, in Matlab navigate to the kuramoto/Matlab directory and run 'makemex' at the Matlab prompt. Alternatively, you can also run 'make' at a terminal in the kuramoto/Matlab directory; you will need the 'mex' and 'makemex' executables on your system executable path (these can be found in the 'bin' directory of your Matlab installation).
+To build the Matlab interface, in Matlab navigate to the kuramoto/Matlab directory and run 'makemex' at the Matlab prompt. Alternatively, you can also run 'make' at a terminal in the kuramoto/Matlab directory, in which case you will need the 'mex' and 'makemex' executables (in the 'bin' directory of your Matlab installation) on your system executable path.
 
 Building has been tested on gcc (Linux 64-bit), mingw-w64 (Windows 64-bit) and Clang/LLVM (macOS). Note that MSVC (still) does not fully support the C99 standard, so may have problems building.
 
