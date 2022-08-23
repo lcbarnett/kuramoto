@@ -2,7 +2,8 @@
 #include <string.h> // for memcpy
 #include <stdlib.h> // for malloc, etc.
 
-// NOTE: C is row-major! Bear in mind when writing interfaces, e.g. for Matlab (column-major)
+// NOTE:  C is row-major; bear in mind when writing interfaces! E.g. for
+// Matlab (column-major) you should transpose the matrix K before calling.
 
 void kuramoto_euler	// Euler method (fast, less accurate)
 (
