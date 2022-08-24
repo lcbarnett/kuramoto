@@ -76,6 +76,10 @@ else
 	h = kuramoto_euler_mex(N,n,w*dt,K'*dt,h0);
 end
 
+% To wrap the oscillator phases to [-pi,pi), do
+%
+% h = mod(h+pi,2*pi)-pi;
+
 % Order parameter (if requested)
 
 if nargout > 1
@@ -83,6 +87,6 @@ if nargout > 1
 	y = mean(sin(h));
 	r = hypot(x,y);
 	if nargout > 2
-		psi = atan2(y,x);
+		psi = atan2(y,x); % wrapped on [-pi,pi)
 	end
 end
