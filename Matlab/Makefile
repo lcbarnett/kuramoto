@@ -43,3 +43,5 @@ diag:
 
 %.$(MEXT): %.c
 	$(MEX) $(MFLAGS) $(MCFLAGS)="\$$CFLAGS $(CFLAGS)" $(OBJ) $<
+
+$(BIN): $(OBJ) ../C/kuramoto.h

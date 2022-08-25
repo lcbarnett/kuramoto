@@ -30,3 +30,5 @@ clean:
 diag:
 	@echo "*** OBJ = " $(SRC)
 	@echo "*** OBJ = " $(SRC)
+
+kuramoto.o: kuramoto.h
