@@ -1,5 +1,5 @@
 
-% Default parameters (override on command line)
+% Default parameters (override on command line - see 'defvar.h')
 
 defvar('N',     20    ); % number of oscillators
 defvar('wmean', 0     ); % oscillator frequencies mean
@@ -8,6 +8,7 @@ defvar('wseed', []    ); % oscillator frequencies random seed (empty for no seed
 defvar('Kmean', 0.8/N ); % oscillator coupling constants mean
 defvar('Ksdev', 0.1/N ); % oscillator coupling constants std. dev.
 defvar('Kseed', []    ); % oscillator coupling constants random seed (empty for no seeding)
+defvar('a',     0     ); % oscillator phase lag constant
 defvar('hseed', []    ); % oscillator initial phases random seed (empty for no seeding)
 defvar('T',     200   ); % simulation time
 defvar('dt',    0.01  ); % integration time increment
@@ -31,12 +32,12 @@ if ~isempty(hseed), rng(rstate); end
 fprintf('\n');
 
 st1 = tic;
-[h1,r1,psi1,T,n] = kuramoto(N,w,K,h0,T,dt,false);
+[h1,r1,psi1,T,n] = kuramoto(N,w,K,a,h0,T,dt,false);
 et1 = toc(st1);
 fprintf('Euler method : %g seconds\n',et1);
 
 st2 = tic;
-[h2,r2,psi2,T,n] = kuramoto(N,w,K,h0,T,dt,true);
+[h2,r2,psi2,T,n] = kuramoto(N,w,K,a,h0,T,dt,true);
 et2 = toc(st2);
 fprintf('Runge-Kutta  : %g seconds\n',et2);
 

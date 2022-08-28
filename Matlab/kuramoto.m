@@ -1,4 +1,4 @@
-function [h,r,psi,T,n] = kuramoto(N,w,K,h0,T,dt,RK4)
+function [h,r,psi,T,n] = kuramoto(N,w,K,a,h0,T,dt,RK4)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -9,12 +9,13 @@ function [h,r,psi,T,n] = kuramoto(N,w,K,h0,T,dt,RK4)
 % N     number of oscillators                (positive integer)
 % w     oscillator frequencies               (vector of length N)
 % K     oscillator coupling constants        (scalar or square matrix of size N)
+% a     phase lag                            (scalar)
 % h0    initial phases of oscillators        (scalar or vector of length N)
 % T     simulation time                      (positive double; or, if negative, number of integration time steps is n = -T)
 % dt    integration time increment           (positive double)
 % RK4   flag: Runge-Kutta (else Euler)?      (logical)
 %
-% h     phase variable (unwrapped)           (N x n matrix)
+% h     oscillator phases (unwrapped)        (N x n matrix)
 % r     order parameter magnitude            (row vector of length n)
 % psi   order parameter phase (wrapped)      (row vector of length n)
 % T     simulation time (possibly adjusted)  (positive double)
@@ -23,6 +24,10 @@ function [h,r,psi,T,n] = kuramoto(N,w,K,h0,T,dt,RK4)
 % NOTE 1: K(i,j) is connection strength from oscillator j to oscillator i.
 %
 % NOTE 2: Euler method is faster (by a factor of about 5), but RK4 is more accurate.
+%
+% NOTE 3: To wrap the oscillator phases h to [-pi,pi), do:
+%
+%     h = mod(h+pi,2*pi)-pi;
 %
 % See kuramoto_demo.m script for usage.
 %
@@ -41,6 +46,8 @@ if isscalar(K)
 else
 	assert(ismatrix(K) && size(K,1) == N && size(K,2) == N,'Coupling constants must be a scalar double, or a square matrix of doubles matching matching the specified number of oscillators');
 end
+
+assert(isa(a,'double') && isscalar(a),'Phase lag must be scalar double');
 
 assert(isa(h0,'double'),'Initial oscillator phases must be a vector of doubles matching the specified number of oscillators');
 if isscalar(h0)
@@ -71,14 +78,10 @@ assert(isscalar(RK4),'Runge-Kutta flag must be a scalar (logical)');
 % We transpose K so that K(i,j) is connection strength j --> i
 
 if RK4
-	h = kuramoto_rk4_mex(N,n,w*dt,K'*dt,h0);
+	h = kuramoto_rk4_mex(N,n,w*dt,K'*dt,a,h0);
 else
-	h = kuramoto_euler_mex(N,n,w*dt,K'*dt,h0);
+	h = kuramoto_euler_mex(N,n,w*dt,K'*dt,a,h0);
 end
-
-% To wrap the oscillator phases to [-pi,pi), do
-%
-% h = mod(h+pi,2*pi)-pi;
 
 % Order parameter (if requested)
 

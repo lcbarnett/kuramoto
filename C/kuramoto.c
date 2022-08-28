@@ -11,6 +11,7 @@ void kuramoto_euler	// Euler method (fast, less accurate)
 	const size_t        n,  // number of integration increments
 	const double* const w,  // dt*frequencies
 	const double* const K,  // dt*(coupling constants)
+	const double        a,  // phase-lag (scalar)
 	const double* const h0, // initial oscillator phases
 	double*       const h   // oscillator phases computed by numerical ODE
 )
@@ -22,9 +23,9 @@ void kuramoto_euler	// Euler method (fast, less accurate)
 		double* const ht1 = (double* const)ht+N;
 		for (size_t i=0; i<N; ++i) {
 			const double* const Ki = K+N*i;
-			const double hti = ht[i];
-			double ht1i = hti+w[i];
-			for (size_t j=0; j<N; ++j) ht1i += Ki[j]*sin(ht[j]-hti);
+			const double htipa = ht[i]+a;
+			double ht1i = ht[i]+w[i];
+			for (size_t j=0; j<N; ++j) ht1i += Ki[j]*sin(ht[j]-htipa);
 			ht1[i] = ht1i; // update next time step
 		}
 	}
@@ -36,6 +37,7 @@ void kuramoto_rk4 // Classic Runge-Kutta ("RK4" - slower, more accurate)
 	const size_t        n,  // number of integration increments
 	const double* const w,  // dt*frequencies
 	const double* const K,  // dt*(coupling constants)
+	const double        a,  // phase-lag (scalar)
 	const double* const h0, // initial oscillator phases
 	double*       const h   // oscillator phases computed by numerical ODE
 )
@@ -58,36 +60,36 @@ void kuramoto_rk4 // Classic Runge-Kutta ("RK4" - slower, more accurate)
 		// k1
 		for (size_t i=0; i<N; ++i) {
 			const double* const Ki = K+N*i;
-			const double hti = ht[i];
+			const double htipa = ht[i]+a;
 			double ki = w[i];
-			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(ht[j]-hti);
+			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(ht[j]-htipa);
 			k1dt[i] = ki;
 		}
 
 		// k2
 		for (size_t i=0; i<N; ++i) {
 			const double* const Ki = K+N*i;
-			const double htpk1dti = ht[i]+k1dt[i];
+			const double htpk1dtipa = ht[i]+k1dt[i]+a;
 			double ki = w[i];
-			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(ht[j]+k1dt[j]-htpk1dti);
+			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(ht[j]+k1dt[j]-htpk1dtipa);
 			k2dt[i] = ki/2.0;
 		}
 
 		// k3
 		for (size_t i=0; i<N; ++i) {
 			const double* const Ki = K+N*i;
-			const double htpk2dti = ht[i]+k2dt[i];
+			const double htpk2dtipa = ht[i]+k2dt[i]+a;
 			double ki = w[i];
-			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(ht[j]+k2dt[j]-htpk2dti);
+			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(ht[j]+k2dt[j]-htpk2dtipa);
 			k3dt[i] = ki/2.0;
 		}
 
 		// k4
 		for (size_t i=0; i<N; ++i) {
 			const double* const Ki = K+N*i;
-			const double htpk3dti = ht[i]+k3dt[i];
+			const double htpk3dtipa = ht[i]+k3dt[i]+a;
 			double ki = w[i];
-			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(ht[j]+k3dt[j]-htpk3dti);
+			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(ht[j]+k3dt[j]-htpk3dtipa);
 			k4dt[i] = ki;
 		}
 
