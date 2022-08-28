@@ -1,4 +1,4 @@
-function [h,r,psi,T,n] = kuramoto_noisy(N,w,K,a,I,h0,T,dt)
+function [h,r,psi,T,n] = kuramoto_noisy(N,w,K,a,V,h0,T,dt)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
