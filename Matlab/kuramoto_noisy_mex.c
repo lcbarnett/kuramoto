@@ -14,8 +14,8 @@ void mexFunction(int UNUSED nlhs, mxArray *plhs[], int UNUSED nrhs, const mxArra
 	const double* const w   = mxGetDoubles(prhs[2]);           // dt*frequencies
 	const double* const K   = mxGetDoubles(prhs[3]);           // dt*(coupling constants)
 	const double        a   = *mxGetDoubles(prhs[4]);          // phase-lag (scalar)
-	const double* const I   = mxGetDoubles(prhs[5]);           // sqrt(dt)*noise
-	const double* const h0  = mxGetDoubles(prhs[6]);           // initial oscillator phases
+	const double* const h0  = mxGetDoubles(prhs[5]);           // initial oscillator phases
+	const double* const I   = mxGetDoubles(prhs[6]);           // sqrt(dt)*noise
 
 	// allocate output
 
@@ -23,5 +23,5 @@ void mexFunction(int UNUSED nlhs, mxArray *plhs[], int UNUSED nrhs, const mxArra
 
 	// Euler method
 
-	kuramoto_noisy(N,n,w,K,a,I,h0,h);
+	kuramoto_noisy(N,n,w,K,a,h0,I,h);
 }

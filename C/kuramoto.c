@@ -112,8 +112,8 @@ void kuramoto_noisy // Euler method with input noise
 	const double* const w,  // dt*frequencies
 	const double* const K,  // dt*(coupling constants)
 	const double        a,  // phase-lag (scalar)
-	const double* const I,  // sqrt(dt)*noise
 	const double* const h0, // initial oscillator phases
+	const double* const I,  // sqrt(dt)*noise
 	double*       const h   // oscillator phases computed by numerical ODE
 )
 {

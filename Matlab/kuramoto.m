@@ -1,4 +1,4 @@
-function [h,r,psi,T,n] = kuramoto(N,w,K,a,h0,T,dt,RK4)
+function [h,r,psi,T,n] = kuramoto(N,w,K,a,h0,T,dt,mode,V)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -13,7 +13,8 @@ function [h,r,psi,T,n] = kuramoto(N,w,K,a,h0,T,dt,RK4)
 % h0    initial phases of oscillators        (scalar or vector of length N)
 % T     simulation time                      (positive double; or, if negative, number of integration time steps is n = -T)
 % dt    integration time increment           (positive double)
-% RK4   flag: Runge-Kutta (else Euler)?      (logical)
+% mode  simulation mode                      (string: 'Euler', 'RK4' or 'Noisy')
+% V     input noise variance/covariance      (positive scalar, vector or square positive-definite matrix of size N)
 %
 % h     oscillator phases (unwrapped)        (N x n matrix)
 % r     order parameter magnitude            (row vector of length n)
@@ -25,7 +26,9 @@ function [h,r,psi,T,n] = kuramoto(N,w,K,a,h0,T,dt,RK4)
 %
 % NOTE 2: Euler method is faster (by a factor of about 5), but RK4 is more accurate.
 %
-% NOTE 3: To wrap the oscillator phases h to [-pi,pi), do:
+% NOTE 3: Noisy method is Euler with Gaussian noise input (no point using RK4 with noise, so not implemented!)
+%
+% NOTE 4: To wrap the oscillator phases h to [-pi,pi), do:
 %
 %     h = mod(h+pi,2*pi)-pi;
 %
@@ -71,16 +74,32 @@ else
 end
 T = n*dt; % adjusted simulation time (<= T)
 
-assert(isscalar(RK4),'Runge-Kutta flag must be a scalar (logical)');
-
 % Call mex ODE simulation (returned phase matrix h is N x n)
 %
 % We transpose K so that K(i,j) is connection strength j --> i
 
-if RK4
-	h = kuramoto_rk4_mex(N,n,w*dt,K'*dt,a,h0);
-else
-	h = kuramoto_euler_mex(N,n,w*dt,K'*dt,a,h0);
+switch upper(mode)
+case 'RK4'
+	h = kuramoto_rk4_mex(N,n,w*dt,K'*dt,a,h0);   % ignore V parameter
+case 'EULER'
+	h = kuramoto_euler_mex(N,n,w*dt,K'*dt,a,h0); % ignore V parameter
+case 'NOISY'
+	assert(isa(V,'double'),'Noise variance/covariance must be a positive scalar double, a vector of positive doubles, or a positive-definite matrix of doubles matching the specified number of oscillators');
+	if isscalar(V)
+		assert(V >= 0,'Noise variance must be positive');
+		L = sqrt(V)*ones(N); % for uncorrelated white noise
+	elseif isvector(V)
+		assert(all(V >= 0),'Noise variances must be positive');
+		L = diag(sqrt(V));
+	else
+		assert(ismatrix(V) && size(V,1) == N && size(V,2) == N,'Noise variance/covariance must be a positive scalar double, a vector of positive doubles, or a positive-definite matrix of doubles matching the specified number of oscillators');
+		[L,cholp] = chol(V,'lower');
+		assert(cholp == 0,'Noise variance/covariance matrix must be positive-definite');
+	end
+	I = L*randn(N,n); % Input: Gaussian white noise
+	h = kuramoto_noisy_mex(N,n,w*dt,K'*dt,a,h0,I*sqrt(dt));
+otherwise
+	error('Unknown simulation mode');
 end
 
 % Order parameter (if requested)
