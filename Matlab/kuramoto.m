@@ -1,4 +1,4 @@
-function [h,r,psi,T,n] = kuramoto(N,w,K,a,h0,T,dt,mode,V)
+function [h,r,psi,T,n] = kuramoto(N,w,K,a,h0,T,dt,V)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -6,21 +6,20 @@ function [h,r,psi,T,n] = kuramoto(N,w,K,a,h0,T,dt,mode,V)
 %
 % To compile "mex" files, see Makefile in this directory
 %
-% N     number of oscillators                (positive integer)
-% w     oscillator frequencies               (vector of length N)
-% K     oscillator coupling constants        (scalar or square matrix of size N)
-% a     phase lag                            (scalar)
-% h0    initial phases of oscillators        (scalar or vector of length N)
-% T     simulation time                      (positive double; or, if negative, number of integration time steps is n = -T)
-% dt    integration time increment           (positive double)
-% mode  simulation mode                      (string: 'Euler', 'RK4' or 'Noisy')
-% V     input noise variance/covariance      (positive scalar, vector or square positive-definite matrix of size N)
+% N     number of oscillators                 (positive integer)
+% w     oscillator frequencies                (vector of length N)
+% K     oscillator coupling constants         (scalar or square matrix of size N)
+% a     phase lag                             (scalar)
+% h0    initial phases of oscillators         (scalar or vector of length N)
+% T     simulation time                       (positive double; or, if negative, number of integration time steps is n = -T)
+% dt    integration time increment            (positive double)
+% V     mode/input noise variance/covariance  ('Euler', 'RK4', or positive scalar, vector or square positive-definite matrix of size N)
 %
-% h     oscillator phases (unwrapped)        (N x n matrix)
-% r     order parameter magnitude            (row vector of length n)
-% psi   order parameter phase (wrapped)      (row vector of length n)
-% T     simulation time (possibly adjusted)  (positive double)
-% n     integration time steps               (positive integer)
+% h     oscillator phases (unwrapped)         (N x n matrix)
+% r     order parameter magnitude             (row vector of length n)
+% psi   order parameter phase (wrapped)       (row vector of length n)
+% T     simulation time (possibly adjusted)   (positive double)
+% n     integration time steps                (positive integer)
 %
 % NOTE 1: K(i,j) is connection strength from oscillator j to oscillator i.
 %
@@ -78,12 +77,13 @@ T = n*dt; % adjusted simulation time (<= T)
 %
 % We transpose K so that K(i,j) is connection strength j --> i
 
-switch upper(mode)
-case 'RK4'
-	h = kuramoto_rk4_mex(N,n,w*dt,K'*dt,a,h0);   % ignore V parameter
-case 'EULER'
-	h = kuramoto_euler_mex(N,n,w*dt,K'*dt,a,h0); % ignore V parameter
-case 'NOISY'
+if ischar(V)
+	switch upper(V)
+		case 'RK4',   h = kuramoto_rk4_mex(N,n,w*dt,K'*dt,a,h0);
+		case 'EULER', h = kuramoto_euler_mex(N,n,w*dt,K'*dt,a,h0);
+		otherwise,    error('Unknown simulation mode');
+	end
+else
 	assert(isa(V,'double'),'Noise variance/covariance must be a positive scalar double, a vector of positive doubles, or a positive-definite matrix of doubles matching the specified number of oscillators');
 	if isscalar(V)
 		assert(V >= 0,'Noise variance must be positive');
@@ -98,8 +98,6 @@ case 'NOISY'
 	end
 	I = L*randn(N,n); % Input: Gaussian white noise
 	h = kuramoto_noisy_mex(N,n,w*dt,K'*dt,a,h0,I*sqrt(dt));
-otherwise
-	error('Unknown simulation mode');
 end
 
 % Order parameter (if requested)

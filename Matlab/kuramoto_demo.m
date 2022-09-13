@@ -9,7 +9,9 @@ defvar('Kmean', 0.8/N  ); % oscillator coupling constants mean
 defvar('Ksdev', 0.1/N  ); % oscillator coupling constants std. dev.
 defvar('Kseed', []     ); % oscillator coupling constants random seed (empty for no seeding)
 defvar('a',     0      ); % oscillator phase lag constant
-defvar('v',     0      ); % oscillator phase noise variance (or zero for no noise)
+defvar('Vmean', 0.05    ); % oscillator input noise mean (zero for no noise)
+defvar('Vsdev', 0.01   ); % oscillator input noise std. dev.
+defvar('Vseed', []     ); % oscillator input noise random seed (empty for no seeding)
 defvar('hseed', []     ); % oscillator initial phases random seed (empty for no seeding)
 defvar('T',     200    ); % simulation time
 defvar('dt',    0.01   ); % integration time increment
@@ -28,14 +30,22 @@ if ~isempty(hseed), rstate = rng(hseed); end
 h0 = pi*(2*rand(N,1)-1);      % initial phases uniform on [-pi,pi]
 if ~isempty(hseed), rng(rstate); end
 
-if v == 0, mode = 'Euler'; else, mode = 'Noisy'; end
+if Vmean > 0
+	mode = 'Noisy';
+	if ~isempty(Vseed), rstate = rng(Vseed); end
+	V = gamrnd(Vmean^2/Vsdev^2,Vsdev^2/Vmean,N,1); % Gamma noise variance
+	if ~isempty(Vseed), rng(rstate); end
+else
+	mode = 'Euler';
+	V = mode;
+end
 
 % Run Kuramoto Euler and Rung-Kutta simulations with specified parameters
 
 fprintf('\n');
 
 st1 = tic;
-[h1,r1,psi1,T,n] = kuramoto(N,w,K,a,h0,T,dt,mode,v);
+[h1,r1,psi1,T,n] = kuramoto(N,w,K,a,h0,T,dt,V);
 et1 = toc(st1);
 fprintf('%s method : %g seconds\n',mode,et1);
 
