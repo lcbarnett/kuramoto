@@ -3,13 +3,13 @@
 
 defvar('N',     20     ); % number of oscillators
 defvar('wmean', 0      ); % oscillator frequencies mean
-defvar('wsdev', 0.5    ); % oscillator frequencies std. dev.
+defvar('wsdev', pi/7   ); % oscillator frequencies std. dev.
 defvar('wseed', []     ); % oscillator frequencies random seed (empty for no seeding)
 defvar('Kmean', 0.8/N  ); % oscillator coupling constants mean
 defvar('Ksdev', 0.1/N  ); % oscillator coupling constants std. dev.
 defvar('Kseed', []     ); % oscillator coupling constants random seed (empty for no seeding)
 defvar('a',     0      ); % oscillator phase lag constant
-defvar('Vmean', 0.05    ); % oscillator input noise mean (zero for no noise)
+defvar('Vmean', 0.04   ); % oscillator input noise mean (zero for no noise)
 defvar('Vsdev', 0.01   ); % oscillator input noise std. dev.
 defvar('Vseed', []     ); % oscillator input noise random seed (empty for no seeding)
 defvar('hseed', []     ); % oscillator initial phases random seed (empty for no seeding)
@@ -57,13 +57,32 @@ fprintf('Runge-Kutta  : %g seconds\n',et2);
 mad = max(abs(r1-r2));
 fprintf('\nMaximum absolute difference = %g\n\n',mad);
 
+t = linspace(0,T,n);
+
 % Display order parameter magnitude
 
 figure(1); clf;
-plot(linspace(0,T,n)',[r1;r2]');
+plot(t',[r1;r2]');
 legend({mode,'RK4'});
 xlabel('time');
 ylabel('order parameter magnitude (r)');
+title(sprintf('\nKuramoto system: N = %d\n',N));
+
+% Display oscillator phases (RK4) on cylinder
+
+cosh2 = cos(h2);
+sinh2 = sin(h2);
+
+figure(2); clf;
+plot3(t',cosh2(1,:)',sinh2(1,:)');
+xlabel('time');
+ylabel('x');
+zlabel('y');
+hold on
+for i = 2:N
+	plot3(t',cosh2(i,:)',sinh2(i,:)');
+end
+hold off
 title(sprintf('\nKuramoto system: N = %d\n',N));
 
 % Display order parameter (animation)
@@ -73,7 +92,7 @@ y1 = r1.*sin(psi1);
 x2 = r2.*cos(psi2);
 y2 = r2.*sin(psi2);
 
-figure(2); clf;
+figure(3); clf;
 rectangle('Position',[-1 -1 2 2],'Curvature',[1,1]);
 daspect([1,1,1]);
 xlim([-1.1 1.1]);
