@@ -23,11 +23,13 @@ function [h,r,psi,T,n] = kuramoto(N,w,K,a,h0,T,dt,V)
 %
 % NOTE 1: K(i,j) is connection strength from oscillator j to oscillator i.
 %
-% NOTE 2: Euler method is faster (by a factor of about 5), but RK4 is more accurate.
+% NOTE 2: If T is entered as a negative integer, then -T is taken as the number of time increments.
 %
-% NOTE 3: Noisy method is Euler with Gaussian noise input (no point using RK4 with noise, so not implemented!)
+% NOTE 3: Euler method is faster (by a factor of about 5), but RK4 is more accurate.
 %
-% NOTE 4: To wrap the oscillator phases h to [-pi,pi), do:
+% NOTE 4: Noisy method is Euler with Gaussian noise input (no point using RK4 with noise, so not implemented!)
+%
+% NOTE 5: To wrap the oscillator phases h to [-pi,pi), do:
 %
 %     h = mod(h+pi,2*pi)-pi;
 %
