@@ -1,4 +1,4 @@
-function [h,r,psi,T,n] = kuramoto(N,w,K,a,h0,T,dt,V)
+function [h,r,psi] = kuramoto(N,w,K,a,h0,n,dt,mode,I)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -11,29 +11,26 @@ function [h,r,psi,T,n] = kuramoto(N,w,K,a,h0,T,dt,V)
 % K     oscillator coupling constants         (scalar or square matrix of size N)
 % a     phase lag                             (scalar)
 % h0    initial phases of oscillators         (scalar or vector of length N)
-% T     simulation time                       (positive double; or, if negative, number of integration time steps is n = -T)
+% n     number of time increments             (positive integer)
 % dt    integration time increment            (positive double)
-% V     mode/input noise variance/covariance  ('Euler', 'RK4', or positive scalar, vector or square positive-definite matrix of size N)
+% mode  simulation mode                       ('Euler' or 'RK4')
+% I     input                                 (N x n matrix or empty)
 %
 % h     oscillator phases (unwrapped)         (N x n matrix)
 % r     order parameter magnitude             (row vector of length n)
 % psi   order parameter phase (wrapped)       (row vector of length n)
-% T     simulation time (possibly adjusted)   (positive double)
-% n     integration time steps                (positive integer)
 %
 % NOTE 1: K(i,j) is connection strength from oscillator j to oscillator i.
 %
-% NOTE 2: If T is entered as a negative integer, then -T is taken as the number of time increments.
+% NOTE 2: Euler method is faster (by a factor of about 5), but RK4 is more accurate.
 %
-% NOTE 3: Euler method is faster (by a factor of about 5), but RK4 is more accurate.
+% NOTE 3: RK4 method with input not currently implemented; supply empty I parameter, or omit
 %
-% NOTE 4: Noisy method is Euler with Gaussian noise input (no point using RK4 with noise, so not implemented!)
-%
-% NOTE 5: To wrap the oscillator phases h to [-pi,pi), do:
+% NOTE 4: To wrap the oscillator phases h to [-pi,pi), do:
 %
 %     h = mod(h+pi,2*pi)-pi;
 %
-% See kuramoto_demo.m script for usage.
+% See kuramoto_demo.m script for example usage.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -60,46 +57,30 @@ else
 	assert(isvector(h0)  && length(h0) == N,'Initial oscillator phases must be a vector of doubles matching the specified number of oscillators');
 end
 
-assert(isa(dt,'double') && isscalar(dt) && dt > 0,'Integration increment must be a positive scalar double');
+n = double(n);
+assert(isscalar(n) && floor(n) == n && n > 0,'Number of time increments must be a positive scalar integer');
 
-T = double(T);
-assert(isscalar(T),'Integration simulation time must be scalar');
-if T > eps
-	n = floor(T/dt);
-	assert(n > 0,'Simulation time too short, or time increment too large!');
-elseif T < -eps
-	n = -T;
-	assert(floor(n) == n && n > 0,'Number of integration steps must be a positive scalar integer');
-else
-	error('Bad simulation time');
-end
-T = n*dt; % adjusted simulation time (<= T)
+assert(isa(dt,'double') && isscalar(dt) && dt > 0,'Integration increment must be a positive scalar double');
 
 % Call mex ODE simulation (returned phase matrix h is N x n)
 %
-% We transpose K so that K(i,j) is connection strength j --> i
+% Note: we transpose K so that K(i,j) is connection strength j --> i
 
-if ischar(V)
-	switch upper(V)
-		case 'RK4',   h = kuramoto_rk4_mex(N,n,w*dt,K'*dt,a,h0);
-		case 'EULER', h = kuramoto_euler_mex(N,n,w*dt,K'*dt,a,h0);
-		otherwise,    error('Unknown simulation mode');
-	end
-else
-	assert(isa(V,'double'),'Noise variance/covariance must be a positive scalar double, a vector of positive doubles, or a positive-definite matrix of doubles matching the specified number of oscillators');
-	if isscalar(V)
-		assert(V >= 0,'Noise variance must be positive');
-		L = sqrt(V)*ones(N); % for uncorrelated white noise
-	elseif isvector(V)
-		assert(all(V >= 0),'Noise variances must be positive');
-		L = diag(sqrt(V));
+assert(ischar(mode),'Simulation mode must be ''Euler'' or ''RK4''');
+
+switch upper(mode)
+case 'RK4'
+	assert(nargin < 9 || isempty(I),'''RK4'' simulation with input not currently implemented');
+	h = kuramoto_rk4_mex(N,n,w*dt,K'*dt,a,h0);
+case 'EULER'
+	if nargin < 9 || isempty(I)
+		h = kuramoto_euler_mex(N,n,w*dt,K'*dt,a,h0); % no input
 	else
-		assert(ismatrix(V) && size(V,1) == N && size(V,2) == N,'Noise variance/covariance must be a positive scalar double, a vector of positive doubles, or a positive-definite matrix of doubles matching the specified number of oscillators');
-		[L,cholp] = chol(V,'lower');
-		assert(cholp == 0,'Noise variance/covariance matrix must be positive-definite');
+		assert(isa(I,'double') && ismatrix(I) && size(I,1) == N && size(I,2) == n,'Input must be an N x n matrix of doubles');
+		h = kuramoto_noisy_mex(N,n,w*dt,K'*dt,a,h0,I*sqrt(dt)); % scale input by sqrt(dt) (Ito simulation!)
 	end
-	I = L*randn(N,n); % Input: Gaussian white noise
-	h = kuramoto_noisy_mex(N,n,w*dt,K'*dt,a,h0,I*sqrt(dt));
+otherwise
+	error('Unknown simulation mode');
 end
 
 % Order parameter (if requested)
