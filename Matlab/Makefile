@@ -4,7 +4,7 @@
 
 MEXT = $(shell mexext)
 
-SRC = kuramoto_euler_mex.c kuramoto_rk4_mex.c kuramoto_noisy_mex.c
+SRC = kuramoto_euler_mex.c kuramoto_rk4_mex.c
 BIN = $(patsubst %.c,%.$(MEXT),$(SRC))
 OBJ = ../C/kuramoto.o
 

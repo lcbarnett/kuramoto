@@ -6,7 +6,7 @@ defvar('wmean', 0       ); % oscillator frequencies mean
 defvar('wsdev', pi/7    ); % oscillator frequencies std. dev.
 defvar('wseed', []      ); % oscillator frequencies random seed (empty for no seeding)
 defvar('Kmean', 0.8/N   ); % oscillator coupling constants mean
-defvar('Ksdev', Kmean/8 ); % oscillator coupling constants std. dev.
+defvar('Ksdev', Kmean/6 ); % oscillator coupling constants std. dev.
 defvar('Kseed', []      ); % oscillator coupling constants random seed (empty for no seeding)
 defvar('a',     0       ); % oscillator phase lag constant
 defvar('hseed', []      ); % oscillator initial phases random seed (empty for no seeding)

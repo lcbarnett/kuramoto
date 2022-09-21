@@ -13,21 +13,43 @@ void kuramoto_euler	// Euler method (fast, less accurate)
 	const double* const K,  // dt*(coupling constants)
 	const double        a,  // phase-lag (scalar)
 	const double* const h0, // initial oscillator phases
+	const double* const I,  // sqrt(dt)*input, or NULL for no input
 	double*       const h   // oscillator phases computed by numerical ODE
 )
 {
 	memcpy(h,h0,N*sizeof(double)); // initialise
 
-	for (size_t t=0; t<n-1; ++t) {
-		const double* const ht = h+N*t;
-		double* const ht1 = (double* const)ht+N;
-		for (size_t i=0; i<N; ++i) {
-			const double* const Ki = K+N*i;
-			const double htipa = ht[i]+a;
-			double ht1i = ht[i]+w[i];
-			for (size_t j=0; j<N; ++j) ht1i += Ki[j]*sin(ht[j]-htipa);
-			ht1[i] = ht1i; // update next time step
+	if (I) { // non-NULL: have input
+
+		for (size_t i=0; i<N; ++i) h[i] += I[i];
+		for (size_t t=0; t<n-1; ++t) {
+			const double* const ht = h+N*t;
+			const double* const It = I+N*(t+1);
+			double* const ht1 = (double* const)ht+N;
+			for (size_t i=0; i<N; ++i) {
+				const double* const Ki = K+N*i;
+				const double htipa = ht[i]+a;
+				double ht1i = ht[i]+w[i]+It[i];
+				for (size_t j=0; j<N; ++j) ht1i += Ki[j]*sin(ht[j]-htipa);
+				ht1[i] = ht1i; // update next time step
+			}
 		}
+
+	}
+	else { // no input
+
+		for (size_t t=0; t<n-1; ++t) {
+			const double* const ht = h+N*t;
+			double* const ht1 = (double* const)ht+N;
+			for (size_t i=0; i<N; ++i) {
+				const double* const Ki = K+N*i;
+				const double htipa = ht[i]+a;
+				double ht1i = ht[i]+w[i];
+				for (size_t j=0; j<N; ++j) ht1i += Ki[j]*sin(ht[j]-htipa);
+				ht1[i] = ht1i; // update next time step
+			}
+		}
+
 	}
 }
 
@@ -49,8 +71,6 @@ void kuramoto_rk4 // Classic Runge-Kutta ("RK4" - slower, more accurate)
 	double* const k2dt = kbuff+N;
 	double* const k3dt = kbuff+2*N;
 	double* const k4dt = kbuff+3*N;
-
-	// classic Runge-Kutta ("RK4" - slower, more accurate)
 
 	memcpy(h,h0,N*sizeof(double)); // initialise
 
@@ -103,34 +123,4 @@ void kuramoto_rk4 // Classic Runge-Kutta ("RK4" - slower, more accurate)
 	// free buffer
 
 	free(kbuff);
-}
-
-void kuramoto_noisy // Euler method with input noise
-(
-	const size_t        N,  // number of oscillators
-	const size_t        n,  // number of integration increments
-	const double* const w,  // dt*frequencies
-	const double* const K,  // dt*(coupling constants)
-	const double        a,  // phase-lag (scalar)
-	const double* const h0, // initial oscillator phases
-	const double* const I,  // sqrt(dt)*noise
-	double*       const h   // oscillator phases computed by numerical ODE
-)
-{
-	memcpy(h,h0,N*sizeof(double)); // initialise
-
-	for (size_t i=0; i<N; ++i) h[i] += I[i];
-
-	for (size_t t=0; t<n-1; ++t) {
-		const double* const ht = h+N*t;
-		const double* const It = I+N*(t+1);
-		double* const ht1 = (double* const)ht+N;
-		for (size_t i=0; i<N; ++i) {
-			const double* const Ki = K+N*i;
-			const double htipa = ht[i]+a;
-			double ht1i = ht[i]+w[i]+It[i];
-			for (size_t j=0; j<N; ++j) ht1i += Ki[j]*sin(ht[j]-htipa);
-			ht1[i] = ht1i; // update next time step
-		}
-	}
 }
