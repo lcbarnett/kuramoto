@@ -1,6 +1,5 @@
 #include <math.h>   // for maths functions
 #include <stdlib.h> // for malloc, etc.
-#include <stdio.h>
 
 // NOTE:  C is row-major; bear in mind when writing interfaces! E.g. for
 // Matlab (column-major) you should transpose the matrix K before calling.
