@@ -8,9 +8,7 @@ void kuramoto_euler	// Euler method (fast, less accurate)
 	const double* const w,  // dt*frequencies
 	const double* const K,  // dt*(coupling constants)
 	const double        a,  // phase-lag (scalar)
-	const double* const h0, // initial oscillator phases
-	const double* const I,  // sqrt(dt)*input, or NULL for no input
-	double*       const h   // oscillator phases computed by numerical ODE
+	double*       const h   // oscillator phases computed by numerical ODE, pre-initialised
 );
 
 void kuramoto_rk4 // Classic Runge-Kutta ("RK4" - slower, more accurate)
@@ -20,8 +18,7 @@ void kuramoto_rk4 // Classic Runge-Kutta ("RK4" - slower, more accurate)
 	const double* const w,  // dt*frequencies
 	const double* const K,  // dt*(coupling constants)
 	const double        a,  // phase-lag (scalar)
-	const double* const h0, // initial oscillator phases
-	double*       const h   // oscillator phases computed by numerical ODE
+	double*       const h   // oscillator phases computed by numerical ODE, pre-initialised
 );
 
 #endif // KURAMATO_H

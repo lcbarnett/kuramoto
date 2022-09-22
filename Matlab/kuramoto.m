@@ -1,4 +1,4 @@
-function [h,r,psi] = kuramoto(N,w,K,a,h0,n,dt,mode,I)
+function [h,r,psi] = kuramoto(N,w,K,a,h0,n,dt,I,mode)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -13,8 +13,8 @@ function [h,r,psi] = kuramoto(N,w,K,a,h0,n,dt,mode,I)
 % h0    initial phases of oscillators         (scalar or vector of length N)
 % n     number of time increments             (positive integer)
 % dt    integration time increment            (positive double)
-% mode  simulation mode                       ('Euler' or 'RK4')
 % I     input                                 (N x n matrix or empty for no input)
+% mode  simulation mode                       ('Euler' or 'RK4')
 %
 % h     oscillator phases (unwrapped)         (N x n matrix)
 % r     order parameter magnitude             (row vector of length n)
@@ -24,7 +24,7 @@ function [h,r,psi] = kuramoto(N,w,K,a,h0,n,dt,mode,I)
 %
 % NOTE 2: Euler method is faster (by a factor of about 5), but RK4 is more accurate.
 %
-% NOTE 3: RK4 method with input not currently implemented; supply empty I parameter, or omit
+% NOTE 3: Input is scaled by sqrt(dt), as per Ito SDE simulation (cf. Ornstein-Uhlenbeck)
 %
 % NOTE 4: To wrap the oscillator phases h to [-pi,pi), do:
 %
@@ -62,6 +62,8 @@ assert(isscalar(n) && floor(n) == n && n > 0,'Number of time increments must be 
 
 assert(isa(dt,'double') && isscalar(dt) && dt > 0,'Integration increment must be a positive scalar double');
 
+assert(isempty(I) || (isa(I,'double') && ismatrix(I) && size(I,1) == N && size(I,2) == n),'Input must be empty, or an N x n matrix of doubles');
+
 % Call mex ODE simulation (returned phase matrix h is N x n)
 %
 % Note: we transpose K so that K(i,j) is connection strength j --> i
@@ -69,15 +71,9 @@ assert(isa(dt,'double') && isscalar(dt) && dt > 0,'Integration increment must be
 assert(ischar(mode),'Simulation mode must be ''Euler'' or ''RK4''');
 switch upper(mode)
 case 'RK4'
-	assert(nargin < 9 || isempty(I),'''RK4'' simulation with input not currently implemented');
-	h = kuramoto_rk4_mex(N,n,w*dt,K'*dt,a,h0);
+	h = kuramoto_rk4_mex(N,n,w*dt,K'*dt,a,h0,I*sqrt(dt));
 case 'EULER'
-	if nargin < 9
-		I = [];
-	else
-		assert(isempty(I) || (isa(I,'double') && ismatrix(I) && size(I,1) == N && size(I,2) == n),'Input must be an N x n matrix of doubles');
-	end
-	h = kuramoto_euler_mex(N,n,w*dt,K'*dt,a,h0,I*sqrt(dt)); % scale input by sqrt(dt) (Ito simulation!)
+	h = kuramoto_euler_mex(N,n,w*dt,K'*dt,a,h0,I*sqrt(dt));
 otherwise
 	error('Unknown simulation mode; must be ''Euler'' or ''RK4''');
 end

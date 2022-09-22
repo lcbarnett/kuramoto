@@ -1,5 +1,6 @@
 #include "matrix.h"   // for Matlab matrix stuff
 #include "kuramoto.h" // for Kuramoto ODE solvers
+#include <string.h>   // for memcpy
 
 #define UNUSED __attribute__ ((unused))
 
@@ -21,7 +22,21 @@ void mexFunction(int UNUSED nlhs, mxArray *plhs[], int UNUSED nrhs, const mxArra
 
 	double* const h = mxGetDoubles(plhs[0] = mxCreateDoubleMatrix(N,n,mxREAL));
 
+	// Initialise with input (if present)
+	//
+	// Note that if compiling with -R2018a, mxCreateDoubleMatrix zero-initializes (this is what we want!)
+
+	if (I) { // have input
+		memcpy(h,I,N*n*sizeof(double)); // initialise phases with input
+	}
+
+	// Initial phases at t = 0 (plus input!)
+
+	for (size_t i=0; i<N; ++i) {
+		h[i] += h0[i];
+	}
+
 	// Euler method
 
-	kuramoto_euler(N,n,w,K,a,h0,I,h);
+	kuramoto_euler(N,n,w,K,a,h);
 }
