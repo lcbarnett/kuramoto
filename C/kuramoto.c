@@ -14,18 +14,17 @@ void kuramoto_euler	// Euler method (fast, less accurate)
 	double*       const h   // oscillator phases computed by numerical ODE, pre-initialised
 )
 {
-	for (size_t t=0; t<n-1; ++t) {
-		const double* const ht = h+N*t;
+	for (const double* ht=h; ht<h+N*(n-1); ht+=N) {
 		double* const ht1 = (double* const)ht+N;
 		for (size_t i=0; i<N; ++i) {
 			const double* const Ki = K+N*i;
-			const double htipa = ht[i]+a;
-			double ht1i = ht[i]+w[i];
-			for (size_t j=0; j<N; ++j) ht1i += Ki[j]*sin(ht[j]-htipa);
+			const double hti = ht[i];
+			const double htai = hti+a;
+			double ht1i = hti+w[i];
+			for (size_t j=0; j<N; ++j) ht1i += Ki[j]*sin(ht[j]-htai);
 			ht1[i] += ht1i; // update next time step (adding in input already in ht1)
 		}
 	}
-
 }
 
 void kuramoto_rk4 // Classic Runge-Kutta ("RK4" - slower, more accurate)
@@ -41,54 +40,53 @@ void kuramoto_rk4 // Classic Runge-Kutta ("RK4" - slower, more accurate)
 	// allocate buffer for intermediates (k1, k2, k3, k4)
 
 	double* const kbuff = calloc(4*N,sizeof(double));
-	double* const k1dt = kbuff;
-	double* const k2dt = kbuff+N;
-	double* const k3dt = kbuff+2*N;
-	double* const k4dt = kbuff+3*N;
+	double* const k1 = kbuff;
+	double* const k2 = kbuff+N;
+	double* const k3 = kbuff+2*N;
+	double* const k4 = kbuff+3*N;
 
-	for (size_t t=0; t<n-1; ++t) {
-		const double* const ht = h+N*t;
+	for (const double* ht=h; ht<h+N*(n-1); ht+=N) {
 
 		// k1
 		for (size_t i=0; i<N; ++i) {
 			const double* const Ki = K+N*i;
-			const double htipa = ht[i]+a;
+			const double htai = ht[i]+a;
 			double ki = w[i];
-			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(ht[j]-htipa);
-			k1dt[i] = ki;
+			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(ht[j]-htai);
+			k1[i] = ki;
 		}
 
 		// k2
 		for (size_t i=0; i<N; ++i) {
 			const double* const Ki = K+N*i;
-			const double htpk1dtipa = ht[i]+k1dt[i]+a;
+			const double htk1ai = ht[i]+k1[i]+a;
 			double ki = w[i];
-			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(ht[j]+k1dt[j]-htpk1dtipa);
-			k2dt[i] = ki/2.0;
+			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(ht[j]+k1[j]-htk1ai);
+			k2[i] = ki/2.0;
 		}
 
 		// k3
 		for (size_t i=0; i<N; ++i) {
 			const double* const Ki = K+N*i;
-			const double htpk2dtipa = ht[i]+k2dt[i]+a;
+			const double htk2ai = ht[i]+k2[i]+a;
 			double ki = w[i];
-			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(ht[j]+k2dt[j]-htpk2dtipa);
-			k3dt[i] = ki/2.0;
+			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(ht[j]+k2[j]-htk2ai);
+			k3[i] = ki/2.0;
 		}
 
 		// k4
 		for (size_t i=0; i<N; ++i) {
 			const double* const Ki = K+N*i;
-			const double htpk3dtipa = ht[i]+k3dt[i]+a;
+			const double htk3ai = ht[i]+k3[i]+a;
 			double ki = w[i];
-			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(ht[j]+k3dt[j]-htpk3dtipa);
-			k4dt[i] = ki;
+			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(ht[j]+k3[j]-htk3ai);
+			k4[i] = ki;
 		}
 
 		// update next time step (adding in input already in ht1)
 		double* const ht1 = (double* const)ht+N;
 		for (size_t i=0; i<N; ++i) {
-			ht1[i] += ht[i] + (k1dt[i]+4.0*k2dt[i]+4.0*k3dt[i]+k4dt[i])/6.0;
+			ht1[i] += ht[i] + (k1[i]+4.0*k2[i]+4.0*k3[i]+k4[i])/6.0;
 		}
 	}
 
