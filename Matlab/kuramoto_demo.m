@@ -40,9 +40,13 @@ if nmean > 0 % with input noise
 	if ~isempty(nseed), rstate = rng(nseed); end
 	nmag = gamrnd(nmean^2/nsdev^2,nsdev^2/nmean,N,1); % per-oscillator noise magnitudes drawn from Gamma distribution
 	if ~isempty(nseed), rng(rstate); end
+end
 
+% Generate input
+
+if nmean > 0 % with input noise
 	if ~isempty(Iseed), rstate = rng(Iseed); end
-	I = nmag.*randn(N,n); % uncorrelated Gaussian white noise inputs
+	I = nmag.*randn(N,n); % uncorrelated Gaussian white noise
 	if ~isempty(Iseed), rng(rstate); end
 else
 	I = []; % no input
@@ -62,78 +66,39 @@ st2 = tic;
 et2 = toc(st2);
 fprintf('RK4 method   : %g seconds\n',et2);
 
-t = linspace(0,T,n);
+% Transpose stuff, etc., for plots
+
+t   = linspace(0,T,n)';
+r   = [r1;r2]';
+psi = [psi1;psi2]';
+h1  = h1';
+h2  = h2';
 
 % Display order parameter magnitude
 
 figure(1); clf;
-plot(t',[r1;r2]');
+plot(t,r);
 legend({'Euler','RK4'});
+ylim([0,1]);
 xlabel('time');
-ylabel('order parameter magnitude (r)');
-title(sprintf('\nKuramoto system: N = %d\n',N));
+ylabel('r','Rotation',0);
+title(sprintf('\nKuramoto system: N = %d - order parameter magnitudes (r)\n',N));
 
-% Display oscillator phases (RK4) on cylinder
-
-cosh1 = cos(h1);
-sinh1 = sin(h1);
-cosh2 = cos(h2);
-sinh2 = sin(h2);
+% Display oscillator phases on cylinder
 
 figure(2); clf;
-sgtitle(sprintf('\nKuramoto system: N = %d\n',N));
 subplot(2,1,1);
-plot3(t',cosh1(1,:)',sinh1(1,:)');
-xlabel('time');
-ylabel('x');
-zlabel('y');
-hold on
-for i = 2:N
-	plot3(t',cosh1(i,:)',sinh1(i,:)');
-end
-hold off
+cylinder_plot(t,h1);
 title(sprintf('Euler\n'));
 subplot(2,1,2);
-plot3(t',cosh2(1,:)',sinh2(1,:)');
-xlabel('time');
-ylabel('x');
-zlabel('y');
-hold on
-for i = 2:N
-	plot3(t',cosh2(i,:)',sinh2(i,:)');
-end
-hold off
+cylinder_plot(t,h2);
 title(sprintf('RK4\n'));
+sgtitle(sprintf('\nKuramoto system: N = %d - oscillator phases\n',N));
+
+% Optionally display complex order parameter (animation)
 
 if anim
-
-	% Display order parameter (animation)
-
-	x1 = r1.*cos(psi1);
-	y1 = r1.*sin(psi1);
-	x2 = r2.*cos(psi2);
-	y2 = r2.*sin(psi2);
-
 	figure(3); clf;
-	rectangle('Position',[-1 -1 2 2],'Curvature',[1,1]);
-	daspect([1,1,1]);
-	xlim([-1.1 1.1]);
-	ylim([-1.1 1.1]);
-	set(gca,'XTick',[])
-	set(gca,'YTick',[])
-	box on
-	title(sprintf('\nOrder parameter (z)\n'));
-	ln1 = line([0;0],[0;0],'LineWidth',1,'Color','b');
-	ln2 = line([0;0],[0;0],'LineWidth',1,'Color','r');
-	ts = xlabel('t = 0');
-	legend({'Euler','RK4'});
-	for k = 1:n
-		ln1.XData = [0;x1(k)];
-		ln1.YData = [0;y1(k)];
-		ln2.XData = [0;x2(k)];
-		ln2.YData = [0;y2(k)];
-		ts.String = sprintf('t = %.0f',k*dt);
-		drawnow limitrate nocallbacks
-	end
-
+	title(sprintf('\nKuramoto system: N = %d - complex order parameters (z)\n',N));
+	clock_plot(t,r,psi,{'Euler','RK4'},{'b','r'})
 end

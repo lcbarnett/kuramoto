@@ -1,8 +1,13 @@
-function clock_plot(x,y,ptitle,legend,cols)
+function clock_plot(t,r,psi,leg,col)
 
-% In progress
+% Animate (complex) phases vs time
 
-[nvars,nphases] = size(x);
+[n,m] = size(r);
+assert(isvector(t) && ismatrix(r) && ismatrix(psi) && length(t) == n && size(psi,1) == n && size(psi,2) == m);
+assert(isvector(leg) && length(leg) == m && isvector(col) && length(col) == m);
+
+x = r.*cos(psi);
+y = r.*sin(psi);
 
 rectangle('Position',[-1 -1 2 2],'Curvature',[1,1]);
 daspect([1,1,1]);
@@ -11,18 +16,17 @@ ylim([-1.1 1.1]);
 set(gca,'XTick',[])
 set(gca,'YTick',[])
 box on
-title(ptitle);
-ln = cell(nvars,1);
-for i = 1:nvars
+ln = cell(m,1);
+for i = 1:m
 	ln{i} = line([0;0],[0;0],'LineWidth',1,'Color',col{i});
 end
+legend(leg);
 ts = xlabel('t = 0');
-legend(plegend);
-for k = 1:nphases
-	for i = 1:nvars
-		ln{i}.XData = [0;x{i}(k)];
-		ln{i}.YData = [0;y{i}(k)];
+for k = 1:n
+	for i = 1:m
+		ln{i}.XData = [0;x(k,i)];
+		ln{i}.YData = [0;y(k,i)];
 	end
-	ts.String = sprintf('t = %.0f',k*dt);
+	ts.String = sprintf('t = %.0f',t(k));
 	drawnow limitrate nocallbacks
 end
