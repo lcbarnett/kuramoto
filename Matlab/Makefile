@@ -18,13 +18,13 @@ ifdef ComSpec
 	MCFLAGS = COMPFLAGS
 	RM      = del /F /Q
 	RMBIN   = $(subst /,\,$(BIN))
-	SOLIB = ..\C\libkuramoto.so
+	SOLIB = ..\lib\libkuramoto.so
 else
 #	Linux, Darwin
 	MCFLAGS = CFLAGS
 	RM      = rm -f
 	RMBIN   = $(BIN)
-	SOLIB = ../C/libkuramoto.so
+	SOLIB = ../lib/libkuramoto.so
 endif
 
 CC  = gcc

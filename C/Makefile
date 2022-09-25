@@ -9,11 +9,11 @@ CFLAGS = -std=c99 -march=native -O3 -Wall -Wextra -Wconversion -Winline -pedanti
 
 ifdef ComSpec
 #	Windows
-	LIB = libkuramoto.dll
+	LIB = ..\lib\libkuramoto.dll
 	RM = del /F /Q
 else
 #	Linux, Darwin
-	LIB = libkuramoto.so
+	LIB = ../lib/libkuramoto.so
 	RM = rm -f
 endif
 
