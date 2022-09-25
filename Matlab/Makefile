@@ -6,7 +6,7 @@ MEXT = $(shell mexext)
 
 SRC = kuramoto_euler_mex.c kuramoto_rk4_mex.c
 BIN = $(patsubst %.c,%.$(MEXT),$(SRC))
-OBJ = ../C/kuramoto.o
+INC = ../C/kuramoto.h
 
 CFLAGS = -std=c99 -march=native -O3 -Wall -Wextra -Wconversion -Winline -pedantic-errors -I../C -D_DEFAULT_SOURCE -D_POSIX_C_SOURCE=200809L
 
@@ -18,11 +18,13 @@ ifdef ComSpec
 	MCFLAGS = COMPFLAGS
 	RM      = del /F /Q
 	RMBIN   = $(subst /,\,$(BIN))
+	SOLIB = ..\C\libkuramoto.so
 else
 #	Linux, Darwin
 	MCFLAGS = CFLAGS
 	RM      = rm -f
 	RMBIN   = $(BIN)
+	SOLIB = ../C/libkuramoto.so
 endif
 
 CC  = gcc
@@ -36,12 +38,15 @@ clean:
 	$(RM) $(RMBIN)
 
 diag:
-	@echo "*** SRC  = " $(SRC)
-	@echo "*** BIN  = " $(BIN)
-	@echo "*** OBJ  = " $(OBJ)
-	@echo "*** MEXT = " $(MEXT)
+	@echo "*** SRC   = " $(SRC)
+	@echo "*** BIN   = " $(BIN)
+	@echo "*** INC   = " $(INC)
+	@echo "*** SOLIB = " $(SOLIB)
+	@echo "*** MEXT  = " $(MEXT)
+
+# NOTE: we link directly to the libkuramoto.so shared library (so we do not have to set LD_LIBRARY_PATH)
 
 %.$(MEXT): %.c
-	$(MEX) $(MFLAGS) $(MCFLAGS)="\$$CFLAGS $(CFLAGS)" $(OBJ) $<
+	$(MEX) $(MFLAGS) $(MCFLAGS)="\$$CFLAGS $(CFLAGS)" $(SOLIB) $<
 
-$(BIN): $(OBJ) ../C/kuramoto.h
+$(BIN): $(INC) $(SOLIB)
