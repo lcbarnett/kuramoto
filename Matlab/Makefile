@@ -5,46 +5,50 @@
 MEXT = $(shell mexext)
 
 SRC = kuramoto_euler_mex.c kuramoto_rk4_mex.c
-BIN = $(patsubst %.c,%.$(MEXT),$(SRC))
-INC = ../C/kuramoto.h
-
-CFLAGS = -std=c99 -march=native -O3 -Wall -Wextra -Wconversion -Winline -pedantic-errors -I../C -D_DEFAULT_SOURCE -D_POSIX_C_SOURCE=200809L
-
-MFLAGS = -O -R2018a
+BIN = $(SRC:.c=.$(MEXT))
 
 ifdef ComSpec
 #	Windows: MATLAB say to use 'CFLAGS' for MinGW, but 'COMPFLAGS' seems to work; see
 #   https://uk.mathworks.com/help/matlab/matlab_external/compiling-c-mex-files-with-mingw.html
 	MCFLAGS = COMPFLAGS
 	RM      = del /F /Q
-	RMBIN   = $(subst /,\,$(BIN))
-	SOLIB = ..\lib\libkuramoto.so
+	INCDIR  = ..\C
+	LIBDIR  = ..\lib
+	INC     = $(INCDIR)\kuramoto.h
+	LIB     = $(LIBDIR)\libkuramoto.dll
 else
 #	Linux, Darwin
 	MCFLAGS = CFLAGS
 	RM      = rm -f
-	RMBIN   = $(BIN)
-	SOLIB = ../lib/libkuramoto.so
+	INCDIR  = ../C
+	LIBDIR  = ../lib
+	INC     = $(INCDIR)/kuramoto.h
+	LIB     = $(LIBDIR)/libkuramoto.so
 endif
 
 CC  = gcc
+
+CFLAGS = -std=c99 -march=native -O3 -Wall -Wextra -Wconversion -Winline -pedantic-errors -I$(INCDIR) -D_DEFAULT_SOURCE -D_POSIX_C_SOURCE=200809L
+
 MEX = mex
+
+MFLAGS = -O -R2018a
 
 .PHONY: all clean diag
 
 all: $(BIN)
 
 clean:
-	$(RM) $(RMBIN)
+	$(RM) $(BIN)
 
 diag:
-	@echo "*** SRC   = " $(SRC)
-	@echo "*** BIN   = " $(BIN)
-	@echo "*** INC   = " $(INC)
-	@echo "*** SOLIB = " $(SOLIB)
-	@echo "*** MEXT  = " $(MEXT)
+	@echo "*** MEXT = " $(MEXT)
+	@echo "*** SRC  = " $(SRC)
+	@echo "*** BIN  = " $(BIN)
+	@echo "*** INC  = " $(INC)
+	@echo "*** LIB  = " $(LIB)
 
 %.$(MEXT): %.c
-	$(MEX) $(MFLAGS) $(MCFLAGS)="\$$CFLAGS $(CFLAGS)" -L../lib -lkuramoto $<
+	$(MEX) $(MFLAGS) $(MCFLAGS)="\$$CFLAGS $(CFLAGS)" -L$(LIBDIR) -lkuramoto $<
 
-$(BIN): $(INC) $(SOLIB)
+$(BIN): $(INC) $(LIB)

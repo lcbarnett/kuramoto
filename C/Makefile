@@ -9,17 +9,19 @@ CFLAGS = -std=c99 -march=native -O3 -Wall -Wextra -Wconversion -Winline -pedanti
 
 ifdef ComSpec
 #	Windows
-	LIB = ..\lib\libkuramoto.dll
+	LIBDIR = ..\lib
+	LIB = $(LIBDIR)\libkuramoto.dll
 	RM = del /F /Q
 else
 #	Linux, Darwin
-	LIB = ../lib/libkuramoto.so
+	LIBDIR = ../lib
+	LIB = $(LIBDIR)/libkuramoto.so
 	RM = rm -f
 endif
 
 CC  = gcc
 
-.PHONY: all clean install diag
+.PHONY: all clean diag
 
 all: $(LIB)
 
@@ -34,7 +36,7 @@ clean:
 	$(RM) $(OBJ) $(LIB)
 
 diag:
-	@echo "*** OBJ = " $(SRC)
-	@echo "*** OBJ = " $(SRC)
+	@echo "*** SRC = " $(SRC)
+	@echo "*** OBJ = " $(OBJ)
 
 kuramoto.o: kuramoto.h
