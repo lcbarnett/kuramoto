@@ -44,9 +44,7 @@ diag:
 	@echo "*** SOLIB = " $(SOLIB)
 	@echo "*** MEXT  = " $(MEXT)
 
-# NOTE: we link directly to the libkuramoto.so shared library (so we do not have to set LD_LIBRARY_PATH)
-
 %.$(MEXT): %.c
-	$(MEX) $(MFLAGS) $(MCFLAGS)="\$$CFLAGS $(CFLAGS)" $(SOLIB) $<
+	$(MEX) $(MFLAGS) $(MCFLAGS)="\$$CFLAGS $(CFLAGS)" -L../lib -lkuramoto $<
 
 $(BIN): $(INC) $(SOLIB)

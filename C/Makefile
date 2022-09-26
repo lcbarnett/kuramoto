@@ -19,7 +19,7 @@ endif
 
 CC  = gcc
 
-.PHONY: all clean diag
+.PHONY: all clean install diag
 
 all: $(LIB)
 
