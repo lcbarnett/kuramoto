@@ -41,14 +41,14 @@ all: $(BIN)
 clean:
 	$(RM) $(BIN)
 
+%.$(MEXT): %.c
+	$(MEX) $(MFLAGS) $(MCFLAGS)="\$$CFLAGS $(CFLAGS)" -L$(LIBDIR) -lkuramoto $<
+
+$(BIN): $(INC) $(LIB)
+
 diag:
 	@echo "*** MEXT = " $(MEXT)
 	@echo "*** SRC  = " $(SRC)
 	@echo "*** BIN  = " $(BIN)
 	@echo "*** INC  = " $(INC)
 	@echo "*** LIB  = " $(LIB)
-
-%.$(MEXT): %.c
-	$(MEX) $(MFLAGS) $(MCFLAGS)="\$$CFLAGS $(CFLAGS)" -L$(LIBDIR) -lkuramoto $<
-
-$(BIN): $(INC) $(LIB)

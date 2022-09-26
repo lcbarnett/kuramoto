@@ -28,15 +28,14 @@ all: $(LIB)
 $(LIB): $(OBJ)
 	$(CC) -shared -o $@ $^
 
-
 $(OBJ): %.o: %.c
 	$(CC) -c -fPIC $(CFLAGS) $< -o $@
 
 clean:
 	$(RM) $(OBJ) $(LIB)
 
+kuramoto.o: kuramoto.h
+
 diag:
 	@echo "*** SRC = " $(SRC)
 	@echo "*** OBJ = " $(OBJ)
-
-kuramoto.o: kuramoto.h
