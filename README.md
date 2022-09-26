@@ -8,6 +8,8 @@ with Matlab interface. Simulations using the Euler and classic Runge-Kutta ("RK4
 ### Building
 You will need the [Make](https://www.gnu.org/software/make/) build tool installed on your system, and the Matlab `mex` and `makemex` executables (in the 'bin' directory of your Matlab installation) on your system executable path. Then in a terminal, navigate to the **kuramoto** installation directory and run `make`.[^1]
 
+Building creates a shared library in the 'lib' sub-directory. You will need to ensure that this directory is on your dynamic link path: this is specified by the environmental variable LD_LIBRARY_PATH in Linux, DYLD_LIBRARY_PATH in macOS and just PATH in Windows (consult your OS documentation about setting environmental variables). Alternatively, you can copy the shared library (libkuramoto.so in Linux and macOS, libkuramoto.dll in Windows) to a standard system library directory (you may need admin privileges for this).
+
 ### Running
 To test the Matlab interface, we recommend that you run the `kuramoto_demo.m` script in the kuramoto/Matlab directory.
 
