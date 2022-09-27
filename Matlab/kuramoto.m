@@ -7,7 +7,7 @@ function [h,r,psi] = kuramoto(N,w,K,a,h0,n,dt,I,mode)
 % To compile "mex" files, see Makefile in this directory
 %
 % N     number of oscillators                 (positive integer)
-% w     oscillator frequencies                (vector of length N)
+% w     oscillator frequencies                (scalar or vector of length N)
 % K     oscillator coupling constants         (scalar or square matrix of size N)
 % a     phase lag                             (scalar)
 % h0    initial phases of oscillators         (scalar or vector of length N)
@@ -39,7 +39,12 @@ function [h,r,psi] = kuramoto(N,w,K,a,h0,n,dt,I,mode)
 N = double(N);
 assert(isscalar(N) && floor(N) == N && N > 0,'Number of oscillators must be a positive scalar integer');
 
-assert(isa(w,'double') && isvector(w) && length(w) == N,'Frequencies must be a vector of doubles matching the specified number of oscillators');
+assert(isa(w,'double'),'Frequencies must be a scalar double or a vector of doubles matching the specified number of oscillators');
+if isscalar(w)
+	w = w*ones(N,1);
+else
+	assert(isvector(w) && length(w) == N,'Frequencies must be a scalar double or a vector of doubles matching the specified number of oscillators');
+end
 
 assert(isa(K,'double'),'Coupling constants must be a scalar double, or a vector of doubles matching the specified number of oscillators');
 if isscalar(K)
@@ -50,11 +55,11 @@ end
 
 assert(isa(a,'double') && isscalar(a),'Phase lag must be scalar double');
 
-assert(isa(h0,'double'),'Initial oscillator phases must be a vector of doubles matching the specified number of oscillators');
+assert(isa(h0,'double'),'Initial oscillator phases must be a scalar double or a vector of doubles matching the specified number of oscillators');
 if isscalar(h0)
 	h0 = h0*ones(N,1);
 else
-	assert(isvector(h0)  && length(h0) == N,'Initial oscillator phases must be a vector of doubles matching the specified number of oscillators');
+	assert(isvector(h0)  && length(h0) == N,'Initial oscillator phases must be a scalar double or a vector of doubles matching the specified number of oscillators');
 end
 
 n = double(n);
