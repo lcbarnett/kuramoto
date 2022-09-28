@@ -9,9 +9,3 @@ all:
 
 clean:
 	make -C C clean && make -C Matlab clean
-
-diag:
-	@echo "*** LIBDIR   = " $(LIBDIR)
-	@echo "*** LIB      = " $(LIB)
-	@echo "*** INSTDIR  = " $(INSTDIR)
-	@echo "*** CP       = " $(CP)

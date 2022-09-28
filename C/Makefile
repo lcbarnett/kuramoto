@@ -9,14 +9,14 @@ CFLAGS = -std=c99 -march=native -O3 -Wall -Wextra -Wconversion -Winline -pedanti
 
 ifdef ComSpec
 #	Windows
+	RM = del /F /Q
 	LIBDIR = ..\lib
 	LIB = $(LIBDIR)\libkuramoto.dll
-	RM = del /F /Q
 else
 #	Linux, Darwin
+	RM = rm -f
 	LIBDIR = ../lib
 	LIB = $(LIBDIR)/libkuramoto.so
-	RM = rm -f
 endif
 
 CC  = gcc
@@ -24,6 +24,8 @@ CC  = gcc
 .PHONY: all clean diag
 
 all: $(LIB)
+
+# Build shared library
 
 $(LIB): $(OBJ)
 	$(CC) -shared -o $@ $^

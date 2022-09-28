@@ -10,20 +10,26 @@ BIN = $(SRC:.c=.$(MEXT))
 ifdef ComSpec
 #	Windows: MATLAB say to use 'CFLAGS' for MinGW, but 'COMPFLAGS' seems to work; see
 #   https://uk.mathworks.com/help/matlab/matlab_external/compiling-c-mex-files-with-mingw.html
-	MCFLAGS = COMPFLAGS
 	RM      = del /F /Q
+	MCFLAGS = COMPFLAGS
+	OBJ     = ..\C\kuramoto.o
 	INCDIR  = ..\C
 	LIBDIR  = ..\lib
-	INC     = $(INCDIR)\kuramoto.h
-	LIB     = $(LIBDIR)\libkuramoto.dll
 else
 #	Linux, Darwin
-	MCFLAGS = CFLAGS
 	RM      = rm -f
+	MCFLAGS = CFLAGS
+	OBJ     = ../C/kuramoto.o
 	INCDIR  = ../C
 	LIBDIR  = ../lib
-	INC     = $(INCDIR)/kuramoto.h
-	LIB     = $(LIBDIR)/libkuramoto.so
+endif
+
+# dynamic linkage to shared library?
+
+ifdef SOLINK
+	OLINK = -L$(LIBDIR) -lkuramoto
+else
+	OLINK = $(OBJ)
 endif
 
 CC  = gcc
@@ -42,13 +48,12 @@ clean:
 	$(RM) $(BIN)
 
 %.$(MEXT): %.c
-	$(MEX) $(MFLAGS) $(MCFLAGS)="\$$CFLAGS $(CFLAGS)" -L$(LIBDIR) -lkuramoto $<
+	$(MEX) $(MFLAGS) $(MCFLAGS)="\$$CFLAGS $(CFLAGS)" $(OLINK) $<
 
-$(BIN): $(INC) $(LIB)
+$(BIN): $(OBJ)
 
 diag:
 	@echo "*** MEXT = " $(MEXT)
 	@echo "*** SRC  = " $(SRC)
+	@echo "*** OBJ  = " $(OBJ)
 	@echo "*** BIN  = " $(BIN)
-	@echo "*** INC  = " $(INC)
-	@echo "*** LIB  = " $(LIB)
