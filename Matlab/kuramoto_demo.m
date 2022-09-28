@@ -38,7 +38,8 @@ T = n*dt; % adjusted simulation time
 
 if nmean > 0 % with input noise
 	if ~isempty(nseed), rstate = rng(nseed); end
-	nmag = gamrnd(nmean^2/nsdev^2,nsdev^2/nmean,N,1); % per-oscillator noise magnitudes drawn from Gamma distribution
+	lnv = log(1+nsdev^2/nmean^2);
+	nmag = lognrnd(log(nmean)-lnv/2,sqrt(lnv),N,1); % per-oscillator noise magnitudes drawn from log-normal distribution
 	if ~isempty(nseed), rng(rstate); end
 end
 
