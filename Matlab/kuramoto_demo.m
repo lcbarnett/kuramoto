@@ -26,6 +26,7 @@ if ~isempty(wseed), rng(rstate); end
 
 if ~isempty(Kseed), rstate = rng(Kseed); end
 K = Kmean + Ksdev*randn(N); % coupling constants normally distributed with mean Kmean and std. dev. Ksdev
+K(1:N+1:N^2) = 0;           % zeros on diagonal (no self-connections!)
 if ~isempty(Kseed), rng(rstate); end
 
 if ~isempty(hseed), rstate = rng(hseed); end
