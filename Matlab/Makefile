@@ -34,7 +34,7 @@ endif
 
 CC  = gcc
 
-CFLAGS = -std=c99 -march=native -O3 -Wall -Wextra -Wconversion -Winline -pedantic-errors -I$(INCDIR) -D_DEFAULT_SOURCE -D_POSIX_C_SOURCE=200809L
+CFLAGS = -std=c99 -march=native -O2 -Wall -Wextra -Wconversion -Winline -pedantic-errors -I$(INCDIR) -D_DEFAULT_SOURCE
 
 MEX = mex
 
