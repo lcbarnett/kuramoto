@@ -5,7 +5,7 @@
 SRC = kuramoto.c
 OBJ = $(SRC:.c=.o)
 
-CFLAGS = -std=c99 -march=native -O3 -Wall -Wextra -Wconversion -Winline -pedantic-errors -D_DEFAULT_SOURCE -D_POSIX_C_SOURCE=200809L
+CFLAGS = -std=c99 -march=native -O3 -Wall -Wextra -Wconversion -Winline -pedantic-errors -D_DEFAULT_SOURCE
 
 ifdef ComSpec
 #	Windows
