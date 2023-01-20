@@ -2,42 +2,38 @@
 # Clang/LLVM (macOS). Note that MSVC (still) does not fully
 # support the C99 standard, so may have problems building.
 
-SRC = kuramoto.c
-OBJ = $(SRC:.c=.o)
-
-CFLAGS = -std=c99 -march=native -O2 -Wall -Wextra -Wconversion -Winline -pedantic-errors -D_DEFAULT_SOURCE
+SRC    = kuramoto_demo.c
+LIBSRC = kuramoto.c
+LIBINC = kuramoto.h
+LLIB   = kuramoto
 
 ifdef ComSpec
 #	Windows
 	RM = del /F /Q
 	LIBDIR = ..\lib
-	LIB = $(LIBDIR)\libkuramoto.dll
+	LIB = $(LIBDIR)\kuramoto.dll
+	BIN = kuramoto_demo.exe
 else
 #	Linux, Darwin
 	RM = rm -f
 	LIBDIR = ../lib
 	LIB = $(LIBDIR)/libkuramoto.so
+	BIN = kuramoto_demo
 endif
 
-CC  = gcc
+CC = gcc
 
-.PHONY: all clean diag
+CFLAGS = -std=c99 -march=native -O2 -Wall -Wextra -Wconversion -Winline -pedantic-errors -D_DEFAULT_SOURCE
 
-all: $(LIB)
+.PHONY: all clean
 
-# Build shared library
+all: $(LIB) $(BIN)
 
-$(LIB): $(OBJ)
-	$(CC) -shared -o $@ $^
+$(LIB): $(LIBSRC) $(LIBINC)
+	$(CC) $(LIBSRC) -shared -fPIC $(CFLAGS) -o $(LIB)
 
-$(OBJ): %.o: %.c
-	$(CC) -c -fPIC $(CFLAGS) $< -o $@
+$(BIN): $(SRC) $(LIB)
+	$(CC) $(SRC) $(CFLAGS) -L$(LIBDIR) -Wl,-rpath=$(LIBDIR) -l$(LLIB) -lm -o $(BIN)
 
 clean:
-	$(RM) $(OBJ) $(LIB)
-
-kuramoto.o: kuramoto.h
-
-diag:
-	@echo "*** SRC = " $(SRC)
-	@echo "*** OBJ = " $(OBJ)
+	$(RM) $(LIB) $(BIN)
