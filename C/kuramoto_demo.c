@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
 
 	const int RK4 = 0; // flag for RK4 (else Euler)
 	if (RK4) {
-		double* const kbuff = calloc(4*N,sizeof(double));
+		double* const kbuff = calloc(4*N,sizeof(double)); // see kuramoto_rk4()
 		kuramoto_rk4(N,n,w,K,h,kbuff);
 		free(kbuff);
 	}
