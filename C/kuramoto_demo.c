@@ -92,7 +92,15 @@ int main(int argc, char *argv[])
 
 	// integrate Kuramoto ODE
 
-	kuramoto_euler(N,n,w,K,h);
+	const int RK4 = 0; // flag for RK4 (else Euler)
+	if (RK4) {
+		double* const kbuff = calloc(4*N,sizeof(double));
+		kuramoto_rk4(N,n,w,K,h,kbuff);
+		free(kbuff);
+	}
+	else {
+		kuramoto_euler(N,n,w,K,h);
+	}
 
 	// calculate order parameter
 

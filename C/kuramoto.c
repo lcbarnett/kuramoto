@@ -51,14 +51,14 @@ void kuramoto_eulerpl // Euler method with phase lags
 
 void kuramoto_rk4 // Classic Runge-Kutta (RK4)
 (
-	const size_t        N,  // number of oscillators
-	const size_t        n,  // number of integration increments
-	const double* const w,  // dt*frequencies
-	const double* const K,  // dt*(coupling constants)
-	double*       const h   // oscillator phases, to be computed by numerical ODE (pre-initialised with input)
+	const size_t        N, // number of oscillators
+	const size_t        n, // number of integration increments
+	const double* const w, // dt*frequencies
+	const double* const K, // dt*(coupling constants)
+	double*       const h, // oscillator phases, to be computed by numerical ODE (pre-initialised with input)
+	double*             k1 // buffer for RK4 coefficients (size must be 4*N)
 )
 {
-	double* const k1 = calloc(4*N,sizeof(double)); // allocate buffer for intermediates (k1, k2, k3, k4)
 	double* const k2 = k1+N;
 	double* const k3 = k2+N;
 	double* const k4 = k3+N;
@@ -107,21 +107,19 @@ void kuramoto_rk4 // Classic Runge-Kutta (RK4)
 			ht1[i] += ht[i] + (k1[i]+4.0*k2[i]+4.0*k3[i]+k4[i])/6.0;
 		}
 	}
-
-	free(k1); // free buffer
 }
 
 void kuramoto_rk4pl // Classic Runge-Kutta (RK4) with phase lags
 (
-	const size_t        N,  // number of oscillators
-	const size_t        n,  // number of integration increments
-	const double* const w,  // dt*frequencies
-	const double* const K,  // dt*(coupling constants)
-	const double*       a,  // phase lags
-	double*       const h   // oscillator phases, to be computed by numerical ODE (pre-initialised with input)
+	const size_t        N, // number of oscillators
+	const size_t        n, // number of integration increments
+	const double* const w, // dt*frequencies
+	const double* const K, // dt*(coupling constants)
+	const double*       a, // phase lags
+	double*       const h, // oscillator phases, to be computed by numerical ODE (pre-initialised with input)
+	double*             k1 // buffer for RK4 coefficients (size must be 4*N)
 )
 {
-	double* const k1 = calloc(4*N,sizeof(double)); // allocate buffer for intermediates (k1, k2, k3, k4)
 	double* const k2 = k1+N;
 	double* const k3 = k2+N;
 	double* const k4 = k3+N;
@@ -174,11 +172,10 @@ void kuramoto_rk4pl // Classic Runge-Kutta (RK4) with phase lags
 			ht1[i] += ht[i] + (k1[i]+4.0*k2[i]+4.0*k3[i]+k4[i])/6.0;
 		}
 	}
-
-	free(k1); // free buffer
 }
 
-void order_param(
+void order_param // calculate order parameter magnitude
+(
 	const size_t N,
 	const size_t n,
 	const double* const h,
@@ -207,12 +204,13 @@ void order_param(
 	}
 }
 
-static inline double wpimpi(const double x)
+static inline double wmpi2pi(const double x) // wrap to [-pi,pi)
 {
 	return x > 0.0 ? fmod(x+M_PI,2.0*M_PI)-M_PI : fmod(x-M_PI,2.0*M_PI)+M_PI;
 }
 
-void phase_wrap(
+void phase_wrap // wrap all oscillator phases
+(
 	const size_t N,
 	const size_t n,
 	const double* const h,
@@ -220,6 +218,6 @@ void phase_wrap(
 )
 {
 	for (size_t k=0; k<N*n; ++k) {
-		theta[k] = wpimpi(h[k]);
+		theta[k] = wmpi2pi(h[k]);
 	}
 }
