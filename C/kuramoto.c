@@ -1,5 +1,6 @@
 #include <math.h>   // for maths functions
 #include <stdlib.h> // for malloc, etc.
+#include <stdio.h> // for malloc, etc.
 
 // NOTE:  C is row-major; bear in mind when writing interfaces! E.g. for
 // Matlab (column-major) you should transpose the matrices K and a before calling.
@@ -203,5 +204,22 @@ void order_param(
 		cmean *= OON;
 		smean *= OON;
 		*rt = hypot(cmean,smean);
+	}
+}
+
+static inline double wpimpi(const double x)
+{
+	return x > 0.0 ? fmod(x+M_PI,2.0*M_PI)-M_PI : fmod(x-M_PI,2.0*M_PI)+M_PI;
+}
+
+void phase_wrap(
+	const size_t N,
+	const size_t n,
+	const double* const h,
+	double* const theta
+)
+{
+	for (size_t k=0; k<N*n; ++k) {
+		theta[k] = wpimpi(h[k]);
 	}
 }

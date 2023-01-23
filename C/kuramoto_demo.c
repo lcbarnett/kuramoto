@@ -55,7 +55,8 @@ int main(int argc, char *argv[])
 
 	double* const w = calloc(N,  sizeof(double)); // oscillator frequencies
 	double* const K = calloc(N*N,sizeof(double)); // coupling constants
-	double* const h = calloc(N*n,sizeof(double)); // oscillator phases
+	double* const h = calloc(N*n,sizeof(double)); // oscillator phases, unwrapped
+	double* const p = calloc(N*n,sizeof(double)); // oscillator phases. wrapped to [-pi,pi)
 	double* const r = calloc(n,  sizeof(double)); // order parameter
 
 	// set up some random frequencies
@@ -97,6 +98,10 @@ int main(int argc, char *argv[])
 
 	order_param(N,n,h,r);
 
+	// wrap oscillator phases to [-pi,pi) [if this is what you want]
+
+	phase_wrap(N,n,h,p);
+
 	// write time stamp, order parameter and oscillator phases to file
 
 	FILE* const fp = fopen("/tmp/kuramoto_demo.asc","w");
@@ -106,9 +111,9 @@ int main(int argc, char *argv[])
 	}
 	for (size_t k=0; k<n; ++k) {
 		fprintf(fp,"%17.8f",(double)(k+1)*dt); // time stamp
-		fprintf(fp," %17.8f",r[k]);           // order parameter
+		fprintf(fp," %17.8f",r[k]);            // order parameter
 		for (size_t i=0; i<N; ++i) {
-			fprintf(fp," %17.8f",h[N*k+i]);   // oscillator phase
+			fprintf(fp," %17.8f",p[N*k+i]);   // oscillator phase (wrapped)
 		}
 		fprintf(fp,"\n");
 	}
@@ -120,6 +125,7 @@ int main(int argc, char *argv[])
 	// free memory
 
 	free(r);
+	free(p);
 	free(h);
 	free(K);
 	free(w);

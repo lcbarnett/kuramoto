@@ -46,4 +46,11 @@ void order_param(
 	double* const r
 );
 
+void phase_wrap(
+	const size_t N,
+	const size_t n,
+	const double* const h,
+	double* const theta
+);
+
 #endif // KURAMATO_H
