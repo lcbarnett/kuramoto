@@ -23,7 +23,7 @@ endif
 
 CC = gcc
 
-CFLAGS = -std=c99 -march=native -O2 -Wall -Wextra -Wconversion -Winline -pedantic-errors -D_DEFAULT_SOURCE
+CFLAGS = -std=c99 -march=native -O2 -Wall -Wextra -Wconversion -Winline -pedantic-errors -D_DEFAULT_SOURCE -D_GNU_SOURCE
 
 .PHONY: all clean
 
@@ -33,7 +33,7 @@ $(LIB): $(LIBSRC) $(LIBINC)
 	$(CC) $(LIBSRC) -shared -fPIC $(CFLAGS) -o $(LIB)
 
 $(BIN): $(SRC) $(LIB)
-	$(CC) $(SRC) $(CFLAGS) -L$(LIBDIR) -Wl,-rpath=$(LIBDIR) -l$(LLIB) -lm -o $(BIN)
+	$(CC) $(SRC) $(LIBSRC) $(CFLAGS) -lm -o $(BIN)
 
 clean:
 	$(RM) $(LIB) $(BIN)

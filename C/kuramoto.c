@@ -176,3 +176,32 @@ void kuramoto_rk4pl // Classic Runge-Kutta (RK4) with phase lags
 
 	free(k1); // free buffer
 }
+
+void order_param(
+	const size_t N,
+	const size_t n,
+	const double* const h,
+	double* const r
+)
+{
+	const double OON = 1.0/(double)N;
+	double* rt = r;
+	for (const double* ht=h; ht<h+N*n; ht+=N,++rt) {
+		double cmean = 0.0;
+		double smean = 0.0;
+		for (size_t i=0; i<N; ++i) {
+#ifdef _GNU_SOURCE
+			double c,s;
+			sincos(ht[i],&s,&c);
+			cmean += c;
+			smean += s;
+#else
+			cmean += cos(ht[i]);
+			smean += sin(ht[i]);
+#endif
+		}
+		cmean *= OON;
+		smean *= OON;
+		*rt = hypot(cmean,smean);
+	}
+}

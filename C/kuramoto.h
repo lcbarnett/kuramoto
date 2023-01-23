@@ -39,4 +39,11 @@ void kuramoto_rk4pl // Classic Runge-Kutta (RK4) with phase lags
 	double*       const h   // oscillator phases, to be computed by numerical ODE (pre-initialised with input)
 );
 
+void order_param(
+	const size_t N,
+	const size_t n,
+	const double* const h,
+	double* const r
+);
+
 #endif // KURAMATO_H

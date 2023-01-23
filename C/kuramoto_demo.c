@@ -5,75 +5,121 @@
 
 #include "kuramoto.h"
 
-// random double in range
+// Uniform random double on [0,1) [Note: you might want a better PRNG]
 
-inline double randd(const double a, const double b)
+static inline double randu()
 {
-	return a + (b-a)*((double)rand()/(double)RAND_MAX);
+	return (double)random()/((double)(RAND_MAX)+1.0);
 }
 
-// Main function
+// Standard normal random double (Box-Muller)
 
-int main()
-// int main(int argc, char* argv[])
+static inline double randn()
 {
-	const size_t N  = 4;
-	const double T  = 20.0;
-	const double dt = 0.01;
-	const size_t n  = (size_t)round(T/dt);
+    static int    iset = 0;
+    static double gset = 0.0;
+    if (iset) {
+	    iset=0;
+	    return gset;
+    }
+    double v1,v2,rsq;
+    do {
+	    v1 = 2.0*randu()-1.0;
+	    v2 = 2.0*randu()-1.0;
+	    rsq = v1*v1+v2*v2;
+    } while (rsq >= 1.0 || rsq == 0.0);
+    const double fac = sqrt(-2.0*log(rsq)/rsq);
+    gset = fac*v1;
+    iset = 1;
+    return fac*v2;
+}
 
-	double* const w = calloc(N,  sizeof(double));
-	double* const K = calloc(N*N,sizeof(double));
-	double* const h = calloc(N*n,sizeof(double));
+// Main function. Call as:
+//
+// kuramoto_demo <seed>
 
-	// set up some frequencies
+int main(int argc, char *argv[])
+{
+	// seed random number generator
 
-	const double wrange = M_PI/7.0;
+	srand(argc > 1 ? (unsigned)atoi(argv[1]) : 1);
+
+	// Kuramoto model size parameters
+
+	const size_t N  = 4;                          // number of oscillators
+	const double T  = 100.0;                      // total integration time
+	const double dt = 0.01;                       // integration step size
+	const size_t n  = (size_t)round(T/dt);        // number of integration steps
+
+	// allocate memory
+
+	double* const w = calloc(N,  sizeof(double)); // oscillator frequencies
+	double* const K = calloc(N*N,sizeof(double)); // coupling constants
+	double* const h = calloc(N*n,sizeof(double)); // oscillator phases
+	double* const r = calloc(n,  sizeof(double)); // order parameter
+
+	// set up some random frequencies
+
+	const double wmean = 0.0;
+	const double wsdev = M_PI/7.0;
 	for (size_t i=0; i<N; ++i) {
-		w[i] = randd(-wrange,wrange);
+		w[i] = dt*(wmean+wsdev*randn()); // scale frequencies by dt
 	}
 
-	// set up some connectivity
+	// set up some random coupling constants
 
 	const double Kmean = 0.8/(double)N;
-	const double Krange = Kmean/6.0;
+	const double Ksdev = Kmean/6.0;
 	for (size_t i=0; i<N; ++i) {
 		for (size_t j=0; j<N; ++j) {
-			if (i != j) {
-				K[N*i+j] = randd(Kmean-Krange,Kmean+Krange);
+			if (i == j) {
+				K[N*i+j] = 0.0;                      // no "self-connections"!
+			}
+			else {
+				K[N*i+j] = dt*(Kmean+Ksdev*randn()); // scale coupling constants by dt
 			}
 		}
 	}
 
-	// set up some input noise
+	// initialise oscillator phases with input (zero-mean Gaussian white noise)
 
-	const double Irange = M_PI/20.0;
+	const double sqrtdt = sqrt(dt);
+	const double Isdev = M_PI/20.0;
 	for (size_t k=0; k<N*n; ++k) {
-		h[k] = randd(-Irange,Irange);
+		h[k] = sqrtdt*Isdev*randn(); // scale input by sqrt(dt) [cf. Ornstein-Uhlenbeck process]
 	}
+
+	// integrate Kuramoto ODE
 
 	kuramoto_euler(N,n,w,K,h);
 
-	// write data to file
+	// calculate order parameter
 
-	FILE* const fp = fopen("/tmp/kuramto_demo.out","w");
+	order_param(N,n,h,r);
+
+	// write time stamp, order parameter and oscillator phases to file
+
+	FILE* const fp = fopen("/tmp/kuramoto_demo.asc","w");
 	if (fp == NULL) {
 		perror("Failed to open output file");
 		return EXIT_FAILURE;
 	}
 	for (size_t k=0; k<n; ++k) {
-		fprintf(fp,"%17.8f",(double)k*dt);
+		fprintf(fp,"%17.8f",(double)(k+1)*dt); // time stamp
+		fprintf(fp," %17.8f",r[k]);           // order parameter
 		for (size_t i=0; i<N; ++i) {
-			fprintf(fp,"\t%17.8f",h[n*i+k]);
+			fprintf(fp," %17.8f",h[N*k+i]);   // oscillator phase
 		}
 		fprintf(fp,"\n");
 	}
-
 	if (fclose(fp) != 0) {
 		perror("Failed to close output file");
 		return EXIT_FAILURE;
 	}
 
+	// free memory
+
+	free(r);
 	free(h);
 	free(K);
 	free(w);
