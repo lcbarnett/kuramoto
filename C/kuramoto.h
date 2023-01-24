@@ -47,15 +47,8 @@ void order_param // calculate order parameter magnitude
 	const size_t n,
 	const double* const h,
 	double* const r
-)
-;
-
-void phase_wrap // wrap all oscillator phases
-(
-	const size_t N,
-	const size_t n,
-	const double* const h,
-	double* const theta
 );
+
+void phase_wrap(const size_t m, double* const h);
 
 #endif // KURAMATO_H

@@ -49,14 +49,13 @@ int main(int argc, char *argv[])
 	const size_t N  = 4;                          // number of oscillators
 	const double T  = 100.0;                      // total integration time
 	const double dt = 0.01;                       // integration step size
-	const size_t n  = (size_t)round(T/dt);        // number of integration steps
+	const size_t n  = (size_t)ceil(T/dt);         // number of integration steps
 
 	// allocate memory
 
 	double* const w = calloc(N,  sizeof(double)); // oscillator frequencies
 	double* const K = calloc(N*N,sizeof(double)); // coupling constants
 	double* const h = calloc(N*n,sizeof(double)); // oscillator phases, unwrapped
-	double* const p = calloc(N*n,sizeof(double)); // oscillator phases. wrapped to [-pi,pi)
 	double* const r = calloc(n,  sizeof(double)); // order parameter
 
 	// set up some random frequencies
@@ -107,8 +106,8 @@ int main(int argc, char *argv[])
 	order_param(N,n,h,r);
 
 	// wrap oscillator phases to [-pi,pi) [if this is what you want]
-
-	phase_wrap(N,n,h,p);
+	//
+	// phase_wrap(N*n,h);
 
 	// write time stamp, order parameter and oscillator phases to file
 
@@ -118,10 +117,10 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 	for (size_t k=0; k<n; ++k) {
-		fprintf(fp,"%17.8f",(double)(k+1)*dt); // time stamp
-		fprintf(fp," %17.8f",r[k]);            // order parameter
+		fprintf(fp,"%17.8f",(double)(k+1)*dt);   // time stamp
+		fprintf(fp," %17.8f",r[k]);              // order parameter
 		for (size_t i=0; i<N; ++i) {
-			fprintf(fp," %17.8f",p[N*k+i]);   // oscillator phase (wrapped)
+			fprintf(fp," %17.8f",sin(h[N*k+i])); // oscillator signal
 		}
 		fprintf(fp,"\n");
 	}
@@ -133,7 +132,6 @@ int main(int argc, char *argv[])
 	// free memory
 
 	free(r);
-	free(p);
 	free(h);
 	free(K);
 	free(w);

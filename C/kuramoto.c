@@ -209,15 +209,9 @@ static inline double wmpi2pi(const double x) // wrap to [-pi,pi)
 	return x > 0.0 ? fmod(x+M_PI,2.0*M_PI)-M_PI : fmod(x-M_PI,2.0*M_PI)+M_PI;
 }
 
-void phase_wrap // wrap all oscillator phases
-(
-	const size_t N,
-	const size_t n,
-	const double* const h,
-	double* const theta
-)
+void phase_wrap(const size_t m, double* const h)
 {
-	for (size_t k=0; k<N*n; ++k) {
-		theta[k] = wmpi2pi(h[k]);
+	for (size_t k=0; k<m; ++k) {
+		h[k] = wmpi2pi(h[k]);
 	}
 }
