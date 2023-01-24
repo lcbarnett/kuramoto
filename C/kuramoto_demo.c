@@ -2,7 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-
+#ifdef	__linux__
+#include <sys/random.h>
+#endif
 #include "kuramoto.h"
 
 // Uniform random double on [0,1) [Note: you might want a better PRNG :-)]
@@ -14,7 +16,7 @@ static inline double randu()
 
 // Standard normal random double (Box-Muller, non-reantrant so not thread-safe)
 
-static inline double randn()
+double randn()
 {
     static int    iset = 0;
     static double gset = 0.0;
@@ -34,15 +36,35 @@ static inline double randn()
     return fac*v2;
 }
 
+// get a random random seed (only implemented for Linux at the moment)
+
+unsigned get_rand_seed()
+{
+	unsigned seed;
+#ifdef	__linux__
+	// if Linux, we seed from /dev/urandom
+	if (getrandom(&seed,sizeof(unsigned),GRND_NONBLOCK) != sizeof(unsigned)) {
+		perror("Failed to open output file");
+		return EXIT_FAILURE;
+	}
+#else
+	// else just set to 1
+	seed = 1;
+#endif
+	return seed;
+}
+
 // Main function. Call as:
 //
 // kuramoto_demo <seed>
 
 int main(int argc, char *argv[])
 {
-	// seed random number generator
+	// seed random number generator (from command line if you want predictability)
 
-	srand(argc > 1 ? (unsigned)atoi(argv[1]) : 1);
+	const unsigned seed = argc > 1 ? (unsigned)atoi(argv[1]) : get_rand_seed();
+	printf("\nrandom seed = %u\n\n",seed);
+	srand(seed);
 
 	// Kuramoto model size parameters
 
@@ -84,9 +106,15 @@ int main(int argc, char *argv[])
 	// initialise oscillator phases with input (zero-mean Gaussian white noise)
 
 	const double sqrtdt = sqrt(dt);
-	const double Isdev = M_PI/20.0;
-	for (size_t k=0; k<N*n; ++k) {
-		h[k] = sqrtdt*Isdev*randn(); // scale input by sqrt(dt) [cf. Ornstein-Uhlenbeck process]
+	const double Isdev = M_PI/40.0;  // noise intensity
+	if (Isdev > 0.0) {
+		for (size_t k=0; k<N*n; ++k) {
+			h[k] = sqrtdt*Isdev*randn(); // scale input by sqrt(dt) [cf. Ornstein-Uhlenbeck process]
+		}
+	}
+	else {
+		// Note: if h allocated with calloc, it will be zeroed out;
+		// if not, you should explicitly zero it out.
 	}
 
 	// integrate Kuramoto ODE
@@ -111,7 +139,7 @@ int main(int argc, char *argv[])
 
 	// write time stamp, order parameter and oscillator signals to file
 
-	char ofile[] = "/tmp/kuramoto_demo.asc";    // output file (ASCII)
+	char ofile[] = "/tmp/kuramoto_demo.asc";     // output file (ASCII)
 	FILE* const fp = fopen(ofile,"w");
 	if (fp == NULL) {
 		perror("Failed to open output file");
@@ -132,7 +160,7 @@ int main(int argc, char *argv[])
 
 	// if Gnuplot installed (and accepts piped input - Linux, Mac),
 	// display order parameter and oscillator signals. Else use your
-	// favourite plotting program.
+	// favourite plotting program on data in output file.
 
 #ifdef _GNUPLOT_HAVE_PIPE
 	FILE* const gp = popen("gnuplot","w");
@@ -151,9 +179,7 @@ int main(int argc, char *argv[])
 	fprintf(gp,"set ylabel \"amplitude\"\n");
 	fprintf(gp,"set yr [-1.05:1.05]\n");
 	fprintf(gp,"plot \\\n");
-	for (size_t i=0; i<N; ++i) {
-		fprintf(gp,"\"%s\" u 1:%zu w l not ,\\\n",ofile,3+i);
-	}
+	for (size_t i=0; i<N; ++i) fprintf(gp,"\"%s\" u 1:%zu w l not ,\\\n",ofile,3+i);
 	fprintf(gp,"NaN not\n");
 	fprintf(gp,"unset multiplot\n");
 	if (pclose(gp) == -1) perror("failed to close pipe to Gnuplot\n");
