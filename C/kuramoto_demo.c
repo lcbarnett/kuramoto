@@ -5,14 +5,14 @@
 
 #include "kuramoto.h"
 
-// Uniform random double on [0,1) [Note: you might want a better PRNG]
+// Uniform random double on [0,1) [Note: you might want a better PRNG :-)]
 
 static inline double randu()
 {
-	return (double)random()/((double)(RAND_MAX)+1.0);
+	return (double)random()/((double)(RAND_MAX)+1.0); // (random() is non-reantrant so not thread-safe)
 }
 
-// Standard normal random double (Box-Muller)
+// Standard normal random double (Box-Muller, non-reantrant so not thread-safe)
 
 static inline double randn()
 {
@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 	// Kuramoto model size parameters
 
 	const size_t N  = 4;                          // number of oscillators
-	const double T  = 100.0;                      // total integration time
+	const double T  = 200.0;                      // total integration time
 	const double dt = 0.01;                       // integration step size
 	const size_t n  = (size_t)ceil(T/dt);         // number of integration steps
 
@@ -105,13 +105,14 @@ int main(int argc, char *argv[])
 
 	order_param(N,n,h,r);
 
-	// wrap oscillator phases to [-pi,pi) [if this is what you want]
+	// wrap oscillator phases to [-pi,pi) [if that's is what you want]
 	//
 	// phase_wrap(N*n,h);
 
-	// write time stamp, order parameter and oscillator phases to file
+	// write time stamp, order parameter and oscillator signals to file
 
-	FILE* const fp = fopen("/tmp/kuramoto_demo.asc","w");
+	char ofile[] = "/tmp/kuramoto_demo.asc";    // output file (ASCII)
+	FILE* const fp = fopen(ofile,"w");
 	if (fp == NULL) {
 		perror("Failed to open output file");
 		return EXIT_FAILURE;
@@ -120,7 +121,7 @@ int main(int argc, char *argv[])
 		fprintf(fp,"%17.8f",(double)(k+1)*dt);   // time stamp
 		fprintf(fp," %17.8f",r[k]);              // order parameter
 		for (size_t i=0; i<N; ++i) {
-			fprintf(fp," %17.8f",sin(h[N*k+i])); // oscillator signal
+			fprintf(fp," %17.8f",sin(h[N*k+i])); // oscillator signal (waveform)
 		}
 		fprintf(fp,"\n");
 	}
@@ -128,6 +129,35 @@ int main(int argc, char *argv[])
 		perror("Failed to close output file");
 		return EXIT_FAILURE;
 	}
+
+	// if Gnuplot installed (and accepts piped input - Linux, Mac),
+	// display order parameter and oscillator signals. Else use your
+	// favourite plotting program.
+
+#ifdef _GNUPLOT_HAVE_PIPE
+	FILE* const gp = popen("gnuplot","w");
+	if (gp == NULL) perror("failed to open pipe to Gnuplot\n");
+	fprintf(gp,"set xlabel \"time\"\n");
+	fprintf(gp,"set ylabel \"mean phase\"\n");
+	fprintf(gp,"set key right bottom Left rev\n");
+	fprintf(gp,"# set grid\n");
+	fprintf(gp,"set xr [0:%g]\n",T);
+	fprintf(gp,"set yr [0:1.05]\n");
+	fprintf(gp,"set ytics 0.5\n");
+	fprintf(gp,"set multiplot title \"Kuramoto demo\" layout 2,1\n");
+	fprintf(gp,"set title \"Order parameter\"\n");
+	fprintf(gp,"plot \"%s\" u 1:2 w l not\n",ofile);
+	fprintf(gp,"set title \"Oscillator signals (waveforms)\"\n");
+	fprintf(gp,"set ylabel \"amplitude\"\n");
+	fprintf(gp,"set yr [-1.05:1.05]\n");
+	fprintf(gp,"plot \\\n");
+	for (size_t i=0; i<N; ++i) {
+		fprintf(gp,"\"%s\" u 1:%zu w l not ,\\\n",ofile,3+i);
+	}
+	fprintf(gp,"NaN not\n");
+	fprintf(gp,"unset multiplot\n");
+	if (pclose(gp) == -1) perror("failed to close pipe to Gnuplot\n");
+#endif
 
 	// free memory
 
