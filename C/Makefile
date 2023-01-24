@@ -10,22 +10,25 @@ LLIB   = kuramoto
 ifdef ComSpec
 #	Windows
 	RM = del /F /Q
-	LIBDIR = ..\lib
-	LIB = $(LIBDIR)\kuramoto.dll
+	LIB = kuramoto.dll
 	BIN = kuramoto_demo.exe
+	BINSTDIR ?=
+	LIBINSTDIR ?=
 else
 #	Linux, Darwin
 	RM = rm -f
-	LIBDIR = ../lib
-	LIB = $(LIBDIR)/libkuramoto.so
+	LIB = libkuramoto.so
 	BIN = kuramoto_demo
+	BININSTDIR ?= /usr/local/bin
+	LIBINSTDIR ?= /usr/local/lib
 endif
 
 CC = gcc
+INSTALL = install
 
 CFLAGS = -std=c99 -march=native -O2 -Wall -Wextra -Wconversion -Winline -pedantic-errors -D_DEFAULT_SOURCE -D_GNU_SOURCE
 
-.PHONY: all clean
+.PHONY: all clean install uninstall
 
 all: $(LIB) $(BIN)
 
@@ -34,6 +37,14 @@ $(LIB): $(LIBSRC) $(LIBINC)
 
 $(BIN): $(SRC) $(LIB)
 	$(CC) $(SRC) $(LIBSRC) $(CFLAGS) -lm -o $(BIN)
+
+install:
+	$(INSTALL) $(BIN) $(BININSTDIR)
+	$(INSTALL) $(LIB) $(LIBINSTDIR)
+
+uninstall:
+	$(RM) $(BININSTDIR)/$(BIN)
+	$(RM) $(LIBINSTDIR)/$(LIB)
 
 clean:
 	$(RM) $(LIB) $(BIN)
