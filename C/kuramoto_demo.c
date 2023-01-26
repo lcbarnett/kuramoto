@@ -15,17 +15,20 @@ int main(int argc, char *argv[])
 	//
 	// kuramoto_demo -N 10 -T 1000 -dt 0.001 -Isdev 0
 	//
-	// Arg:  name   type    default    description
+	// Arg:  name    type    default    description
 	puts("\n---------------------------------------------------------------------------------------");
-	CLAP_ARG(N,     size_t, 4,         "number of oscillators");
-	CLAP_ARG(T,     double, 200.0,     "total integration time");
-	CLAP_ARG(dt,    double, 0.01,      "integration step size");
-	CLAP_ARG(rseed, uint,   0,         "random seed (or 0 for random random seed)");
-	CLAP_ARG(wmean, double, 0.0,       "oscillator frequencies mean");
-	CLAP_ARG(wsdev, double, M_PI/7.0,  "oscillator frequencies std. dev.");
-	CLAP_ARG(Kmean, double, 0.8/N,     "coupling constants mean");
-	CLAP_ARG(Ksdev, double, Kmean/6.0, "coupling constants std. dev.");
-	CLAP_ARG(Isdev, double, M_PI/40.0, "input noise intensity (zero for deterministic)");
+	CLAP_ARG(N,      size_t, 4,         "number of oscillators");
+	CLAP_ARG(T,      double, 200.0,     "total integration time");
+	CLAP_ARG(dt,     double, 0.01,      "integration step size");
+	CLAP_ARG(wmean,  double, 0.0,       "oscillator frequencies mean");
+	CLAP_ARG(wsdev,  double, M_PI/7.0,  "oscillator frequencies std. dev.");
+	CLAP_ARG(Kmean,  double, 0.8/N,     "coupling constants mean");
+	CLAP_ARG(Ksdev,  double, Kmean/6.0, "coupling constants std. dev.");
+	CLAP_ARG(Isdev,  double, M_PI/40.0, "input noise intensity (zero for deterministic)");
+	CLAP_ARG(rseed,  uint,   0,         "random seed (or 0 for random random seed)");
+#ifdef _GNUPLOT_HAVE_PIPE
+	CLAP_ARG(gpterm, cstr,   GPTERM,    "Gnuplot terminal type (if available)");
+#endif
 	puts("---------------------------------------------------------------------------------------");
 
 	// seed random number generator (from command line if you want predictability)
@@ -122,8 +125,9 @@ int main(int argc, char *argv[])
 	// favourite plotting program on data in output file.
 
 #ifdef _GNUPLOT_HAVE_PIPE
-	FILE* const gp = popen("gnuplot","w");
+	FILE* const gp = popen("gnuplot -p","w");
 	if (gp == NULL) perror("failed to open pipe to Gnuplot\n");
+	fprintf(gp,"set term \"%s\" title \"Kuramoto oscillator demo\" size 1600,800\n",gpterm);
 	fprintf(gp,"set xlabel \"time\"\n");
 	fprintf(gp,"set ylabel \"mean phase\"\n");
 	fprintf(gp,"set key right bottom Left rev\n");
@@ -131,7 +135,7 @@ int main(int argc, char *argv[])
 	fprintf(gp,"set xr [0:%g]\n",T);
 	fprintf(gp,"set yr [0:1.05]\n");
 	fprintf(gp,"set ytics 0.5\n");
-	fprintf(gp,"set multiplot title \"Kuramoto demo\" layout 2,1\n");
+	fprintf(gp,"set multiplot layout 2,1\n");
 	fprintf(gp,"set title \"Order parameter\"\n");
 	fprintf(gp,"plot \"%s\" u 1:2 w l not\n",ofile);
 	fprintf(gp,"set title \"Oscillator signals (waveforms)\"\n");
