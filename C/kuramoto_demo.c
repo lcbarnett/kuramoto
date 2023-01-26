@@ -1,76 +1,41 @@
-#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#ifdef	__linux__
-#include <sys/random.h>
-#endif
+
+#include "clap.h"
+#include "kutils.h"
 #include "kuramoto.h"
 
-// Uniform random double on [0,1) [Note: you might want a better PRNG :-)]
-
-static inline double randu()
-{
-	return (double)random()/((double)(RAND_MAX)+1.0); // (random() is non-reantrant so not thread-safe)
-}
-
-// Standard normal random double (Box-Muller, non-reantrant so not thread-safe)
-
-double randn()
-{
-    static int    iset = 0;
-    static double gset = 0.0;
-    if (iset) {
-	    iset=0;
-	    return gset;
-    }
-    double v1,v2,rsq;
-    do {
-	    v1 = 2.0*randu()-1.0;
-	    v2 = 2.0*randu()-1.0;
-	    rsq = v1*v1+v2*v2;
-    } while (rsq >= 1.0 || rsq == 0.0);
-    const double fac = sqrt(-2.0*log(rsq)/rsq);
-    gset = fac*v1;
-    iset = 1;
-    return fac*v2;
-}
-
-// get a random random seed (only implemented for Linux at the moment)
-
-unsigned get_rand_seed()
-{
-	unsigned seed;
-#ifdef	__linux__
-	// if Linux, we seed from /dev/urandom
-	if (getrandom(&seed,sizeof(unsigned),GRND_NONBLOCK) != sizeof(unsigned)) {
-		perror("Failed to open output file");
-		return EXIT_FAILURE;
-	}
-#else
-	// else just set to 1
-	seed = 1;
-#endif
-	return seed;
-}
-
-// Main function. Call as:
-//
-// kuramoto_demo <seed>
+// Program to demonstrate usage of Kuramoto C library.
 
 int main(int argc, char *argv[])
 {
+	// CLAP (command-line argument parser). Default values may
+	// be overriden on the command line as switches; e.g.:
+	//
+	// kuramoto_demo -N 10 -T 1000 -dt 0.001 -Isdev 0
+	//
+	// Arg:  name   type    default    description
+	puts("\n---------------------------------------------------------------------------------------");
+	CLAP_ARG(N,     size_t, 4,         "number of oscillators");
+	CLAP_ARG(T,     double, 200.0,     "total integration time");
+	CLAP_ARG(dt,    double, 0.01,      "integration step size");
+	CLAP_ARG(rseed, uint,   0,         "random seed (or 0 for random random seed)");
+	CLAP_ARG(wmean, double, 0.0,       "oscillator frequencies mean");
+	CLAP_ARG(wsdev, double, M_PI/7.0,  "oscillator frequencies std. dev.");
+	CLAP_ARG(Kmean, double, 0.8/N,     "coupling constants mean");
+	CLAP_ARG(Ksdev, double, Kmean/6.0, "coupling constants std. dev.");
+	CLAP_ARG(Isdev, double, M_PI/40.0, "input noise intensity (zero for deterministic)");
+	puts("---------------------------------------------------------------------------------------");
+
 	// seed random number generator (from command line if you want predictability)
 
-	const unsigned seed = argc > 1 ? (unsigned)atoi(argv[1]) : get_rand_seed();
+	const uint seed = rseed > 0 ? rseed : get_rand_seed();
 	printf("\nrandom seed = %u\n\n",seed);
 	srand(seed);
 
-	// Kuramoto model size parameters
+	// number of integration steps
 
-	const size_t N  = 4;                          // number of oscillators
-	const double T  = 200.0;                      // total integration time
-	const double dt = 0.01;                       // integration step size
 	const size_t n  = (size_t)ceil(T/dt);         // number of integration steps
 
 	// allocate memory
@@ -80,18 +45,14 @@ int main(int argc, char *argv[])
 	double* const h = calloc(N*n,sizeof(double)); // oscillator phases, unwrapped
 	double* const r = calloc(n,  sizeof(double)); // order parameter
 
-	// set up some random frequencies
+	// random frequencies (normal distribution)
 
-	const double wmean = 0.0;
-	const double wsdev = M_PI/7.0;
 	for (size_t i=0; i<N; ++i) {
 		w[i] = dt*(wmean+wsdev*randn()); // scale frequencies by dt
 	}
 
-	// set up some random coupling constants
+	// random coupling constants (normal distribution)
 
-	const double Kmean = 0.8/(double)N;
-	const double Ksdev = Kmean/6.0;
 	for (size_t i=0; i<N; ++i) {
 		for (size_t j=0; j<N; ++j) {
 			if (i == j) {
@@ -106,15 +67,13 @@ int main(int argc, char *argv[])
 	// initialise oscillator phases with input (zero-mean Gaussian white noise)
 
 	const double sqrtdt = sqrt(dt);
-	const double Isdev = M_PI/40.0;  // noise intensity
 	if (Isdev > 0.0) {
 		for (size_t k=0; k<N*n; ++k) {
 			h[k] = sqrtdt*Isdev*randn(); // scale input by sqrt(dt) [cf. Ornstein-Uhlenbeck process]
 		}
 	}
 	else {
-		// Note: if h allocated with calloc, it will be zeroed out;
-		// if not, you should explicitly zero it out.
+		memset(h,0,N*N*sizeof(double));  // zero-fill for no input [in fact here calloc will have done that]
 	}
 
 	// integrate Kuramoto ODE

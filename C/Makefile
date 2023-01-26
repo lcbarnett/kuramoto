@@ -2,7 +2,8 @@
 # Clang/LLVM (macOS). Note that MSVC (still) does not fully
 # support the C99 standard, so may have problems building.
 
-SRC    = kuramoto_demo.c
+SRC    = kuramoto_demo.c kutils.c clap.c
+INC    = kutils.h clap.h
 LIBSRC = kuramoto.c
 LIBINC = kuramoto.h
 LLIB   = kuramoto
@@ -26,7 +27,7 @@ endif
 CC = gcc
 INSTALL = install
 
-CFLAGS = -std=c99 -march=native -O2 -Wall -Wextra -Wconversion -Winline -pedantic-errors -D_DEFAULT_SOURCE -D_GNU_SOURCE -D_GNUPLOT_HAVE_PIPE
+CFLAGS = -std=c99 -march=native -O2 -Wall -Wextra -Winline -pedantic-errors -D_DEFAULT_SOURCE -D_GNU_SOURCE -D_GNUPLOT_HAVE_PIPE
 
 .PHONY: all clean install uninstall
 
@@ -35,7 +36,8 @@ all: $(LIB) $(BIN)
 $(LIB): $(LIBSRC) $(LIBINC)
 	$(CC) $(LIBSRC) -shared -fPIC $(CFLAGS) -o $(LIB)
 
-$(BIN): $(SRC) $(LIB)
+# Note: we're not linking to the library here
+$(BIN): $(SRC) $(INC) $(LIB)
 	$(CC) $(SRC) $(LIBSRC) $(CFLAGS) -lm -o $(BIN)
 
 install:
