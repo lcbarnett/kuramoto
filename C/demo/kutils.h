@@ -8,6 +8,17 @@
 #include <sys/random.h>
 #endif
 
+// Gnuplot default terminal
+
+#ifdef _HAVE_GNUPLOT
+#ifdef __unix__
+#define GPTERM "x11"
+#endif
+#ifdef __APPLE__
+#define GPTERM "aqua"
+#endif
+#endif
+
 // Uniform random double on [0,1) [Note: you might want a better PRNG :-)]
 
 static inline double randu()

@@ -5,19 +5,19 @@
 # NOTE: you must build and install the kuramoto synamic shared
 # library first! See ../lib
 
-SRC = kuramoto_demo.c kutils.c clap.c
+SRC = main.c demo.c audio.c kutils.c clap.c
 INC = kutils.h clap.h
 
 ifdef ComSpec
 #	Windows
 	RM = del /F /Q
-	BIN = kuramoto_demo.exe
+	BIN = kuramoto.exe
 	LIBDIR ?=
 	INCDIR ?=
 else
 #	Linux, Darwin
 	RM = rm -f
-	BIN = kuramoto_demo
+	BIN = kuramoto
 	LIBDIR ?= /usr/local/lib
 	INCDIR ?= /usr/local/include/kuramoto
 endif
