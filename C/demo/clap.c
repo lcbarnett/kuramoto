@@ -6,14 +6,10 @@
 
 int clap_find_arg(int argc, char* argv[], cstr argname, cstr argtype, void* parg)
 {
-	--argc;
-	++argv;
-// fprintf(stderr,"argc = %d\n",argc);
 	if (argc == 0) return 0;
 	if (argc%2) {fprintf(stderr,"CLAP ERROR: must be an even number of args\n"); exit(EXIT_FAILURE);}
 	for (int i = 0; i < argc; i += 2)
 	{
-// fprintf(stderr,"argv[%d] = %s\n",i,argv[i]);
 		if (argv[i][0] != '-')  {fprintf(stderr,"CLAP ERROR: argument %d is not a switch!\n",i+1); exit(EXIT_FAILURE);}
 		if (strncmp(argname,argv[i]+1, CLAP_ARGNAME_MAX) == 0)
 		{

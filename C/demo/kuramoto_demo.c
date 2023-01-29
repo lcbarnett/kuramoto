@@ -14,7 +14,10 @@ int main(int argc, char *argv[])
 	// be overriden on the command line as switches; e.g.:
 	//
 	// kuramoto_demo -N 10 -T 1000 -dt 0.001 -Isdev 0
-	//
+
+	--argc;
+	++argv;
+
 	// Arg:  name    type    default    description
 	puts("\n---------------------------------------------------------------------------------------");
 	CLAP_ARG(N,      size_t, 4,         "number of oscillators");
