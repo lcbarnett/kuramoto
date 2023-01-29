@@ -25,7 +25,7 @@ endif
 CC = gcc
 INSTALL = install
 
-CFLAGS = -std=c99 -march=native -O2 -Wall -Wextra -Winline -pedantic-errors -D_DEFAULT_SOURCE -D_GNU_SOURCE -D_GNUPLOT_HAVE_PIPE
+CFLAGS = -std=c99 -march=native -O2 -Wall -Wextra -Winline -pedantic-errors -D_DEFAULT_SOURCE -D_GNU_SOURCE -D_HAVE_GNUPLOT
 
 .PHONY: all clean
 

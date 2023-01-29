@@ -6,6 +6,17 @@
 #include "kutils.h"
 #include "kuramoto.h"
 
+// Gnuplot default terminal
+
+#ifdef _HAVE_GNUPLOT
+#ifdef __unix__
+#define GPTERM "x11"
+#endif
+#ifdef __APPLE__
+#define GPTERM "aqua"
+#endif
+#endif
+
 // Program to demonstrate usage of Kuramoto C library.
 
 int main(int argc, char *argv[])
@@ -29,7 +40,7 @@ int main(int argc, char *argv[])
 	CLAP_ARG(Ksdev,  double, Kmean/6.0, "coupling constants std. dev.");
 	CLAP_ARG(Isdev,  double, M_PI/40.0, "input noise intensity (zero for deterministic)");
 	CLAP_ARG(rseed,  uint,   0,         "random seed (or 0 for random random seed)");
-#ifdef _GNUPLOT_HAVE_PIPE
+#ifdef _HAVE_GNUPLOT
 	CLAP_ARG(gpterm, cstr,   GPTERM,    "Gnuplot terminal type (if available)");
 #endif
 	puts("---------------------------------------------------------------------------------------");
@@ -123,13 +134,16 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	// if Gnuplot installed (and accepts piped input - Linux, Mac),
-	// display order parameter and oscillator signals. Else use your
-	// favourite plotting program on data in output file.
+	// if Gnuplot installed display order parameter and oscillator signals.
+	// Else use your favourite plotting program on data in output file.
 
-#ifdef _GNUPLOT_HAVE_PIPE
-	FILE* const gp = popen("gnuplot -p","w");
-	if (gp == NULL) perror("failed to open pipe to Gnuplot\n");
+#ifdef _HAVE_GNUPLOT
+	char gfile[] = "/tmp/kuramoto_demo.gp"; // Gnuplot command file
+	FILE* const gp = fopen(gfile,"w");
+	if (gp == NULL) {
+		perror("failed to open Gnuplot command file\n");
+		return EXIT_FAILURE;
+	}
 	fprintf(gp,"set term \"%s\" title \"Kuramoto oscillator demo\" size 1600,800\n",gpterm);
 	fprintf(gp,"set xlabel \"time\"\n");
 	fprintf(gp,"set ylabel \"mean phase\"\n");
@@ -148,7 +162,19 @@ int main(int argc, char *argv[])
 	for (size_t i=0; i<N; ++i) fprintf(gp,"\"%s\" u 1:%zu w l not ,\\\n",ofile,3+i);
 	fprintf(gp,"NaN not\n");
 	fprintf(gp,"unset multiplot\n");
-	if (pclose(gp) == -1) perror("failed to close pipe to Gnuplot\n");
+	if (fclose(gp) != 0) {
+		perror("Failed to close Gnuplot command file");
+		return EXIT_FAILURE;
+	}
+	const size_t strlen = 100;
+	char gpcmd[strlen+1];
+	strncpy(gpcmd,"gnuplot -p ",strlen);
+	strncat(gpcmd,gfile,strlen);
+	printf("Gnuplot command: %s\n\n",gpcmd);
+	if (system(gpcmd) == -1) {
+		perror("Failed to run Gnuplot command");
+		return EXIT_FAILURE;
+	}
 #endif
 
 	// free memory
