@@ -25,6 +25,7 @@ int demo(int argc, char *argv[])
 	CLAP_ARG(Kmean,  double, 0.8/N,     "coupling constants mean");
 	CLAP_ARG(Ksdev,  double, Kmean/6.0, "coupling constants std. dev.");
 	CLAP_ARG(Isdev,  double, M_PI/40.0, "input noise intensity (zero for deterministic)");
+	CLAP_ARG(RK4,    int,    0,         "RK4 solver flag (else Euler)");
 	CLAP_ARG(rseed,  uint,   0,         "random seed (or 0 for random random seed)");
 #ifdef _HAVE_GNUPLOT
 	CLAP_ARG(gpterm, cstr,   GPTERM,    "Gnuplot terminal type (if available)");
@@ -81,7 +82,6 @@ int demo(int argc, char *argv[])
 
 	// integrate Kuramoto ODE
 
-	const int RK4 = 0; // flag for RK4 (else Euler)
 	if (RK4) {
 		double* const kbuff = calloc(4*N,sizeof(double)); // see kuramoto_rk4()
 		kuramoto_rk4(N,n,w,K,h,kbuff);

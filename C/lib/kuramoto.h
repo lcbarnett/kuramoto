@@ -1,6 +1,8 @@
 #ifndef KURAMATO_H
 #define KURAMATO_H
 
+#define TWOPI (2.0*M_PI)
+
 void kuramoto_euler	// Euler method
 (
 	const size_t        N,  // number of oscillators

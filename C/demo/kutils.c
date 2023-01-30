@@ -1,5 +1,9 @@
 #include <stdio.h>
 #include <math.h>
+#include <fcntl.h>
+#ifdef __unix__
+#include <unistd.h>
+#endif
 
 #include "kutils.h"
 
@@ -25,20 +29,33 @@ double randn()
     return fac*v2;
 }
 
-// get a random random seed (only implemented for Linux at the moment)
+// get a random random seed (only implemented for Linux/POSIX at the moment)
 
 unsigned get_rand_seed()
 {
 	unsigned seed;
+#ifdef __unix__
 #ifdef	__linux__
-	// if Linux, we seed from /dev/urandom
 	if (getrandom(&seed,sizeof(unsigned),GRND_NONBLOCK) != sizeof(unsigned)) {
-		perror("Failed to open output file");
+		perror("random seed generation failed");
 		return EXIT_FAILURE;
 	}
 #else
-	// else just set to 1
+	const int fd = open("/dev/urandom",O_RDONLY);
+	if (fd < 0) {
+		perror("random seed generation failed");
+		return EXIT_FAILURE;
+	}
+	unsigned seed;
+	ssize_t result = read(fd,&seed,sizeof(unsigned));
+	if (result < 0) {
+		perror("random seed generation failed");
+		return EXIT_FAILURE;
+	}
+#endif // __linux__
+#else
+	fprintf(stderr,"WARNING: no OS random seed - setting to 1\n");
 	seed = 1;
-#endif
+#endif // __unix__
 	return seed;
 }
