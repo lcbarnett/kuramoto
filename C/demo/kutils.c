@@ -35,24 +35,26 @@ unsigned get_rand_seed()
 {
 	unsigned seed;
 #ifdef __unix__
-#ifdef	__linux__
+	#ifdef	__linux__
 	if (getrandom(&seed,sizeof(unsigned),GRND_NONBLOCK) != sizeof(unsigned)) {
 		perror("random seed generation failed");
 		return EXIT_FAILURE;
 	}
-#else
+	#else
 	const int fd = open("/dev/urandom",O_RDONLY);
 	if (fd < 0) {
-		perror("random seed generation failed");
+		perror("random seed generation: failed to open /dev/urandom");
 		return EXIT_FAILURE;
 	}
-	unsigned seed;
-	ssize_t result = read(fd,&seed,sizeof(unsigned));
-	if (result < 0) {
-		perror("random seed generation failed");
+	if (read(fd,&seed,sizeof(unsigned)) != sizeof(unsigned)) {
+		perror("random seed generation: failed to read /dev/urandom");
 		return EXIT_FAILURE;
 	}
-#endif // __linux__
+	if (close(fd) != 0) {
+		perror("random seed generation: failed to close /dev/urandom");
+		return EXIT_FAILURE;
+	}
+	#endif // __linux__
 #else
 	fprintf(stderr,"WARNING: no OS random seed - setting to 1\n");
 	seed = 1;
