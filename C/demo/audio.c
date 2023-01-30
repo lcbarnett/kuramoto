@@ -1,21 +1,29 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#ifdef __unix__
-#include <time.h>
-#endif
 
 #include "clap.h"
 #include "kutils.h"
 #include "kuramoto.h"
 
-#define CDSRATE 44100.0
-#define MIDDLEC 261.625565
+#define CD_SRATE 44100.0
+#define MIDDLE_C 261.625565
+#define FLAC_QB  24
 
 // Program to demonstrate usage of Kuramoto C library.
 
 int audio(int argc, char *argv[])
 {
+
+	printf("u1 = %u\n",pcm24( 0.0,-1,1));
+	printf("u2 = %u\n",pcm24( 1.0,-1,1));
+	printf("u3 = %u\n",pcm24(-1.0,-1,1));
+	putchar('\n');
+	printf("u1 = %u\n",pcm16( 0.0,-1,1));
+	printf("u2 = %u\n",pcm16( 1.0,-1,1));
+	printf("u3 = %u\n",pcm16(-1.0,-1,1));
+	return EXIT_SUCCESS;
+
 	// CLAP (command-line argument parser). Default values may
 	// be overriden on the command line as switches; e.g.:
 	//
@@ -23,20 +31,21 @@ int audio(int argc, char *argv[])
 	//
 	// Arg:  name    type    default    description
 	puts("\n---------------------------------------------------------------------------------------");
-	CLAP_ARG(N,      size_t, 4,           "number of oscillators");
-	CLAP_ARG(T,      double, 10.0,        "total time (seconds)");
-	CLAP_ARG(f,      double, CDSRATE,     "sampling frequency (Hz)");
-	CLAP_ARG(wmean,  double, 2.0*MIDDLEC, "oscillator frequencies mean (Hz)");
-	CLAP_ARG(wsdev,  double, 20,          "oscillator frequencies std. dev. (Hz)");
-	CLAP_ARG(Kmean,  double, 8.0/N,       "coupling constants mean (Hz)");
-	CLAP_ARG(Ksdev,  double, Kmean/8.0,   "coupling constants std. dev. (Hz)");
-	CLAP_ARG(Isdev,  double, 0.2,         "input noise intensity (Hz: zero for deterministic)");
-	CLAP_ARG(RK4,    int,    0,           "RK4 solver flag (else Euler)");
-	CLAP_ARG(rseed,  uint,   0,           "random seed (or 0 for random random seed)");
+	CLAP_ARG(N,      size_t, 4,            "number of oscillators");
+	CLAP_ARG(T,      double, 10.0,         "total time (seconds)");
+	CLAP_ARG(f,      double, CD_SRATE,     "sampling frequency (Hz)");
+	CLAP_ARG(wmean,  double, 0.0,          "oscillator frequencies mean (Hz)");
+	CLAP_ARG(wsdev,  double, 3.0*MIDDLE_C, "oscillator frequencies std. dev. (Hz)");
+	CLAP_ARG(Kmean,  double, 8.0/N,        "coupling constants mean (Hz)");
+	CLAP_ARG(Ksdev,  double, Kmean/8.0,    "coupling constants std. dev. (Hz)");
+	CLAP_ARG(Isdev,  double, 0.2,          "input noise intensity (Hz: zero for deterministic)");
+	CLAP_ARG(RK4,    int,    0,            "RK4 solver flag (else Euler)");
+	CLAP_ARG(rseed,  uint,   0,            "random seed (or 0 for random random seed)");
+	CLAP_ARG(pcmb,   int,    FLAC_QB,      "PCM bits (or zero for no PCM)");
 #ifdef _HAVE_GNUPLOT
-	CLAP_ARG(Ts,     double, 5.0,         "display time start (seconds)");
-	CLAP_ARG(Te,     double, 5.1,         "display time end   (seconds)");
-	CLAP_ARG(gpterm, cstr,   GPTERM,      "Gnuplot terminal type (if available) or \"noplot\"");
+	CLAP_ARG(Ts,     double, 5.0,          "display time start (seconds)");
+	CLAP_ARG(Te,     double, 5.1,          "display time end   (seconds)");
+	CLAP_ARG(gpterm, cstr,   GPTERM,       "Gnuplot terminal type (if available) or \"noplot\"");
 #endif
 	puts("---------------------------------------------------------------------------------------");
 
@@ -91,10 +100,7 @@ int audio(int argc, char *argv[])
 
 	// integrate Kuramoto ODE
 
-	printf("simulating Kuramoto system ..."); fflush(stdout);
-#ifdef __unix__
-	const double ts = (double)clock()/(double)CLOCKS_PER_SEC;
-#endif
+	const double ts = timer_start("simulating Kuramoto system");
 	if (RK4) {
 		double* const kbuff = calloc(4*N,sizeof(double)); // see kuramoto_rk4()
 		kuramoto_rk4(N,n,w,K,h,kbuff);
@@ -103,12 +109,7 @@ int audio(int argc, char *argv[])
 	else {
 		kuramoto_euler(N,n,w,K,h);
 	}
-#ifdef __unix__
-	const double te = (double)clock()/(double)CLOCKS_PER_SEC;
-	printf(" %.4f seconds\n\n",te-ts);
-#else
-	printf(" done\n\n");
-#endif
+	timer_stop(ts);
 
 	// calculate order parameter
 

@@ -1,6 +1,8 @@
 #ifndef KUTILS_H
 #define KUTILS_H
 
+#include <stdint.h>
+
 // for random number generation from OS
 
 #include <stdlib.h>
@@ -34,5 +36,24 @@ double randn();
 
 unsigned get_rand_seed();
 
+// A basic stopwatch
+
+double timer_start(const char mesg[]);
+void   timer_stop(const double ts);
+
+// Linear PCM
+
+static inline uint16_t pcm16(const double x, const double amax, const double amin)
+{
+	return (uint16_t)(((double)((((uint16_t)1)<<16)-1))*((x-amin)/(amax-amin)));
+}
+
+static inline uint32_t pcm24(const double x, const double amax, const double amin)
+{
+	return (uint32_t)(((double)((((uint32_t)1)<<24)-1))*((x-amin)/(amax-amin)));
+}
+
+void xpcm16(const double* const x, uint16_t* const u, const size_t n, const double amax, const double amin);
+void xpcm24(const double* const x, uint32_t* const u, const size_t n, const double amax, const double amin);
 
 #endif // KUTILS_H

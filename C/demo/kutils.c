@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #ifdef __unix__
 #include <unistd.h>
+#include <time.h>
 #endif
 
 #include "kutils.h"
@@ -60,4 +61,37 @@ unsigned get_rand_seed()
 	seed = 1;
 #endif // __unix__
 	return seed;
+}
+
+double timer_start(const char mesg[])
+{
+	printf("%s ...",mesg);
+	fflush(stdout);
+#ifdef __unix__
+	return (double)clock()/(double)CLOCKS_PER_SEC;
+#else
+	return 0.0/0.0; // NaN
+#endif
+}
+
+void timer_stop(const double ts)
+{
+#ifdef __unix__
+	const double te = (double)clock()/(double)CLOCKS_PER_SEC;
+	printf(" %.4f seconds\n\n",te-ts);
+#else
+	printf(" done\n\n");
+#endif
+}
+
+// Linear PCM
+
+void xpcm16(const double* const x, uint16_t* const u, const size_t n, const double amax, const double amin)
+{
+	for (size_t i=0; i<n; ++i) u[i] = pcm16(x[i],amax,amin);
+}
+
+void xpcm24(const double* const x, uint32_t* const u, const size_t n, const double amax, const double amin)
+{
+	for (size_t i=0; i<n; ++i) u[i] = pcm24(x[i],amax,amin);
 }
