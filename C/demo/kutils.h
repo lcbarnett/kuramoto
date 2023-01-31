@@ -21,6 +21,8 @@
 #endif
 #endif
 
+typedef unsigned char uchar_t;
+
 // Uniform random double on [0,1) [Note: you might want a better PRNG :-)]
 
 static inline double randu()
@@ -41,19 +43,8 @@ unsigned get_rand_seed();
 double timer_start(const char mesg[]);
 void   timer_stop(const double ts);
 
-// Linear PCM
+// Linear PCM (remember to free returned buffer after use!)
 
-static inline uint16_t pcm16(const double x, const double amax, const double amin)
-{
-	return (uint16_t)(((double)((((uint16_t)1)<<16)-1))*((x-amin)/(amax-amin)));
-}
-
-static inline uint32_t pcm24(const double x, const double amax, const double amin)
-{
-	return (uint32_t)(((double)((((uint32_t)1)<<24)-1))*((x-amin)/(amax-amin)));
-}
-
-void xpcm16(const double* const x, uint16_t* const u, const size_t n, const double amax, const double amin);
-void xpcm24(const double* const x, uint32_t* const u, const size_t n, const double amax, const double amin);
+uchar_t* pcm_alloc(const double* const x, const size_t n, const int pcm, const double amax, const double amin, size_t* const nbytes);
 
 #endif // KUTILS_H

@@ -9,7 +9,7 @@
 #define CD_SRATE 44100.0
 #define MIDDLE_C 261.625565
 
-// Program to demonstrate usage of Kuramoto C library.
+// Program to demonstrate usage of Kuramoto C library - as an audio synth :-)
 
 int audio(int argc, char *argv[])
 {
@@ -30,10 +30,10 @@ int audio(int argc, char *argv[])
 	CLAP_ARG(Isdev,  double, 0.2,          "input noise intensity (Hz: zero for deterministic)");
 	CLAP_ARG(RK4,    int,    0,            "RK4 solver flag (else Euler)");
 	CLAP_ARG(rseed,  uint,   0,            "random seed (or 0 for random random seed)");
-	CLAP_ARG(pcmb,   int,    16,           "PCM bits: 16 or 24 (or zero for no PCM)");
+	CLAP_ARG(pcm,    int,    16,           "PCM bits: 16 or 24 (or zero for no PCM)");
 #ifdef _HAVE_GNUPLOT
-	CLAP_ARG(Ts,     double, 5.0,          "display time start (seconds)");
-	CLAP_ARG(Te,     double, 5.1,          "display time end   (seconds)");
+	CLAP_ARG(Ts,     double, 1.0,          "display time start (seconds)");
+	CLAP_ARG(Te,     double, 1.1,          "display time end   (seconds)");
 	CLAP_ARG(gpterm, cstr,   GPTERM,       "Gnuplot terminal type (if available) or \"noplot\"");
 #endif
 	puts("---------------------------------------------------------------------------------------");
@@ -46,11 +46,11 @@ int audio(int argc, char *argv[])
 
 	// some convenient constants
 
-	const double dt = 1.0/f;        // integration time step size (1/sampling frequency should do)
-	const int    F = (int)round(f); // nearest int to sampling frequency
+	const double dt = 1.0/f;             // integration time step size (1/sampling frequency should do)
+	const int    F = (int)round(f);      // nearest int to sampling frequency
 	const size_t n = (size_t)ceil(T/dt); // number of integration steps
-	const size_t m = N*n;    // size of oscillator buffers
-	const size_t M = N*N;    // number of coupling constants
+	const size_t m = N*n;                // size of oscillator buffers
+	const size_t M = N*N;                // number of coupling constants
 
 	// allocate memory
 
@@ -64,7 +64,7 @@ int audio(int argc, char *argv[])
 	// random frequencies (normal distribution)
 
 	for (size_t i=0; i<N; ++i) {
-		w[i] = TWOPI*dt*(wmean+wsdev*randn()); // scale frequencies by dt
+		w[i] = dt*TWOPI*(wmean+wsdev*randn()); // scale frequencies by dt
 	}
 
 	// random coupling constants (normal distribution)
@@ -75,7 +75,7 @@ int audio(int argc, char *argv[])
 				K[N*i+j] = 0.0;                      // no "self-connections"!
 			}
 			else {
-				K[N*i+j] = TWOPI*dt*(Kmean+Ksdev*randn()); // scale coupling constants by dt
+				K[N*i+j] = dt*TWOPI*(Kmean+Ksdev*randn()); // scale coupling constants by dt
 			}
 		}
 	}
@@ -85,7 +85,7 @@ int audio(int argc, char *argv[])
 	const double sqrtdt = sqrt(dt);
 	if (Isdev > 0.0) {
 		for (size_t k=0; k<m; ++k) {
-			h[k] = TWOPI*sqrtdt*Isdev*randn(); // scale input by sqrt(dt) [cf. Ornstein-Uhlenbeck process]
+			h[k] = sqrtdt*TWOPI*Isdev*randn(); // scale input by sqrt(dt) [cf. Ornstein-Uhlenbeck process]
 		}
 	}
 	else {
@@ -118,6 +118,9 @@ int audio(int argc, char *argv[])
 	for (size_t j=0; j<m; ++j) {
 		x[j] = sin(h[j]);
 	}
+
+	// aggregate signal
+
 	const double ooN = 1.0/(double)N;
 	for (size_t k=0; k<n; ++k) {
 		double yk = 0.0;
@@ -128,6 +131,7 @@ int audio(int argc, char *argv[])
 	// write time stamp, order parameter and oscillator signals to file
 
 	char ofile[] = "/tmp/kuramoto_audio.asc";     // output file (ASCII)
+	printf("writing ASCII data to %s ...",ofile); fflush(stdout);
 	FILE* const fp = fopen(ofile,"w");
 	if (fp == NULL) {
 		perror("Failed to open ASCII output file");
@@ -146,60 +150,33 @@ int audio(int argc, char *argv[])
 		perror("Failed to close ASCII output file");
 		return EXIT_FAILURE;
 	}
+	printf(" done\n\n");
 
 	// encode aggregate signal as PCM and write to file
 
-	if (pcmb) {
-		// try, e.g..: play -t raw -r 44.1k -e unsigned -b 16 -c 1 /tmp/kuramoto_audio_44100_16.pcm
+	// try, e.g..: play -t raw -r 44.1k -e unsigned -b 16 -c 1 /tmp/kuramoto_audio_44100_16.pcm
+	if (pcm) {
 		const size_t smaxlen = 100;
 		char rfile[smaxlen]; // raw PCM data file name
-		if      (pcmb == 16) {
-			// try: ffplay -f s16le -ar 16k -ac 1 /tmp/kuramoto_audio_44100_16.pcm
-			const double ts2 = timer_start("PCM encoding (16-bit)");
-			uint16_t* const u = calloc(n,sizeof(uint16_t)); // PCM data
-			xpcm16(y,u,n,1.0,-1.0);                         // encode aggregate signal
-			snprintf(rfile,smaxlen,"/tmp/kuramoto_audio_%d_16.pcm",F);
-			FILE* const rp = fopen(rfile,"wb");
-			if (rp == NULL) {
-				perror("Failed to open PCM output file");
-				return EXIT_FAILURE;
-			}
-			if (fwrite(u,sizeof(uint16_t),m,rp) != m) {
-				perror("Failed to write PCM output file");
-				return EXIT_FAILURE;
-			}
-			if (fclose(rp) != 0) {
-				perror("Failed to close PCM output file");
-				return EXIT_FAILURE;
-			}
-			free(u);
-			timer_stop(ts2);
-		}
-		else if (pcmb == 24) {
-			const double ts2 = timer_start("PCM encoding (24-bit)");
-			uint32_t* const u = calloc(n,sizeof(uint32_t)); // PCM data
-			xpcm24(y,u,n,1.0,-1.0);                         // encode aggregate signal
-			snprintf(rfile,smaxlen,"/tmp/kuramoto_audio_%d_24.pcm",F);
-			FILE* const rp = fopen(rfile,"wb");
-			if (rp == NULL) {
-				perror("Failed to open PCM output file");
-				return EXIT_FAILURE;
-			}
-			if (fwrite(u,sizeof(uint32_t),m,rp) != m) {
-				perror("Failed to write PCM output file");
-				return EXIT_FAILURE;
-			}
-			if (fclose(rp) != 0) {
-				perror("Failed to close PCM output file");
-				return EXIT_FAILURE;
-			}
-			free(u);
-			timer_stop(ts2);
-		}
-		else {
-			fprintf(stderr,"PCM bits must be 16 or 24\n");
+		snprintf(rfile,smaxlen,"/tmp/kuramoto_audio_%d.u%d",F,pcm);
+		printf("writing PCM (%d-bit) data to %s ...",pcm,rfile); fflush(stdout);
+		size_t nbytes; // PCM bytes
+		uchar* const u = pcm_alloc(y,n,pcm,1.0,-1.0,&nbytes); // PCM data (remember to free buffer!)
+		FILE* const rp = fopen(rfile,"wb");
+		if (rp == NULL) {
+			perror("Failed to open PCM output file");
 			return EXIT_FAILURE;
 		}
+		if (fwrite(u,sizeof(uchar_t),nbytes,rp) != nbytes) {
+			perror("Failed to write PCM output file");
+			return EXIT_FAILURE;
+		}
+		if (fclose(rp) != 0) {
+			perror("Failed to close PCM output file");
+			return EXIT_FAILURE;
+		}
+		free(u);
+		printf(" done\n\n");
 	}
 
 	// if Gnuplot installed display order parameter and oscillator signals.

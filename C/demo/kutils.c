@@ -84,14 +84,40 @@ void timer_stop(const double ts)
 #endif
 }
 
-// Linear PCM
+// Linear PCM (remember to free returned buffer after use!)
 
-void xpcm16(const double* const x, uint16_t* const u, const size_t n, const double amax, const double amin)
+#define O16 ((uint16_t)1)
+#define O32 ((uint32_t)1)
+uchar_t* pcm_alloc(const double* const x, const size_t n, const int pcm, const double amax, const double amin, size_t* const nbytes)
 {
-	for (size_t i=0; i<n; ++i) u[i] = pcm16(x[i],amax,amin);
+	if ((pcm!=16)&&(pcm!= 24)) {
+		fprintf(stderr,"ERROR: PCM bits must be 16 or 24\n");
+		exit(EXIT_FAILURE);
+	}
+	*nbytes = (pcm/8)*n; // number of PCM bytes
+	uchar_t* const u = calloc(*nbytes,sizeof(uchar_t)); // caller must free!!!
+	if (pcm == 16) {
+		const uint16_t lomask = (O16<<8)-O16; // mask for low byte
+		const double   maxval = (double)((O16<<16)-O16); // 16-bit max (double-precision floating-point)
+		uchar_t* uu = u;
+		for (const double* xx=x; xx<x+n; ++xx) {
+			const uint16_t xpcm = (uint16_t)(maxval*((*xx-amin)/(amax-amin)));
+			*uu++ = (uchar_t)((xpcm>>0)&lomask);
+			*uu++ = (uchar_t)((xpcm>>8)&lomask);
+		}
+	}
+	else { // pcm == 24
+		const uint32_t lomask = (O32<<8)-O32; // mask for low byte
+		const double   maxval = (double)((O32<<24)-O32); // 24-bit max (double-precision floating-point)
+		uchar_t* uu = u;
+		for (const double* xx=x; xx<x+n; ++xx) {
+			const uint32_t xpcm = (uint32_t)(maxval*((*xx-amin)/(amax-amin)));
+			*uu++ = (uchar_t)((xpcm>> 0)&lomask);
+			*uu++ = (uchar_t)((xpcm>> 8)&lomask);
+			*uu++ = (uchar_t)((xpcm>>16)&lomask);
+		}
+	}
+	return u;
 }
-
-void xpcm24(const double* const x, uint32_t* const u, const size_t n, const double amax, const double amin)
-{
-	for (size_t i=0; i<n; ++i) u[i] = pcm24(x[i],amax,amin);
-}
+#undef O32
+#undef O16
