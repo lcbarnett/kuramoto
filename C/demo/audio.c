@@ -46,17 +46,20 @@ int audio(int argc, char *argv[])
 
 	// some convenient constants
 
-	const double dt = 1.0/f;             // integration time step size (1/sampling frequency should do)
-	const size_t n  = (size_t)ceil(T*f); // number of integration steps
-	const size_t m  = N*n;               // size of oscillator buffers
+	const double dt = 1.0/f;        // integration time step size (1/sampling frequency should do)
+	const int    F = (int)round(f); // nearest int to sampling frequency
+	const size_t n = (size_t)ceil(T/dt); // number of integration steps
+	const size_t m = N*n;    // size of oscillator buffers
+	const size_t M = N*N;    // number of coupling constants
 
 	// allocate memory
 
-	double* const w = calloc(N,  sizeof(double)); // oscillator frequencies
-	double* const K = calloc(N*N,sizeof(double)); // coupling constants
-	double* const h = calloc(m,  sizeof(double)); // oscillator phases, unwrapped
-	double* const r = calloc(n,  sizeof(double)); // order parameter
-	double* const x = calloc(m,  sizeof(double)); // oscillator signal (waveform)
+	double* const w = calloc(N,sizeof(double)); // oscillator frequencies
+	double* const K = calloc(M,sizeof(double)); // coupling constants
+	double* const h = calloc(m,sizeof(double)); // oscillator phases
+	double* const r = calloc(n,sizeof(double)); // order parameter
+	double* const x = calloc(m,sizeof(double)); // oscillator signal
+	double* const y = calloc(n,sizeof(double)); // oscillator agregated signal
 
 	// random frequencies (normal distribution)
 
@@ -86,12 +89,12 @@ int audio(int argc, char *argv[])
 		}
 	}
 	else {
-		memset(h,0,N*N*sizeof(double));  // zero-fill for no input [in fact here calloc will have done that]
+		memset(h,0,M*sizeof(double));  // zero-fill for no input [in fact here calloc will have done that]
 	}
 
 	// integrate Kuramoto ODE
 
-	const double ts = timer_start("simulating Kuramoto system");
+	const double ts1 = timer_start("simulating Kuramoto system");
 	if (RK4) {
 		double* const kbuff = calloc(4*N,sizeof(double)); // see kuramoto_rk4()
 		kuramoto_rk4(N,n,w,K,h,kbuff);
@@ -100,7 +103,7 @@ int audio(int argc, char *argv[])
 	else {
 		kuramoto_euler(N,n,w,K,h);
 	}
-	timer_stop(ts);
+	timer_stop(ts1);
 
 	// calculate order parameter
 
@@ -112,21 +115,30 @@ int audio(int argc, char *argv[])
 
 	// generate signal from phases
 
-	for (size_t j=0; j<m; ++j) x[j] = sin(h[j]);
+	for (size_t j=0; j<m; ++j) {
+		x[j] = sin(h[j]);
+	}
+	const double ooN = 1.0/(double)N;
+	for (size_t k=0; k<n; ++k) {
+		double yk = 0.0;
+		for (size_t i=0; i<N; ++i) yk += x[N*k+i];
+		y[k] = ooN*yk;
+	}
 
 	// write time stamp, order parameter and oscillator signals to file
 
-	char ofile[] = "/tmp/kuramoto.asc";     // output file (ASCII)
+	char ofile[] = "/tmp/kuramoto_audio.asc";     // output file (ASCII)
 	FILE* const fp = fopen(ofile,"w");
 	if (fp == NULL) {
 		perror("Failed to open ASCII output file");
 		return EXIT_FAILURE;
 	}
 	for (size_t k=0; k<n; ++k) {
-		fprintf(fp,"%17.8f",(double)(k+1)*dt);   // time stamp
-		fprintf(fp," %17.8f",r[k]);              // order parameter
+		fprintf(fp,"%17.8f",(double)(k+1)*dt); // time stamp
+		fprintf(fp," %17.8f",r[k]);            // order parameter
+		fprintf(fp," %17.8f",y[k]);            // aggregate signal
 		for (size_t i=0; i<N; ++i) {
-			fprintf(fp," %17.8f",x[N*k+i]); // oscillator signal (waveform)
+			fprintf(fp," %17.8f",x[N*k+i]);    // oscillator signal (waveform)
 		}
 		fprintf(fp,"\n");
 	}
@@ -135,13 +147,18 @@ int audio(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	// if PCM specified, encode and write to file
+	// encode aggregate signal as PCM and write to file
 
 	if (pcmb) {
+		// try, e.g..: play -t raw -r 44.1k -e unsigned -b 16 -c 1 /tmp/kuramoto_audio_44100_16.pcm
+		const size_t smaxlen = 100;
+		char rfile[smaxlen]; // raw PCM data file name
 		if      (pcmb == 16) {
-			uint16_t* const u = calloc(m,sizeof(uint16_t)); // PCM data
-			xpcm16(x,u,m,1.0,-1.0);                         // encode signals
-			char rfile[] = "/tmp/kuramoto.raw16";           // output file
+			// try: ffplay -f s16le -ar 16k -ac 1 /tmp/kuramoto_audio_44100_16.pcm
+			const double ts2 = timer_start("PCM encoding (16-bit)");
+			uint16_t* const u = calloc(n,sizeof(uint16_t)); // PCM data
+			xpcm16(y,u,n,1.0,-1.0);                         // encode aggregate signal
+			snprintf(rfile,smaxlen,"/tmp/kuramoto_audio_%d_16.pcm",F);
 			FILE* const rp = fopen(rfile,"wb");
 			if (rp == NULL) {
 				perror("Failed to open PCM output file");
@@ -156,11 +173,13 @@ int audio(int argc, char *argv[])
 				return EXIT_FAILURE;
 			}
 			free(u);
+			timer_stop(ts2);
 		}
 		else if (pcmb == 24) {
-			uint32_t* const u = calloc(m,sizeof(uint32_t)); // PCM data
-			xpcm24(x,u,m,1.0,-1.0);                        // encode signals
-			char rfile[] = "/tmp/kuramoto.raw24";          // output file
+			const double ts2 = timer_start("PCM encoding (24-bit)");
+			uint32_t* const u = calloc(n,sizeof(uint32_t)); // PCM data
+			xpcm24(y,u,n,1.0,-1.0);                         // encode aggregate signal
+			snprintf(rfile,smaxlen,"/tmp/kuramoto_audio_%d_24.pcm",F);
 			FILE* const rp = fopen(rfile,"wb");
 			if (rp == NULL) {
 				perror("Failed to open PCM output file");
@@ -175,6 +194,7 @@ int audio(int argc, char *argv[])
 				return EXIT_FAILURE;
 			}
 			free(u);
+			timer_stop(ts2);
 		}
 		else {
 			fprintf(stderr,"PCM bits must be 16 or 24\n");
@@ -189,13 +209,13 @@ int audio(int argc, char *argv[])
 	if (strncmp(gpterm,"noplot",7) != 0) {
 		const size_t ns  = (size_t)ceil(Ts*f);  // start time step
 		const size_t ne  = (size_t)ceil(Te*f);  // start time step
-		char gfile[] = "/tmp/kuramoto.gp"; // Gnuplot command file
+		char gfile[] = "/tmp/kuramoto_audio.gp"; // Gnuplot command file
 		FILE* const gp = fopen(gfile,"w");
 		if (gp == NULL) {
 			perror("failed to open Gnuplot command file\n");
 			return EXIT_FAILURE;
 		}
-		fprintf(gp,"set term \"%s\" title \"Kuramoto oscillator demo\" size 1600,800\n",gpterm);
+		fprintf(gp,"set term \"%s\" title \"Kuramoto oscillator demo\" size 1600,1200\n",gpterm);
 		fprintf(gp,"set xlabel \"time (secs)\"\n");
 		fprintf(gp,"set ylabel \"mean phase\"\n");
 		fprintf(gp,"set key right bottom Left rev\n");
@@ -203,14 +223,16 @@ int audio(int argc, char *argv[])
 		fprintf(gp,"set xr [%g:%g]\n",Ts,Te);
 		fprintf(gp,"set yr [0:1.05]\n");
 		fprintf(gp,"set ytics 0.5\n");
-		fprintf(gp,"set multiplot layout 2,1\n");
+		fprintf(gp,"set multiplot layout 3,1\n");
 		fprintf(gp,"set title \"Order parameter\"\n");
 		fprintf(gp,"plot \"%s\" every ::%zu::%zu u 1:2 w l not\n",ofile,ns,ne);
+		fprintf(gp,"set yr [-1.05:1.05]\n");
+		fprintf(gp,"set title \"Aggregate oscillator signal (waveform)\"\n");
+		fprintf(gp,"plot \"%s\" every ::%zu::%zu u 1:3 w l not\n",ofile,ns,ne);
 		fprintf(gp,"set title \"Oscillator signals (waveforms)\"\n");
 		fprintf(gp,"set ylabel \"amplitude\"\n");
-		fprintf(gp,"set yr [-1.05:1.05]\n");
 		fprintf(gp,"plot \\\n");
-		for (size_t i=0; i<N; ++i) fprintf(gp,"\"%s\" every ::%zu::%zu u 1:%zu w l not ,\\\n",ofile,ns,ne,3+i);
+		for (size_t i=0; i<N; ++i) fprintf(gp,"\"%s\" every ::%zu::%zu u 1:%zu w l not ,\\\n",ofile,ns,ne,4+i);
 		fprintf(gp,"NaN not\n");
 		fprintf(gp,"unset multiplot\n");
 		if (fclose(gp) != 0) {
@@ -231,6 +253,7 @@ int audio(int argc, char *argv[])
 
 	// free memory
 
+	free(y);
 	free(x);
 	free(r);
 	free(h);

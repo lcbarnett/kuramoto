@@ -38,16 +38,20 @@ int demo(int argc, char *argv[])
 	printf("\nrandom seed = %u\n\n",seed);
 	srand(seed);
 
-	// number of integration steps
+	// some convenient constants
 
-	const size_t n  = (size_t)ceil(T/dt);         // number of integration steps
+	const size_t n = (size_t)ceil(T/dt); // number of integration steps
+	const size_t m = N*n; // size of oscillator buffers
+	const size_t M = N*N; // number of coupling constants
 
 	// allocate memory
 
-	double* const w = calloc(N,  sizeof(double)); // oscillator frequencies
-	double* const K = calloc(N*N,sizeof(double)); // coupling constants
-	double* const h = calloc(N*n,sizeof(double)); // oscillator phases, unwrapped
-	double* const r = calloc(n,  sizeof(double)); // order parameter
+	double* const w = calloc(N,sizeof(double)); // oscillator frequencies
+	double* const K = calloc(M,sizeof(double)); // coupling constants
+	double* const h = calloc(m,sizeof(double)); // oscillator phases
+	double* const r = calloc(n,sizeof(double)); // order parameter
+	double* const x = calloc(m,sizeof(double)); // oscillator signal
+	double* const y = calloc(n,sizeof(double)); // oscillator agregated signal
 
 	// random frequencies (normal distribution)
 
@@ -72,12 +76,12 @@ int demo(int argc, char *argv[])
 
 	const double sqrtdt = sqrt(dt);
 	if (Isdev > 0.0) {
-		for (size_t k=0; k<N*n; ++k) {
+		for (size_t k=0; k<m; ++k) {
 			h[k] = sqrtdt*Isdev*randn(); // scale input by sqrt(dt) [cf. Ornstein-Uhlenbeck process]
 		}
 	}
 	else {
-		memset(h,0,N*N*sizeof(double));  // zero-fill for no input [in fact here calloc will have done that]
+		memset(h,0,M*sizeof(double));  // zero-fill for no input [in fact here calloc will have done that]
 	}
 
 	// integrate Kuramoto ODE
@@ -97,7 +101,19 @@ int demo(int argc, char *argv[])
 
 	// wrap oscillator phases to [-pi,pi) [if that's is what you want]
 	//
-	// phase_wrap(N*n,h);
+	// phase_wrap(m,h);
+
+	// generate signal from phases
+
+	for (size_t j=0; j<m; ++j) {
+		x[j] = sin(h[j]);
+	}
+	const double ooN = 1.0/(double)N;
+	for (size_t k=0; k<n; ++k) {
+		double yk = 0.0;
+		for (size_t i=0; i<N; ++i) yk += x[N*k+i];
+		y[k] = ooN*yk;
+	}
 
 	// write time stamp, order parameter and oscillator signals to file
 
@@ -108,10 +124,11 @@ int demo(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 	for (size_t k=0; k<n; ++k) {
-		fprintf(fp,"%17.8f",(double)(k+1)*dt);   // time stamp
-		fprintf(fp," %17.8f",r[k]);              // order parameter
+		fprintf(fp,"%17.8f",(double)(k+1)*dt); // time stamp
+		fprintf(fp," %17.8f",r[k]);            // order parameter
+		fprintf(fp," %17.8f",y[k]);            // aggregate signal
 		for (size_t i=0; i<N; ++i) {
-			fprintf(fp," %17.8f",sin(h[N*k+i])); // oscillator signal (waveform)
+			fprintf(fp," %17.8f",x[N*k+i]);    // signal
 		}
 		fprintf(fp,"\n");
 	}
@@ -130,7 +147,7 @@ int demo(int argc, char *argv[])
 		perror("failed to open Gnuplot command file\n");
 		return EXIT_FAILURE;
 	}
-	fprintf(gp,"set term \"%s\" title \"Kuramoto oscillator demo\" size 1600,800\n",gpterm);
+	fprintf(gp,"set term \"%s\" title \"Kuramoto oscillator demo\" size 1600,1200\n",gpterm);
 	fprintf(gp,"set xlabel \"time\"\n");
 	fprintf(gp,"set ylabel \"mean phase\"\n");
 	fprintf(gp,"set key right bottom Left rev\n");
@@ -138,14 +155,16 @@ int demo(int argc, char *argv[])
 	fprintf(gp,"set xr [0:%g]\n",T);
 	fprintf(gp,"set yr [0:1.05]\n");
 	fprintf(gp,"set ytics 0.5\n");
-	fprintf(gp,"set multiplot layout 2,1\n");
+	fprintf(gp,"set multiplot layout 3,1\n");
 	fprintf(gp,"set title \"Order parameter\"\n");
 	fprintf(gp,"plot \"%s\" u 1:2 w l not\n",ofile);
+	fprintf(gp,"set yr [-1.05:1.05]\n");
+	fprintf(gp,"set title \"Aggregate oscillator signal (waveform)\"\n");
+	fprintf(gp,"plot \"%s\" u 1:3 w l not\n",ofile);
 	fprintf(gp,"set title \"Oscillator signals (waveforms)\"\n");
 	fprintf(gp,"set ylabel \"amplitude\"\n");
-	fprintf(gp,"set yr [-1.05:1.05]\n");
 	fprintf(gp,"plot \\\n");
-	for (size_t i=0; i<N; ++i) fprintf(gp,"\"%s\" u 1:%zu w l not ,\\\n",ofile,3+i);
+	for (size_t i=0; i<N; ++i) fprintf(gp,"\"%s\" u 1:%zu w l not ,\\\n",ofile,4+i);
 	fprintf(gp,"NaN not\n");
 	fprintf(gp,"unset multiplot\n");
 	if (fclose(gp) != 0) {
@@ -165,6 +184,8 @@ int demo(int argc, char *argv[])
 
 	// free memory
 
+	free(y);
+	free(x);
 	free(r);
 	free(h);
 	free(K);
