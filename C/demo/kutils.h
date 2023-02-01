@@ -45,6 +45,6 @@ void   timer_stop(const double ts);
 
 // Linear PCM (remember to free returned buffer after use!)
 
-uchar_t* pcm_alloc(const double* const x, const size_t n, const int pcm, const double amax, const double amin, size_t* const nbytes);
+int pcm_write(FILE* const fp, const double* const x, const size_t n, const int pcm, const double amax, const double amin);
 
 #endif // KUTILS_H

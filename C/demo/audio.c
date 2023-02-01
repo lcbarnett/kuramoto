@@ -16,21 +16,21 @@ int audio(int argc, char *argv[])
 	// CLAP (command-line argument parser). Default values may
 	// be overriden on the command line as switches; e.g.:
 	//
-	// kuramoto_demo -N 10 -T 1000 -dt 0.001 -Isdev 0
+	// kuramoto audio -N 10 -T 5 -f 20000 -Isdev 0
 	//
 	// Arg:  name    type    default    description
 	puts("\n---------------------------------------------------------------------------------------");
 	CLAP_ARG(N,      size_t, 4,            "number of oscillators");
-	CLAP_ARG(T,      double, 10.0,         "total time (seconds)");
+	CLAP_ARG(T,      double, 5.0,          "total time (seconds)");
 	CLAP_ARG(f,      double, CD_SRATE,     "sampling frequency (Hz)");
 	CLAP_ARG(wmean,  double, 0.0,          "oscillator frequencies mean (Hz)");
 	CLAP_ARG(wsdev,  double, 3.0*MIDDLE_C, "oscillator frequencies std. dev. (Hz)");
-	CLAP_ARG(Kmean,  double, 8.0/N,        "coupling constants mean (Hz)");
+	CLAP_ARG(Kmean,  double, 8.0,          "coupling constants mean (Hz)");
 	CLAP_ARG(Ksdev,  double, Kmean/8.0,    "coupling constants std. dev. (Hz)");
 	CLAP_ARG(Isdev,  double, 0.2,          "input noise intensity (Hz: zero for deterministic)");
 	CLAP_ARG(RK4,    int,    0,            "RK4 solver flag (else Euler)");
 	CLAP_ARG(rseed,  uint,   0,            "random seed (or 0 for random random seed)");
-	CLAP_ARG(pcm,    int,    16,           "PCM bits: 16 or 24 (or zero for no PCM)");
+	CLAP_ARG(pcm,    int,    16,           "PCM bits: 16 or 24 (unsigned), -32 or -64 (fp), or zero for no PCM");
 #ifdef _HAVE_GNUPLOT
 	CLAP_ARG(Ts,     double, 1.0,          "display time start (seconds)");
 	CLAP_ARG(Te,     double, 1.1,          "display time end   (seconds)");
@@ -46,11 +46,12 @@ int audio(int argc, char *argv[])
 
 	// some convenient constants
 
-	const double dt = 1.0/f;             // integration time step size (1/sampling frequency should do)
-	const int    F = (int)round(f);      // nearest int to sampling frequency
-	const size_t n = (size_t)ceil(T/dt); // number of integration steps
-	const size_t m = N*n;                // size of oscillator buffers
-	const size_t M = N*N;                // number of coupling constants
+	const double dt  = 1.0/f;              // integration time step size (1/sampling frequency should do)
+	const int    F   = (int)round(f);      // nearest int to sampling frequency
+	const size_t n   = (size_t)ceil(T/dt); // number of integration steps
+	const size_t m   = N*n;                // size of oscillator buffers
+	const size_t M   = N*N;                // number of coupling constants
+	const double ooN = 1.0/(double)N;
 
 	// allocate memory
 
@@ -75,7 +76,7 @@ int audio(int argc, char *argv[])
 				K[N*i+j] = 0.0;                      // no "self-connections"!
 			}
 			else {
-				K[N*i+j] = dt*TWOPI*(Kmean+Ksdev*randn()); // scale coupling constants by dt
+				K[N*i+j] = dt*TWOPI*ooN*(Kmean+Ksdev*randn()); // scale coupling constants by dt
 			}
 		}
 	}
@@ -121,7 +122,6 @@ int audio(int argc, char *argv[])
 
 	// aggregate signal
 
-	const double ooN = 1.0/(double)N;
 	for (size_t k=0; k<n; ++k) {
 		double yk = 0.0;
 		for (size_t i=0; i<N; ++i) yk += x[N*k+i];
@@ -153,29 +153,32 @@ int audio(int argc, char *argv[])
 	printf(" done\n\n");
 
 	// encode aggregate signal as PCM and write to file
-
-	// try, e.g..: play -t raw -r 44.1k -e unsigned -b 16 -c 1 /tmp/kuramoto_audio_44100_16.pcm
+	//
+	// try, e.g..: play -t raw -r 44.1k -e unsigned -b 16 -c 1 /tmp/kuramoto_audio_44100.u16
+	//             play -t raw -r 44.1k -e float    -b 32 -c 1 /tmp/kuramoto_audio_44100.f32
 	if (pcm) {
 		const size_t smaxlen = 100;
 		char rfile[smaxlen]; // raw PCM data file name
-		snprintf(rfile,smaxlen,"/tmp/kuramoto_audio_%d.u%d",F,pcm);
-		printf("writing PCM (%d-bit) data to %s ...",pcm,rfile); fflush(stdout);
-		size_t nbytes; // PCM bytes
-		uchar* const u = pcm_alloc(y,n,pcm,1.0,-1.0,&nbytes); // PCM data (remember to free buffer!)
+		if (pcm > 0) {
+			snprintf(rfile,smaxlen,"/tmp/kuramoto_audio_%d.u%d",F,pcm);
+			printf("writing PCM (%d-bit) data to %s ...",pcm,rfile); fflush(stdout);
+		}
+		else {
+			snprintf(rfile,smaxlen,"/tmp/kuramoto_audio_%d.f%d",F,-pcm);
+			printf("writing PCM (%d-bit floating-point) data to %s ...",pcm,rfile); fflush(stdout);
+		}
 		FILE* const rp = fopen(rfile,"wb");
 		if (rp == NULL) {
 			perror("Failed to open PCM output file");
 			return EXIT_FAILURE;
 		}
-		if (fwrite(u,sizeof(uchar_t),nbytes,rp) != nbytes) {
-			perror("Failed to write PCM output file");
+		if (pcm_write(rp,y,n,pcm,1.0,-1.0) != 0) { // write PCM data
 			return EXIT_FAILURE;
 		}
 		if (fclose(rp) != 0) {
 			perror("Failed to close PCM output file");
 			return EXIT_FAILURE;
 		}
-		free(u);
 		printf(" done\n\n");
 	}
 

@@ -88,36 +88,63 @@ void timer_stop(const double ts)
 
 #define O16 ((uint16_t)1)
 #define O32 ((uint32_t)1)
-uchar_t* pcm_alloc(const double* const x, const size_t n, const int pcm, const double amax, const double amin, size_t* const nbytes)
+int pcm_write(FILE* const fp, const double* const x, const size_t n, const int pcm, const double amax, const double amin)
 {
-	if ((pcm!=16)&&(pcm!= 24)) {
-		fprintf(stderr,"ERROR: PCM bits must be 16 or 24\n");
-		exit(EXIT_FAILURE);
+	if ((pcm != -32)&&(pcm != -64)&&(pcm != 16)&&(pcm != 24)) {
+		fprintf(stderr,"ERROR: PCM must be unsigned 16- or 24-bit, or floating-point 32- or 64-bit\n");
+		return 1;
 	}
-	*nbytes = (pcm/8)*n; // number of PCM bytes
-	uchar_t* const u = calloc(*nbytes,sizeof(uchar_t)); // caller must free!!!
-	if (pcm == 16) {
-		const uint16_t lomask = (O16<<8)-O16; // mask for low byte
-		const double   maxval = (double)((O16<<16)-O16); // 16-bit max (double-precision floating-point)
-		uchar_t* uu = u;
+	if (pcm == -32) { // single-precision floating-point
+		float* const u = calloc(n,sizeof(float)); // caller must free!!!
+		float* uu = u;
 		for (const double* xx=x; xx<x+n; ++xx) {
-			const uint16_t xpcm = (uint16_t)(maxval*((*xx-amin)/(amax-amin)));
-			*uu++ = (uchar_t)((xpcm>>0)&lomask);
-			*uu++ = (uchar_t)((xpcm>>8)&lomask);
+			*uu++ = (float)*xx;
+		}
+		if (fwrite(u,sizeof(float),n,fp) != n) {
+			perror("ERROR: PCM write failed");
+			free(u);
+			return 2;
+		}
+		free(u);
+	}
+	else if  (pcm == -64) { // double-precision floating-point
+		if (fwrite(x,sizeof(double),n,fp) != n) {
+			perror("ERROR: PCM write failed");
+			return 2;
 		}
 	}
-	else { // pcm == 24
-		const uint32_t lomask = (O32<<8)-O32; // mask for low byte
-		const double   maxval = (double)((O32<<24)-O32); // 24-bit max (double-precision floating-point)
-		uchar_t* uu = u;
-		for (const double* xx=x; xx<x+n; ++xx) {
-			const uint32_t xpcm = (uint32_t)(maxval*((*xx-amin)/(amax-amin)));
-			*uu++ = (uchar_t)((xpcm>> 0)&lomask);
-			*uu++ = (uchar_t)((xpcm>> 8)&lomask);
-			*uu++ = (uchar_t)((xpcm>>16)&lomask);
+	else {
+		const size_t nbytes = (pcm/8)*n; // number of PCM bytes
+		uchar_t* const u = calloc(nbytes,sizeof(uchar_t)); // caller must free!!!
+		if (pcm == 16) {
+			const uint16_t lomask = (O16<<8)-O16; // mask for low byte
+			const double   maxval = (double)((O16<<16)-O16); // 16-bit max (double-precision floating-point)
+			uchar_t* uu = u;
+			for (const double* xx=x; xx<x+n; ++xx) {
+				const uint16_t xpcm = (uint16_t)(maxval*((*xx-amin)/(amax-amin)));
+				*uu++ = (uchar_t)((xpcm>>0)&lomask);
+				*uu++ = (uchar_t)((xpcm>>8)&lomask);
+			}
 		}
+		else { // pcm == 24
+			const uint32_t lomask = (O32<<8)-O32; // mask for low byte
+			const double   maxval = (double)((O32<<24)-O32); // 24-bit max (double-precision floating-point)
+			uchar_t* uu = u;
+			for (const double* xx=x; xx<x+n; ++xx) {
+				const uint32_t xpcm = (uint32_t)(maxval*((*xx-amin)/(amax-amin)));
+				*uu++ = (uchar_t)((xpcm>> 0)&lomask);
+				*uu++ = (uchar_t)((xpcm>> 8)&lomask);
+				*uu++ = (uchar_t)((xpcm>>16)&lomask);
+			}
+		}
+		if (fwrite(u,sizeof(uchar_t),nbytes,fp) != nbytes) {
+			perror("ERROR: PCM write failed");
+			free(u);
+			return 2;
+		}
+		free(u);
 	}
-	return u;
+	return 0;
 }
 #undef O32
 #undef O16
