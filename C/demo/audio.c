@@ -31,6 +31,7 @@ int audio(int argc, char *argv[])
 	CLAP_ARG(RK4,    int,    0,            "RK4 solver flag (else Euler)");
 	CLAP_ARG(rseed,  uint,   0,            "random seed (or 0 for random random seed)");
 	CLAP_ARG(pcm,    int,    16,           "PCM bits: 16 or 24 (unsigned), -32 or -64 (fp), or zero for no PCM");
+	CLAP_ARG(cagg,   int,    1,            "PCM aggregate channels?");
 #ifdef _HAVE_GNUPLOT
 	CLAP_ARG(Ts,     double, 1.0,          "display time start (seconds)");
 	CLAP_ARG(Te,     double, 1.1,          "display time end   (seconds)");
@@ -156,15 +157,16 @@ int audio(int argc, char *argv[])
 	//
 	// try, e.g..: play -t raw -r 44.1k -e unsigned -b 16 -c 1 /tmp/kuramoto_audio_44100.u16
 	//             play -t raw -r 44.1k -e float    -b 32 -c 1 /tmp/kuramoto_audio_44100.f32
+	// add e.g., remix 3 0 at end to play just 3rd channel
 	if (pcm) {
 		const size_t smaxlen = 100;
 		char rfile[smaxlen]; // raw PCM data file name
 		if (pcm > 0) {
-			snprintf(rfile,smaxlen,"/tmp/kuramoto_audio_%d.u%d",F,pcm);
+			snprintf(rfile,smaxlen,"/tmp/kuramoto_audio_%dHz_c%zu%s.u%d",F,N,cagg?"a":"",pcm);
 			printf("writing PCM (%d-bit) data to %s ...",pcm,rfile); fflush(stdout);
 		}
 		else {
-			snprintf(rfile,smaxlen,"/tmp/kuramoto_audio_%d.f%d",F,-pcm);
+			snprintf(rfile,smaxlen,"/tmp/kuramoto_audio_%dHz_c%zu%s.u%d",F,N,cagg?"a":"",-pcm);
 			printf("writing PCM (%d-bit floating-point) data to %s ...",pcm,rfile); fflush(stdout);
 		}
 		FILE* const rp = fopen(rfile,"wb");
@@ -172,7 +174,7 @@ int audio(int argc, char *argv[])
 			perror("Failed to open PCM output file");
 			return EXIT_FAILURE;
 		}
-		if (pcm_write(rp,y,n,pcm,1.0,-1.0) != 0) { // write PCM data
+		if (pcm_write(rp,cagg?y:x,cagg?n:N*n,pcm,1.0,-1.0) != 0) { // write PCM data
 			return EXIT_FAILURE;
 		}
 		if (fclose(rp) != 0) {
