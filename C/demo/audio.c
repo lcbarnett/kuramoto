@@ -158,6 +158,7 @@ int audio(int argc, char *argv[])
 	// try, e.g..: play -t raw -r 44.1k -e unsigned -b 16 -c 1 /tmp/kuramoto_audio_44100.u16
 	//             play -t raw -r 44.1k -e float    -b 32 -c 1 /tmp/kuramoto_audio_44100.f32
 	// add e.g., remix 3 0 at end to play just 3rd channel
+
 	if (pcm) {
 		const size_t smaxlen = 100;
 		char rfile[smaxlen]; // raw PCM data file name
@@ -166,8 +167,8 @@ int audio(int argc, char *argv[])
 			printf("writing PCM (%d-bit) data to %s ...",pcm,rfile); fflush(stdout);
 		}
 		else {
-			snprintf(rfile,smaxlen,"/tmp/kuramoto_audio_%dHz_c%zu%s.u%d",F,N,cagg?"a":"",-pcm);
-			printf("writing PCM (%d-bit floating-point) data to %s ...",pcm,rfile); fflush(stdout);
+			snprintf(rfile,smaxlen,"/tmp/kuramoto_audio_%dHz_c%zu%s.f%d",F,N,cagg?"a":"",-pcm);
+			printf("writing PCM (%d-bit floating-point) data to %s ...",-pcm,rfile); fflush(stdout);
 		}
 		FILE* const rp = fopen(rfile,"wb");
 		if (rp == NULL) {
