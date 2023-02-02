@@ -157,6 +157,7 @@ int audio(int argc, char *argv[])
 	//
 	// try, e.g..: play -t raw -r 44.1k -e unsigned -b 16 -c 1 /tmp/kuramoto_audio_44100.u16
 	//             play -t raw -r 44.1k -e float    -b 32 -c 1 /tmp/kuramoto_audio_44100.f32
+	//
 	// add e.g., remix 3 0 at end to play just 3rd channel
 
 	if (pcm) {
@@ -175,7 +176,7 @@ int audio(int argc, char *argv[])
 			perror("Failed to open PCM output file");
 			return EXIT_FAILURE;
 		}
-		if (pcm_write(rp,cagg?y:x,cagg?n:N*n,pcm,1.0,-1.0) != 0) { // write PCM data
+		if (pcm_write(rp,cagg?y:x,cagg?n:N*n,pcm,1.0,-1.0) == -1) { // write PCM data
 			return EXIT_FAILURE;
 		}
 		if (fclose(rp) != 0) {

@@ -2,6 +2,7 @@
 #define KUTILS_H
 
 #include <stdint.h>
+#include <error.h>
 
 // for random number generation from OS
 
