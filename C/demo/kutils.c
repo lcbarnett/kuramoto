@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <math.h>
-#include <fcntl.h>
-#ifdef __unix__
 #include <unistd.h>
 #include <time.h>
+#ifdef	__linux__
+#include <sys/random.h> // for getrandom()
 #endif
 
 #include "kutils.h"
@@ -35,13 +35,12 @@ double randn()
 unsigned get_rand_seed()
 {
 	unsigned seed;
-#ifdef __unix__
-	#ifdef	__linux__
+#ifdef	__linux__
 	if (getrandom(&seed,sizeof(unsigned),GRND_NONBLOCK) != sizeof(unsigned)) {
 		perror("random seed generation failed");
 		return EXIT_FAILURE;
 	}
-	#else
+#else
 	const int fd = open("/dev/urandom",O_RDONLY);
 	if (fd < 0) {
 		perror("random seed generation: failed to open /dev/urandom");
@@ -55,11 +54,7 @@ unsigned get_rand_seed()
 		perror("random seed generation: failed to close /dev/urandom");
 		return EXIT_FAILURE;
 	}
-	#endif // __linux__
-#else
-	fprintf(stderr,"WARNING: no OS random seed - setting to 1\n");
-	seed = 1;
-#endif // __unix__
+#endif
 	return seed;
 }
 
@@ -67,39 +62,32 @@ double timer_start(const char mesg[])
 {
 	printf("%s ...",mesg);
 	fflush(stdout);
-#ifdef __unix__
 	return (double)clock()/(double)CLOCKS_PER_SEC;
-#else
-	return 0.0/0.0; // NaN
-#endif
 }
 
 void timer_stop(const double ts)
 {
-#ifdef __unix__
 	const double te = (double)clock()/(double)CLOCKS_PER_SEC;
 	printf(" %.4f seconds\n\n",te-ts);
-#else
-	printf(" done\n\n");
-#endif
 }
 
 // Linear PCM (remember to free returned buffer after use!)
-
-typedef struct {
-  uint32_t value : 24;
-} uint24_t;
 
 #define O16 ((uint16_t)1)
 #define O32 ((uint32_t)1)
 int pcm_write(FILE* const fp, const double* const x, const size_t n, const int pcm, const double amax, const double amin)
 {
 	if (pcm == 16) { // 2 bytes = uint16_t
-		uint16_t* const u = calloc(n,sizeof(uint16_t)); // caller must free!!!
-		const double maxval = (double)((O16<<16)-O16); // 16-bit max (double-precision floating-point)
+		const double maxfac = (double)((O16<<16)-O16)/(amax-amin); // 16-bit max factor
+		uint16_t* const u = calloc(n,sizeof(uint16_t));
+		if (u == NULL) {
+			perror("PCM memory allocation failed");
+			free(u);
+			return -1;
+		}
 		uint16_t* uu = u;
 		for (const double* xx=x; xx<x+n; ++xx) {
-			*uu++ = (uint16_t)(maxval*((*xx-amin)/(amax-amin)));
+			*uu++ = (uint16_t)(maxfac*(*xx-amin));
 		}
 		if (fwrite(u,sizeof(uint16_t),n,fp) != n) {
 			perror("PCM write failed");
@@ -109,17 +97,23 @@ int pcm_write(FILE* const fp, const double* const x, const size_t n, const int p
 		free(u);
 		return 0;
 	}
+
 	if (pcm == 24) { // 3 bytes, but no native uint24_t type, so we use 3 unsigned chars
+		const double maxfac = (double)((O32<<24)-O32)/(amax-amin); // 24-bit max factor
 		const size_t nbytes = 3*n; // number of PCM bytes
 		uchar_t* const u = calloc(nbytes,sizeof(uchar_t));
+		if (u == NULL) {
+			perror("PCM memory allocation failed");
+			free(u);
+			return -1;
+		}
 		const uint32_t lomask = (O32<<8)-O32; // mask for low byte
-		const double   maxval = (double)((O32<<24)-O32); // 24-bit max (double-precision floating-point)
 		uchar_t* uu = u;
 		for (const double* xx=x; xx<x+n; ++xx) {
-			const uint32_t xpcm = (uint32_t)(maxval*((*xx-amin)/(amax-amin)));
-			*uu++ = (uchar_t)((xpcm>> 0)&lomask);
+			const uint32_t xpcm = (uint32_t)(maxfac*(*xx-amin));
+			*uu++ = (uchar_t)((xpcm>> 0)&lomask); // don't really need the shift
 			*uu++ = (uchar_t)((xpcm>> 8)&lomask);
-			*uu++ = (uchar_t)((xpcm>>16)&lomask);
+			*uu++ = (uchar_t)((xpcm>>16)&lomask); // don't really need the mask
 		}
 		if (fwrite(u,sizeof(uchar_t),nbytes,fp) != nbytes) {
 			perror("PCM write failed");
@@ -129,8 +123,14 @@ int pcm_write(FILE* const fp, const double* const x, const size_t n, const int p
 		free(u);
 		return 0;
 	}
+
 	if (pcm == -32) { // single-precision floating-point
 		float* const u = calloc(n,sizeof(float));
+		if (u == NULL) {
+			perror("PCM memory allocation failed");
+			free(u);
+			return -1;
+		}
 		float* uu = u;
 		for (const double* xx=x; xx<x+n; ++xx) {
 			*uu++ = (float)*xx;
@@ -143,6 +143,7 @@ int pcm_write(FILE* const fp, const double* const x, const size_t n, const int p
 		free(u);
 		return 0;
 	}
+
 	if  (pcm == -64) { // double-precision floating-point - got that already!
 		if (fwrite(x,sizeof(double),n,fp) != n) {
 			perror("PCM write failed");
@@ -150,6 +151,7 @@ int pcm_write(FILE* const fp, const double* const x, const size_t n, const int p
 		}
 		return 0;
 	}
+
 	error(0,0,"PCM must be unsigned 16- or 24-bit, or floating-point 32- or 64-bit");
 	return -1;
 }

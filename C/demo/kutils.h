@@ -3,23 +3,20 @@
 
 #include <stdint.h>
 #include <error.h>
-
-// for random number generation from OS
-
 #include <stdlib.h>
-#ifdef	__linux__
-#include <sys/random.h>
-#endif
 
 // Gnuplot default terminal
 
 #ifdef _HAVE_GNUPLOT
-#ifdef __unix__
-#define GPTERM "x11"
-#endif
-#ifdef __APPLE__
-#define GPTERM "aqua"
-#endif
+	#if defined(__unix__)
+		#define GPTERM "x11"
+	#elif defined(__APPLE__)
+		#define GPTERM "aqua"
+	#elif defined(_WIN32) ||  defined(_WIN64)
+		#define GPTERM "windows"
+	#else
+		#error "Don't know how to set Gnuplot terminal"
+	#endif
 #endif
 
 typedef unsigned char uchar_t;
