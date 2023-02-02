@@ -32,7 +32,7 @@ static inline double randu()
 
 double randn();
 
-// get a random random seed (only implemented for Linux at the moment)
+// get a random random seed
 
 unsigned get_rand_seed();
 
@@ -41,7 +41,7 @@ unsigned get_rand_seed();
 double timer_start(const char mesg[]);
 void   timer_stop(const double ts);
 
-// Linear PCM (remember to free returned buffer after use!)
+// Linear PCM encoding
 
 int pcm_write(FILE* const fp, const double* const x, const size_t n, const int pcm, const double amax, const double amin);
 

@@ -74,10 +74,10 @@ int audio(int argc, char *argv[])
 	for (size_t i=0; i<N; ++i) {
 		for (size_t j=0; j<N; ++j) {
 			if (i == j) {
-				K[N*i+j] = 0.0;                      // no "self-connections"!
+				K[N*i+j] = 0.0; // no "self-connections"!
 			}
 			else {
-				K[N*i+j] = dt*TWOPI*ooN*(Kmean+Ksdev*randn()); // scale coupling constants by dt
+				K[N*i+j] = dt*TWOPI*ooN*(Kmean+Ksdev*randn()); // scale coupling constants by dt and N
 			}
 		}
 	}
@@ -153,12 +153,16 @@ int audio(int argc, char *argv[])
 	}
 	printf(" done\n\n");
 
-	// encode aggregate signal as PCM and write to file
+	// encode signals or aggregated signal as PCM and write to file
 	//
-	// try, e.g..: play -t raw -r 44.1k -e unsigned -b 16 -c 1 /tmp/kuramoto_audio_44100.u16
-	//             play -t raw -r 44.1k -e float    -b 32 -c 1 /tmp/kuramoto_audio_44100.f32
+	// if you have SoX, you can play the adio by, e.g.:
 	//
-	// add e.g., remix 3 0 at end to play just 3rd channel
+	//   play -t raw -r 44.1k -e unsigned -b 16 -c 1 kuramoto_audio_44100Hz_c8a.u16
+	//   play -t raw -r 44.1k -e float -b 32 -c 8 kuramoto_audio_44100Hz_c8.f32
+	//
+	// in the unaggregated case, you can play, e.g., just the 3rd channel with:
+	//
+	//   play -t raw -r 44.1k -e float -b 32 -c 8 kuramoto_audio_44100Hz_c8.f32 remix 3 0
 
 	if (pcm) {
 		const size_t smaxlen = 100;

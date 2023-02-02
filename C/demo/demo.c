@@ -57,7 +57,7 @@ int demo(int argc, char *argv[])
 	// random frequencies (normal distribution)
 
 	for (size_t i=0; i<N; ++i) {
-		w[i] = dt*TWOPI*(wmean+wsdev*randn()); // scale by dt
+		w[i] = dt*TWOPI*(wmean+wsdev*randn()); // scale frequencies by dt
 	}
 
 	// random coupling constants (normal distribution)
@@ -65,10 +65,10 @@ int demo(int argc, char *argv[])
 	for (size_t i=0; i<N; ++i) {
 		for (size_t j=0; j<N; ++j) {
 			if (i == j) {
-				K[N*i+j] = 0.0;                      // no "self-connections"!
+				K[N*i+j] = 0.0; // no "self-connections"!
 			}
 			else {
-				K[N*i+j] = dt*ooN*TWOPI*(Kmean+Ksdev*randn()); // scale by no. of oscillators and dt
+				K[N*i+j] = dt*ooN*TWOPI*(Kmean+Ksdev*randn()); // scale coupling constants by dt and N
 			}
 		}
 	}

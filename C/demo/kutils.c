@@ -30,7 +30,7 @@ double randn()
     return fac*v2;
 }
 
-// get a random random seed (only implemented for Linux/POSIX at the moment)
+// get a random random seed
 
 unsigned get_rand_seed()
 {
@@ -71,7 +71,7 @@ void timer_stop(const double ts)
 	printf(" %.4f seconds\n\n",te-ts);
 }
 
-// Linear PCM (remember to free returned buffer after use!)
+// Linear PCM encoding
 
 #define O16 ((uint16_t)1)
 #define O32 ((uint32_t)1)
