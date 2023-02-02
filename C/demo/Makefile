@@ -1,8 +1,9 @@
 # Tested on gcc (Linux 64-bit), mingw-w64 (Windows 64-bit) and
-# Clang/LLVM (macOS). Note that MSVC (still) does not fully
-# support the C99 standard, so may have problems building.
-
-# NOTE: you must build and install the kuramoto synamic shared
+# Clang/LLVM (macOS). We basically assume Posix compliance. Note
+# that MSVC (still) does not fully support the C99 standard, so
+# may have problems building.
+#
+# NOTE: you must build and install the kuramoto dynamic shared
 # library first! See ../lib
 
 SRC = main.c demo.c audio.c kutils.c clap.c
@@ -12,6 +13,7 @@ ifdef ComSpec
 #	Windows
 	RM = del /F /Q
 	BIN = kuramoto.exe
+	# I don't know standard locations for dev headers and dlls on Windows
 	LIBDIR ?=
 	INCDIR ?=
 else
