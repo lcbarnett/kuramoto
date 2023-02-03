@@ -5,10 +5,10 @@ defvar('N',     20      ); % number of oscillators
 defvar('wmean', 0       ); % oscillator frequencies mean
 defvar('wsdev', pi/7    ); % oscillator frequencies std. dev.
 defvar('wseed', []      ); % oscillator frequencies random seed (empty for no seeding)
-defvar('Kmean', 0.8/N   ); % oscillator coupling constants mean
+defvar('Kmean', 0.8     ); % oscillator coupling constants mean
 defvar('Ksdev', Kmean/6 ); % oscillator coupling constants std. dev.
 defvar('Kseed', []      ); % oscillator coupling constants random seed (empty for no seeding)
-defvar('a',     0       ); % oscillator phase lag constant
+defvar('a',     []      ); % oscillator phase lag constant
 defvar('hseed', []      ); % oscillator initial phases random seed (empty for no seeding)
 defvar('T',     200     ); % simulation time
 defvar('dt',    0.01    ); % integration time increment
@@ -26,12 +26,8 @@ if ~isempty(wseed), rng(rstate); end
 
 if ~isempty(Kseed), rstate = rng(Kseed); end
 K = Kmean + Ksdev*randn(N); % coupling constants normally distributed with mean Kmean and std. dev. Ksdev
-K(1:N+1:N^2) = 0;           % zeros on diagonal (no self-connections!)
 if ~isempty(Kseed), rng(rstate); end
-
-if ~isempty(hseed), rstate = rng(hseed); end
-h0 = pi*(2*rand(N,1)-1);      % initial phases uniform on [-pi,pi]
-if ~isempty(hseed), rng(rstate); end
+K = K/N;                    % scale by system size
 
 n = round(T/dt);
 assert(n > 0,'Simulation time too short, or time increment too large!');
@@ -51,20 +47,23 @@ if nmean > 0 % with input noise
 	I = nmag.*randn(N,n); % uncorrelated Gaussian white noise
 	if ~isempty(Iseed), rng(rstate); end
 else
-	I = []; % no input
+	I = zeros(N,n); % no input
 end
+if ~isempty(hseed), rstate = rng(hseed); end
+I(:,1) = pi*(2*rand(N,1)-1);      % initial phases uniform on [-pi,pi]
+if ~isempty(hseed), rng(rstate); end
 
 % Run Kuramoto Euler and Rung-Kutta simulations with specified parameters
 
 fprintf('\n');
 
 st1 = tic;
-[h1,r1,psi1] = kuramoto(N,w,K,a,h0,n,dt,I,'Euler'); % with input noise
+[h1,r1,psi1] = kuramoto(N,w,K,a,n,dt,I,'Euler');
 et1 = toc(st1);
 fprintf('Euler method : %g seconds\n',et1);
 
 st2 = tic;
-[h2,r2,psi2] = kuramoto(N,w,K,a,h0,n,dt,[],'RK4');  % without input
+[h2,r2,psi2] = kuramoto(N,w,K,a,n,dt,I,'RK4');
 et2 = toc(st2);
 fprintf('RK4 method   : %g seconds\n',et2);
 

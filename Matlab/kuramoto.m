@@ -1,4 +1,4 @@
-function [h,r,psi] = kuramoto(N,w,K,a,h0,n,dt,I,mode)
+function [h,r,psi] = kuramoto(N,w,K,a,n,dt,I,mode)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -9,8 +9,7 @@ function [h,r,psi] = kuramoto(N,w,K,a,h0,n,dt,I,mode)
 % N     number of oscillators                 (positive integer)
 % w     oscillator frequencies                (scalar or vector of length N)
 % K     oscillator coupling constants         (scalar or square matrix of size N)
-% a     phase lag                             (scalar)
-% h0    initial phases of oscillators         (scalar or vector of length N)
+% a     phase lags                            (scalar or square matrix of size N)
 % n     number of time increments             (positive integer)
 % dt    integration time increment            (positive double)
 % I     input                                 (N x n matrix or empty for no input)
@@ -46,20 +45,22 @@ else
 	assert(isvector(w) && length(w) == N,'Frequencies must be a scalar double or a vector of doubles matching the specified number of oscillators');
 end
 
-assert(isa(K,'double'),'Coupling constants must be a scalar double, or a vector of doubles matching the specified number of oscillators');
+assert(isa(K,'double'),'Coupling constants must be a scalar double, or a square matrix of doubles matching the specified number of oscillators');
 if isscalar(K)
-	K = K*ones(N); % uniform coupling
+	K = K*ones(N);    % uniform coupling
+	K(1:N+1:N*N) = 0; % zeros on diagonal!
 else
-	assert(ismatrix(K) && size(K,1) == N && size(K,2) == N,'Coupling constants must be a scalar double, or a square matrix of doubles matching matching the specified number of oscillators');
+	assert(ismatrix(K) && size(K,1) == N && size(K,2) == N,'Coupling constants must be a scalar double, or a square matrix of doubles matching the specified number of oscillators');
 end
 
-assert(isa(a,'double') && isscalar(a),'Phase lag must be scalar double');
-
-assert(isa(h0,'double'),'Initial oscillator phases must be a scalar double or a vector of doubles matching the specified number of oscillators');
-if isscalar(h0)
-	h0 = h0*ones(N,1);
-else
-	assert(isvector(h0)  && length(h0) == N,'Initial oscillator phases must be a scalar double or a vector of doubles matching the specified number of oscillators');
+if ~isempty(a)
+	assert(isa(a,'double'),'Phase lags must be empty, a scalar double, or a square matrix of doubles matching matching the specified number of oscillators');
+	if isscalar(a)
+		a = a*ones(N);    % uniform phase lag
+		a(1:N+1:N*N) = 0; % zeros on diagonal!
+	else
+		assert(ismatrix(a) && size(a,1) == N && size(a,2) == N,'Phase lags must be empty, a scalar double, or a square matrix of doubles matching the specified number of oscillators');
+	end
 end
 
 n = double(n);
@@ -69,19 +70,22 @@ assert(isa(dt,'double') && isscalar(dt) && dt > 0,'Integration increment must be
 
 assert(isempty(I) || (isa(I,'double') && ismatrix(I) && size(I,1) == N && size(I,2) == n),'Input must be empty, or an N x n matrix of doubles');
 
+if isempty(mode)
+	RK4 = 1;
+else
+	assert(ischar(mode),'Simulation mode must be empty, or ''Euler'' or ''RK4''');
+	switch upper(mode)
+		case 'RK4',   RK4 = 1;
+		case 'EULER', RK4 = 0;
+		otherwise,    error('Unknown simulation mode; must be empty, ''Euler'' or ''RK4''');
+	end
+end
+
 % Call mex ODE simulation (returned phase matrix h is N x n)
 %
-% Note: we transpose K so that K(i,j) is connection strength j --> i
+% Note: we transpose K so that K(i,j) is connection strength j --> i. Also a
 
-assert(ischar(mode),'Simulation mode must be ''Euler'' or ''RK4''');
-switch upper(mode)
-case 'RK4'
-	h = kuramoto_rk4_mex(N,n,w*dt,K'*dt,a,h0,I*sqrt(dt));
-case 'EULER'
-	h = kuramoto_euler_mex(N,n,w*dt,K'*dt,a,h0,I*sqrt(dt));
-otherwise
-	error('Unknown simulation mode; must be ''Euler'' or ''RK4''');
-end
+h = kuramoto_mex(N,n,dt*w,dt*K',a',sqrt(dt)*I,RK4);
 
 % Order parameter (if requested)
 
