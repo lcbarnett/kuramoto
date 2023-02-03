@@ -18,7 +18,7 @@ int audio(int argc, char *argv[])
 	//
 	// kuramoto audio -N 10 -T 5 -f 20000 -Isdev 0
 	//
-	// Arg:  name    type    default    description
+	// Arg:  name    type    default       description
 	puts("\n---------------------------------------------------------------------------------------");
 	CLAP_ARG(N,      size_t, 4,            "number of oscillators");
 	CLAP_ARG(T,      double, 5.0,          "total time (seconds)");

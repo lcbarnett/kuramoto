@@ -1,25 +1,19 @@
-# Tested on gcc (Linux 64-bit), mingw-w64 (Windows 64-bit) and
-# Clang/LLVM (macOS). Note that MSVC (still) does not fully
-# support the C99 standard, so may have problems building.
+# This Makefile targets POSIX environments, probably using GCC,
+# but should also work with Clang/LLVM on Nac OS. It may also
+# work on Windows, say with mingw-w64/MSYS2 (note that MSVC does
+# not fully support the C99 standard, so may be problematic).
+
+PREFIX ?= /usr/local
 
 SRC = kuramoto.c
 INC = kuramoto.h
 
-ifdef ComSpec
-#	Windows
-	RM = del /F /Q
-	LIB = kuramoto.dll
-	LIBDIR ?=
-	INCDIR ?=
-else
-#	Linux, Darwin
-	RM = rm -f
-	LIB = libkuramoto.so
-	LIBDIR ?= /usr/local/lib
-	INCDIR ?= /usr/local/include/kuramoto
-endif
+RM = rm -f
+LIB = libkuramoto.so
+LIBDIR ?= $(PREFIX)/lib
+INCDIR ?= $(PREFIX)/include/kuramoto
 
-CC = gcc
+CC ?= gcc
 INSTALL = install -D
 
 CFLAGS = -std=c99 -march=native -O2 -Wall -Wextra -Winline -pedantic-errors -D_DEFAULT_SOURCE

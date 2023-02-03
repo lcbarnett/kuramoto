@@ -1,40 +1,26 @@
 # Tested on gcc (Linux 64-bit), mingw-w64 (Windows 64-bit) and
 # Clang/LLVM (macOS). Note that MSVC (still) does not fully
 # support the C99 standard, so may have problems building.
+# This Makefile targets POSIX environments, probably using GCC,
+# but should also work with Clang/LLVM on Nac OS. It may also
+# work on Windows, say with mingw-w64/MSYS2 (note that MSVC does
+# not fully support the C99 standard, so may be problematic).
+
+PREFIX ?= /usr/local
 
 MEXT = $(shell mexext)
 
-SRC = kuramoto_euler_mex.c kuramoto_rk4_mex.c
-BIN = $(SRC:.c=.$(MEXT))
+SRC = kuramoto_mex.c
+BIN = kuramoto.$(MEXT)
 
-ifdef ComSpec
-#	Windows: MATLAB say to use 'CFLAGS' for MinGW, but 'COMPFLAGS' seems to work; see
-#   https://uk.mathworks.com/help/matlab/matlab_external/compiling-c-mex-files-with-mingw.html
-	RM      = del /F /Q
-	MCFLAGS = COMPFLAGS
-	OBJ     = ..\C\kuramoto.o
-	INCDIR  = ..\C
-	LIBDIR  = ..\lib
-else
-#	Linux, Darwin
-	RM      = rm -f
-	MCFLAGS = CFLAGS
-	OBJ     = ../C/kuramoto.o
-	INCDIR  = ../C
-	LIBDIR  = ../lib
-endif
+RM      = rm -f
+MCFLAGS = CFLAGS
+LIBDIR ?= $(PREFIX)/lib
+INCDIR ?= $(PREFIX)/include/kuramoto
 
-# dynamic linkage to shared library?
+CC ?= gcc
 
-ifdef SOLINK
-	OLINK = -L$(LIBDIR) -lkuramoto
-else
-	OLINK = $(OBJ)
-endif
-
-CC  = gcc
-
-CFLAGS = -std=c99 -march=native -O2 -Wall -Wextra -Wconversion -Winline -pedantic-errors -I$(INCDIR) -D_DEFAULT_SOURCE
+CFLAGS = -std=c99 -march=native -O2 -Wall -Wextra -Winline -pedantic-errors -I$(INCDIR) -Wl,-rpath=$(LIBDIR) -D_DEFAULT_SOURCE
 
 MEX = mex
 
@@ -47,13 +33,10 @@ all: $(BIN)
 clean:
 	$(RM) $(BIN)
 
-%.$(MEXT): %.c
-	$(MEX) $(MFLAGS) $(MCFLAGS)="\$$CFLAGS $(CFLAGS)" $(OLINK) $<
-
-$(BIN): $(OBJ)
+$(BIN): $(SRC)
+	$(MEX) $(MFLAGS) $(MCFLAGS)="\$$CFLAGS $(CFLAGS)" -lkuramoto $<
 
 diag:
 	@echo "*** MEXT = " $(MEXT)
 	@echo "*** SRC  = " $(SRC)
-	@echo "*** OBJ  = " $(OBJ)
 	@echo "*** BIN  = " $(BIN)

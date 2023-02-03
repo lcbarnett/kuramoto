@@ -14,9 +14,9 @@ void mexFunction(int UNUSED nlhs, mxArray *plhs[], int UNUSED nrhs, const mxArra
 	const size_t        n   = (size_t)mxGetScalar(prhs[1]);  // number of integration increments
 	const double* const w   =  mxGetDoubles(prhs[2]);        // dt*frequencies
 	const double* const K   =  mxGetDoubles(prhs[3]);        // dt*(coupling constants)
-	const double        a   =  mxGetScalar(prhs[4]);         // phase-lag (scalar)
-	const double* const h0  =  mxGetDoubles(prhs[5]);        // initial oscillator phases
-	const double* const I   =  mxIsEmpty(prhs[6]) ? NULL : mxGetDoubles(prhs[6]); // sqrt(dt)*input
+	const double* const a   =  mxIsEmpty(prhs[4]) ? NULL : mxGetDoubles(prhs[4]);     // phase-lags
+	const double* const I   =  mxIsEmpty(prhs[5]) ? NULL : mxGetDoubles(prhs[5]);     // sqrt(dt)*input
+	const int           RK4 =  mxIsEmpty(prhs[6]) ? 1    : (int)mxGetScalar(prhs[6]); // use RK4? (default: yes)
 
 	// allocate output
 
@@ -30,13 +30,14 @@ void mexFunction(int UNUSED nlhs, mxArray *plhs[], int UNUSED nrhs, const mxArra
 		memcpy(h,I,N*n*sizeof(double)); // initialise phases with input
 	}
 
-	// Initial phases at t = 0 (plus input!)
+	// run Kuramoto ODE solver
 
-	for (size_t i=0; i<N; ++i) {
-		h[i] += h0[i];
+	if (RK4) {
+		double* const k1 = mxCalloc(4*N,sizeof(double));
+		if (a) kuramoto_rk4pl(N,n,w,K,a,h,k1); else kuramoto_rk4(N,n,w,K,h,k1);
+		mxFree(k1);
 	}
-
-	// Classic Runge-Kutta method (RK4)
-
-	kuramoto_rk4(N,n,w,K,a,h);
+	else {
+		if (a) kuramoto_eulerpl(N,n,w,K,a,h);  else kuramoto_euler(N,n,w,K,h);
+	}
 }

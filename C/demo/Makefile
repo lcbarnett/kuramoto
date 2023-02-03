@@ -1,40 +1,38 @@
-# Tested on gcc (Linux 64-bit), mingw-w64 (Windows 64-bit) and
-# Clang/LLVM (macOS). We basically assume Posix compliance. Note
-# that MSVC (still) does not fully support the C99 standard, so
-# may have problems building.
-#
-# NOTE: you must build and install the kuramoto dynamic shared
-# library first! See ../lib
+# This Makefile targets POSIX environments, probably using GCC,
+# but should also work with Clang/LLVM on Nac OS. It may also
+# work on Windows, say with mingw-w64/MSYS2 (note that MSVC does
+# not fully support the C99 standard, so may be problematic).
+
+PREFIX ?= /usr/local
 
 SRC = main.c demo.c audio.c kutils.c clap.c
 INC = kutils.h clap.h
 
-ifdef ComSpec
-#	Windows
-	RM = del /F /Q
-	BIN = kuramoto.exe
-	# I don't know standard locations for dev headers and dlls on Windows
-	LIBDIR ?=
-	INCDIR ?=
-else
-#	Linux, Darwin
-	RM = rm -f
-	BIN = kuramoto
-	LIBDIR ?= /usr/local/lib
-	INCDIR ?= /usr/local/include/kuramoto
-endif
+RM = rm -f
+BIN = kuramoto
 
-CC = gcc
-INSTALL = install
+LIBDIR ?= $(PREFIX)/lib
+INCDIR ?= $(PREFIX)/include/kuramoto
+BINDIR ?= $(PREFIX)/bin
 
-CFLAGS = -std=c99 -march=native -O2 -Wall -Wextra -Winline -pedantic-errors -D_DEFAULT_SOURCE -D_GNU_SOURCE -D_HAVE_GNUPLOT
+CC ?= gcc
+INSTALL = install -D
 
-.PHONY: all clean
+# If you don't have Gnuplot installed, omit the  -D_HAVE_GNUPLOT flag
+CFLAGS = -std=c99 -march=native -O2 -Wall -Wextra -Winline -pedantic-errors -D_DEFAULT_SOURCE -D_HAVE_GNUPLOT
+
+.PHONY: all clean install
 
 all: $(BIN)
 
 $(BIN): $(SRC) $(INC)
-	$(CC) $(SRC) $(LIBSRC) $(CFLAGS) -I$(INCDIR) -Wl,-rpath=$(LIBDIR) -lkuramoto -lm -o $(BIN)
+	$(CC) $(SRC) $(CFLAGS) -I$(INCDIR) -Wl,-rpath=$(LIBDIR) -lkuramoto -lm -o $(BIN)
+
+install:
+	$(INSTALL) -m755 $(BIN) $(BINDIR)/$(BIN)
+
+uninstall:
+	$(RM) $(BINDIR)/$(BIN)
 
 clean:
 	$(RM) $(BIN)
