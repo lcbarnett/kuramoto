@@ -12,7 +12,7 @@ To build and install the kuramoto shared library, in a terminal navigate to the 
 ```
 make -C C/lib && sudo make -C C/lib install
 ```
-This builds, and then installs the library. The default installation directory is /usr/local/lib (you will need admin privileges for this).  Alternatively, you may specfify an installation path by setting the PREFIX environmental variable before running `make install`.
+This builds, and then installs the library. The default installation directory is /usr/local/lib (you will need admin privileges for this).  You may specify an alternative installation path by setting the PREFIX environmental variable before running `make install`.
 
 To build the C demo, run
 ```
