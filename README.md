@@ -6,7 +6,7 @@ An efficient C implementation of the standard Kuramoto coupled oscillators syste
 with C and Matlab interfaces. Simulations using the Euler and classic Runge-Kutta ("RK4") methods are available. There are C and Matlab programs to demonstrate usage of the interfaces to the **kuramoto** library.
 
 ### Building and installation
-You will need the [Make](https://www.gnu.org/software/make/) build tool installed on your system, and the Matlab `mex` and `makemex` executables (in the `bin` directory of your Matlab installation) on your system executable path. [^1]
+You will need the [Make](https://www.gnu.org/software/make/) build tool installed on your system, and the Matlab `mex` and `makemex` executables (in the `bin` directory of your Matlab installation) on your system executable path [^1].
 
 To build and install the kuramoto shared library, in a terminal navigate to the **kuramoto** root directory and run
 ```
