@@ -21,11 +21,16 @@
 
 typedef unsigned char uchar_t;
 
-// Uniform random double on [0,1) [Note: you might want a better PRNG :-)]
+// Uniform random (IEEE-754 53-bit resolution) double on [0,1)
+//
+// Note: uses POSIX random(), which is non-reantrant
+// so not thread-safe/. Should probably use a better
+// PRNG, like Mersenne Twister.
 
 static inline double randu()
 {
-	return (double)random()/((double)(RAND_MAX)+1.0); // (random() is non-reantrant so not thread-safe)
+	// random() only returns 32 random bits - glue two together.
+	return ((((uint64_t)random())|(((uint64_t)random())<<32))>>11)*(1.0/9007199254740992.0);
 }
 
 // Standard normal random double (Box-Muller, non-reantrant so not thread-safe)

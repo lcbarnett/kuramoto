@@ -55,7 +55,6 @@ int demo(int argc, char *argv[])
 	double* const y = calloc(n,sizeof(double)); // oscillator agregated signal
 
 	// random frequencies (normal distribution)
-
 	for (size_t i=0; i<N; ++i) {
 		w[i] = dt*TWOPI*(wmean+wsdev*randn()); // scale frequencies by dt
 	}
