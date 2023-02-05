@@ -182,7 +182,7 @@ int audio(int argc, char *argv[])
 			perror("Failed to open PCM output file");
 			return EXIT_FAILURE;
 		}
-		if (pcm_write(rp,cagg?y:x,cagg?n:N*n,pcm,1.0,-1.0) == -1) { // write PCM data
+		if (pcm_write(rp,cagg?y:x,cagg?n:N*n,pcm,-1.0,1.0) == -1) { // write PCM data
 			return EXIT_FAILURE;
 		}
 		if (fclose(rp) != 0) {

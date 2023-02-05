@@ -48,6 +48,6 @@ void   timer_stop(const double ts);
 
 // Linear PCM encoding
 
-int pcm_write(FILE* const fp, const double* const x, const size_t n, const int pcm, const double amax, const double amin);
+int pcm_write(FILE* const fp, const double* const x, const size_t n, const int pcm, const double amin, const double amax);
 
 #endif // KUTILS_H
