@@ -5,8 +5,8 @@
 
 PREFIX ?= /usr/local
 
-SRC = kuramoto.c
-INC = kuramoto.h
+SRC = kuramoto.c stulan.c
+INC = kuramoto.h stulan.h
 
 RM = rm -f
 LIB = libkuramoto.so
