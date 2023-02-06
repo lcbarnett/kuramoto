@@ -4,6 +4,13 @@
 #include <stdint.h>
 #include <error.h>
 #include <stdlib.h>
+#include <limits.h>
+
+// Check that uint64_t is implemented
+
+#if !defined(UINT64_MAX)
+#error "Sorry, this code requires 64-bit unsigned integers"
+#endif
 
 // Gnuplot default terminal
 

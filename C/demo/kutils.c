@@ -98,7 +98,7 @@ int pcm_write(FILE* const fp, const double* const x, const size_t n, const int p
 
 	if (pcm == 24) { // 3 bytes, but no native uint24_t type, so we use 3 unsigned chars
 		const double   maxfac = (double)(((uint32_t)~0)>>8)/(amax-amin); // 24-bit max factor
-		const uint32_t lomask = ((uint32_t)~0)>>24;                      // mask for low byte
+		const uint32_t lomask = ((uint32_t)~0)>>24;                      // low byte mask
 		const size_t nbytes = 3*n; // number of PCM bytes
 		uchar_t* const u = calloc(nbytes,sizeof(uchar_t));
 		if (u == NULL) {
