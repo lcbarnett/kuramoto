@@ -8,13 +8,11 @@ PREFIX ?= /usr/local
 SRC = kuramoto.c stulan.c
 INC = kuramoto.h stulan.h
 
-RM = rm -f
 LIB = libkuramoto.so
 LIBDIR ?= $(PREFIX)/lib
 INCDIR ?= $(PREFIX)/include/kuramoto
 
 CC ?= gcc
-INSTALL = install -D
 
 CFLAGS = -std=c99 -march=native -O2 -Wall -Wextra -Winline -pedantic-errors -D_DEFAULT_SOURCE
 
@@ -26,12 +24,14 @@ $(LIB): $(SRC) $(INC)
 	$(CC) $(SRC) -shared -fPIC $(CFLAGS) -o $(LIB)
 
 install:
-	$(INSTALL) -m755 $(LIB) $(LIBDIR)/$(LIB)
-	$(INSTALL) -m644 $(INC) $(INCDIR)/$(INC)
+	install -m755 $(LIB) $(LIBDIR)
+	install -D -m644 kuramoto.h $(INCDIR)/kuramoto.h
+	install -D -m644 stulan.h   $(INCDIR)/stulan.h
 
 uninstall:
-	$(RM) $(LIBDIR)/$(LIB)
-	$(RM) $(INCDIR)/$(INC)
+	rm $(LIBDIR)/$(LIB)
+	rm $(INCDIR)/kuramoto.h
+	rm $(INCDIR)/stulan.h
 
 clean:
-	$(RM) $(LIB)
+	rm $(LIB)

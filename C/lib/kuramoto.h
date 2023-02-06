@@ -45,10 +45,11 @@ void kuramoto_rk4pl // Classic Runge-Kutta (RK4) with phase lags
 
 void order_param // calculate order parameter magnitude
 (
-	const size_t N,
-	const size_t n,
-	const double* const h,
-	double* const r
+	const size_t N,        // number of oscillators
+	const size_t n,        // number of integration increments
+	const double* const h, // oscillator phases
+	double* const r,       // order parameter magnitude
+	double* const psi      // order parameter phase (NULL if not required)
 );
 
 void phase_wrap(const size_t m, double* const h);

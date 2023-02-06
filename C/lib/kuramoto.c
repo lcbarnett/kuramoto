@@ -176,31 +176,34 @@ void kuramoto_rk4pl // Classic Runge-Kutta (RK4) with phase lags
 
 void order_param // calculate order parameter magnitude
 (
-	const size_t N,
-	const size_t n,
-	const double* const h,
-	double* const r
+	const size_t N,        // number of oscillators
+	const size_t n,        // number of integration increments
+	const double* const h, // oscillator phases
+	double* const r,       // order parameter magnitude
+	double* const psi      // order parameter phase (NULL if not required)
 )
 {
 	const double OON = 1.0/(double)N;
 	double* rt = r;
-	for (const double* ht=h; ht<h+N*n; ht+=N,++rt) {
-		double cmean = 0.0;
-		double smean = 0.0;
+	double* pt = psi;
+	for (const double* ht=h; ht<h+N*n; ht+=N) {
+		double x = 0.0;
+		double y = 0.0;
 		for (size_t i=0; i<N; ++i) {
 #ifdef _GNU_SOURCE
 			double c,s;
 			sincos(ht[i],&s,&c);
-			cmean += c;
-			smean += s;
+			x += c;
+			y += s;
 #else
-			cmean += cos(ht[i]);
-			smean += sin(ht[i]);
+			x += cos(ht[i]);
+			y += sin(ht[i]);
 #endif
 		}
-		cmean *= OON;
-		smean *= OON;
-		*rt = hypot(cmean,smean);
+		x *= OON;
+		y *= OON;
+		*rt++ = hypot(x,y);
+		if (psi) *pt++ = atan2(y,x);
 	}
 }
 
