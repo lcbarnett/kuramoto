@@ -98,7 +98,7 @@ int demo(int argc, char *argv[])
 
 	// calculate order parameter
 
-	order_param(N,n,h,r,NULL);
+	kuramoto_order_param(N,n,h,r,NULL);
 
 	// wrap oscillator phases to [-pi,pi) [if that's is what you want]
 	//

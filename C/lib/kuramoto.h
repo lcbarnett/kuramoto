@@ -3,6 +3,8 @@
 
 #define TWOPI (2.0*M_PI)
 
+// Kuramoto model
+
 void kuramoto_euler	// Euler method
 (
 	const size_t        N,  // number of oscillators
@@ -43,7 +45,7 @@ void kuramoto_rk4pl // Classic Runge-Kutta (RK4) with phase lags
 	double*       const k1 // buffer for RK4 coefficients (size must be 4*N)
 );
 
-void order_param // calculate order parameter magnitude
+void kuramoto_order_param // calculate order parameter magnitude/phase
 (
 	const size_t N,        // number of oscillators
 	const size_t n,        // number of integration increments
@@ -51,6 +53,27 @@ void order_param // calculate order parameter magnitude
 	double* const r,       // order parameter magnitude
 	double* const psi      // order parameter phase (NULL if not required)
 );
+
+// Stuart-Landau model
+
+void stulan_euler // Euler method
+(
+	const size_t        N,  // number of oscillators
+	const size_t        n,  // number of integration increments
+	const double        dt, // time integration step
+	const double* const w,  // dt*frequencies
+	const double* const K,  // dt*frequencies*(coupling constants)/N
+	const double* const a,  // dt*(growth constants) - (K summed over 2nd index)
+	double*       const x,  // oscillator real part, to be computed by numerical ODE (pre-initialised with input)
+	double*       const y   // oscillator imag part, to be computed by numerical ODE (pre-initialised with input)
+);
+
+// Utilities
+
+static inline double wmpi2pi(const double x) // wrap to [-pi,pi)
+{
+	return x > 0.0 ? fmod(x+M_PI,2.0*M_PI)-M_PI : fmod(x-M_PI,2.0*M_PI)+M_PI;
+}
 
 void phase_wrap(const size_t m, double* const h);
 

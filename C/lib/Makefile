@@ -5,8 +5,8 @@
 
 PREFIX ?= /usr/local
 
-SRC = kuramoto.c stulan.c
-INC = kuramoto.h stulan.h
+SRC = kuramoto.c
+INC = kuramoto.h
 
 LIB = libkuramoto.so
 LIBDIR ?= $(PREFIX)/lib
@@ -26,12 +26,10 @@ $(LIB): $(SRC) $(INC)
 install:
 	install -m755 $(LIB) $(LIBDIR)
 	install -D -m644 kuramoto.h $(INCDIR)/kuramoto.h
-	install -D -m644 stulan.h   $(INCDIR)/stulan.h
 
 uninstall:
 	rm $(LIBDIR)/$(LIB)
 	rm $(INCDIR)/kuramoto.h
-	rm $(INCDIR)/stulan.h
 
 clean:
 	rm $(LIB)
