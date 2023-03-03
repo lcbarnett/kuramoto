@@ -20,7 +20,7 @@ CC ?= gcc
 # If you don't have Gnuplot installed, omit the  -D_HAVE_GNUPLOT flag
 CFLAGS = -std=c99 -march=native -O2 -Wall -Wextra -Winline -pedantic-errors -D_DEFAULT_SOURCE -D_HAVE_GNUPLOT
 
-.PHONY: all clean install
+.PHONY: all clean install uninstall
 
 all: $(BIN)
 
