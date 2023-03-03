@@ -70,16 +70,18 @@ int audio(int argc, char *argv[])
 		w[i] = dt*TWOPI*(wmean+wsdev*randn()); // scale frequencies by dt
 	}
 
-	// random coupling constants (normal distribution)
+	// random coupling constants (normal distribution); note that we take incoming couplings as
+	// multipliers for the corresponding oscillator's natural frequency - so that the become
+	// dimensionless - and scale by the number of oscillators
 
 	for (size_t i=0; i<N; ++i) {
-		const double ooNwi = ooN*w[i];
+		const double ooNwi = ooN*w[i]; // multiplier is w[i]/N
 		for (size_t j=0; j<N; ++j) {
 			if (i == j) {
 				K[N*i+j] = 0.0; // no "self-connections"!
 			}
 			else {
-				K[N*i+j] = ooNwi*((randu()<Kbias?Kmean:-Kmean)+Ksdev*randn()); // scale coupling constants by dt and N
+				K[N*i+j] = ooNwi*((randu()<Kbias?Kmean:-Kmean)+Ksdev*randn()); // scale coupling constants by dt, w[i] and N
 			}
 		}
 	}

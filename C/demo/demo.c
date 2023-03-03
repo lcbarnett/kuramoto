@@ -62,13 +62,13 @@ int demo(int argc, char *argv[])
 	// random coupling constants (normal distribution)
 
 	for (size_t i=0; i<N; ++i) {
-		const double ooNwi = ooN*w[i];
+		const double ooNwi = ooN*w[i]; // multiplier is w[i]/N
 		for (size_t j=0; j<N; ++j) {
 			if (i == j) {
 				K[N*i+j] = 0.0; // no "self-connections"!
 			}
 			else {
-				K[N*i+j] = ooNwi*(Kmean+Ksdev*randn()); // scale coupling constants by dt and N
+				K[N*i+j] = dt*TWOPI*ooN*(Kmean+Ksdev*randn()); // scale coupling constants by dt and N
 			}
 		}
 	}
