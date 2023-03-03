@@ -12,6 +12,7 @@ LIB = libkuramoto.so
 LIBDIR ?= $(PREFIX)/lib
 INCDIR ?= $(PREFIX)/include/kuramoto
 
+RM ?= rm -f
 CC ?= gcc
 
 CFLAGS = -std=c99 -march=native -O2 -Wall -Wextra -Winline -pedantic-errors -D_DEFAULT_SOURCE
@@ -28,8 +29,8 @@ install:
 	install -D -m644 kuramoto.h $(INCDIR)/kuramoto.h
 
 uninstall:
-	rm $(LIBDIR)/$(LIB)
-	rm $(INCDIR)/kuramoto.h
+	$(RM) $(LIBDIR)/$(LIB)
+	$(RM) $(INCDIR)/kuramoto.h
 
 clean:
-	rm $(LIB)
+	$(RM) $(LIB)
