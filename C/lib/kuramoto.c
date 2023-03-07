@@ -1,6 +1,7 @@
 #include <math.h>   // for maths functions
 #include <stdlib.h> // for malloc, etc.
-#include <stdio.h> // for malloc, etc.
+
+#include "kuramoto.h"
 
 // NOTE:  C is row-major; bear in mind when writing interfaces! E.g. for
 // Matlab (column-major) you should transpose the matrices K and a before calling.
@@ -10,7 +11,7 @@ void kuramoto_euler	// Euler method
 	const size_t        N,  // number of oscillators
 	const size_t        n,  // number of integration increments
 	const double* const w,  // dt*frequencies
-	const double* const K,  // dt*(coupling constants)
+	const double* const K,  // dt*frequencies*(coupling constants)/N
 	double*       const h   // oscillator phases, to be computed by numerical ODE (pre-initialised with input)
 )
 {
@@ -31,7 +32,7 @@ void kuramoto_eulerpl // Euler method with phase lags
 	const size_t        N,  // number of oscillators
 	const size_t        n,  // number of integration increments
 	const double* const w,  // dt*frequencies
-	const double* const K,  // dt*(coupling constants)
+	const double* const K,  // dt*frequencies*(coupling constants)/N
 	const double* const a,  // phase lags
 	double*       const h   // oscillator phases, to be computed by numerical ODE (pre-initialised with input)
 )
@@ -54,7 +55,7 @@ void kuramoto_rk4 // Classic Runge-Kutta (RK4)
 	const size_t        N, // number of oscillators
 	const size_t        n, // number of integration increments
 	const double* const w, // dt*frequencies
-	const double* const K, // dt*(coupling constants)
+	const double* const K, // dt*frequencies*(coupling constants)/N
 	double*       const h, // oscillator phases, to be computed by numerical ODE (pre-initialised with input)
 	double*       const k1 // buffer for RK4 coefficients (size must be 4*N)
 )
@@ -114,7 +115,7 @@ void kuramoto_rk4pl // Classic Runge-Kutta (RK4) with phase lags
 	const size_t        N, // number of oscillators
 	const size_t        n, // number of integration increments
 	const double* const w, // dt*frequencies
-	const double* const K, // dt*(coupling constants)
+	const double* const K, // dt*frequencies*(coupling constants)/N
 	const double* const a, // phase lags
 	double*       const h, // oscillator phases, to be computed by numerical ODE (pre-initialised with input)
 	double*       const k1 // buffer for RK4 coefficients (size must be 4*N)
@@ -174,40 +175,156 @@ void kuramoto_rk4pl // Classic Runge-Kutta (RK4) with phase lags
 	}
 }
 
-void order_param // calculate order parameter magnitude
+void kuramoto_order_param // calculate order parameter magnitude/phase
 (
-	const size_t N,
-	const size_t n,
-	const double* const h,
-	double* const r
+	const size_t N,        // number of oscillators
+	const size_t n,        // number of integration increments
+	const double* const h, // oscillator phases
+	double* const r,       // order parameter magnitude
+	double* const psi      // order parameter phase (NULL if not required)
 )
 {
 	const double OON = 1.0/(double)N;
 	double* rt = r;
-	for (const double* ht=h; ht<h+N*n; ht+=N,++rt) {
-		double cmean = 0.0;
-		double smean = 0.0;
+	double* pt = psi;
+	for (const double* ht=h; ht<h+N*n; ht+=N) {
+		double x = 0.0;
+		double y = 0.0;
 		for (size_t i=0; i<N; ++i) {
 #ifdef _GNU_SOURCE
 			double c,s;
 			sincos(ht[i],&s,&c);
-			cmean += c;
-			smean += s;
+			x += c;
+			y += s;
 #else
-			cmean += cos(ht[i]);
-			smean += sin(ht[i]);
+			x += cos(ht[i]);
+			y += sin(ht[i]);
 #endif
 		}
-		cmean *= OON;
-		smean *= OON;
-		*rt = hypot(cmean,smean);
+		x *= OON;
+		y *= OON;
+		*rt++ = hypot(x,y);
+		if (psi) *pt++ = atan2(y,x);
 	}
 }
 
-static inline double wmpi2pi(const double x) // wrap to [-pi,pi)
+// Stuart-Landau model
+
+void stulan_euler // Euler method
+(
+	const size_t        N,  // number of oscillators
+	const size_t        n,  // number of integration increments
+	const double        dt, // time integration step
+	const double* const w,  // dt*frequencies
+	const double* const K,  // dt*frequencies*(coupling constants)/N
+	const double* const a,  // dt*(growth constants) - (K mean over 2nd index)
+	double*       const x,  // oscillator real part, to be computed by numerical ODE (pre-initialised with input)
+	double*       const y   // oscillator imag part, to be computed by numerical ODE (pre-initialised with input)
+)
 {
-	return x > 0.0 ? fmod(x+M_PI,2.0*M_PI)-M_PI : fmod(x-M_PI,2.0*M_PI)+M_PI;
+	double* yt=y;
+	for (double* xt=x; xt<x+N*(n-1); xt+=N,yt+=N) {
+		double* const xt1 = xt+N;
+		double* const yt1 = yt+N;
+		for (size_t i=0; i<N; ++i) {
+			const double* const Ki = K+N*i;
+			const double xti = xt[i];
+			const double yti = yt[i];
+			const double vi = a[i]-dt*(xti*xti+yti*yti);
+			double dxti = vi*xti - w[i]*yti;
+			double dyti = vi*yti + w[i]*xti;
+			for (size_t j=0; j<N; ++j) dxti += Ki[j]*xt[j];
+			for (size_t j=0; j<N; ++j) dyti += Ki[j]*yt[j];
+			xt1[i] += xti+dxti; // update next time step (adding in input already in yt1)
+			yt1[i] += yti+dyti; // update next time step (adding in input already in xt1)
+		}
+	}
 }
+
+/*
+void stulan_rk4 // Classic Runge-Kutta (RK4)
+(
+	const size_t        N,  // number of oscillators
+	const size_t        n,  // number of integration increments
+	const double        dt, // time integration step
+	const double* const w,  // dt*frequencies
+	const double* const K,  // dt*frequencies*(coupling constants)/N
+	const double* const a,  // dt*(growth constants) - (K summed over 2nd index)
+	double*       const x,  // oscillator real part, to be computed by numerical ODE (pre-initialised with input)
+	double*       const y,  // oscillator imag part, to be computed by numerical ODE (pre-initialised with input)
+	double*       const k   // buffer for RK4 coefficients (size must be 8*N)
+)
+{
+	double* const kx1 = k  +N;
+	double* const ky1 = kx1+N;
+	double* const kx2 = ky1+N;
+	double* const ky2 = kx2+N;
+	double* const kx3 = ky2+N;
+	double* const ky3 = kx3+N;
+	double* const kx4 = ky3+N;
+	double* const ky4 = kx4+N;
+
+	double* yt=y;
+	for (double* xt=x; xt<x+N*(n-1); xt+=N,yt+=N) {
+
+		// k1
+		for (size_t i=0; i<N; ++i) {
+			const double* const Ki = K+N*i;
+			const double xti = xt[i];
+			const double yti = yt[i];
+			const double vi = a[i]-dt*(xt[i]*xt[i]+yt[i]*yt[i]);
+			double kxi = vi*xti - w[i]*yt[i];
+			double kyi = vi*yti + w[i]*xt[i];
+			for (size_t j=0; j<N; ++j) kxi += Ki[j]*xt[j];
+			for (size_t j=0; j<N; ++j) kyi += Ki[j]*yt[j];
+			kx1[i] = kxi;
+			ky1[i] = kyi;
+
+		}
+
+		// k2
+		for (size_t i=0; i<N; ++i) {
+			const double* const Ki = K+N*i;
+			const double xti = xt[i];
+			const double yti = yt[i];
+			const double vi = a[i]-dt*(xt[i]*xt[i]+yt[i]*yt[i]);
+
+			const double xtk1i = xt[i]+kx1[i];
+			double kxi = vi*xti - w[i]*yt[i];
+			double kyi = vi*yti + w[i]*xt[i];
+			for (size_t j=0; j<N; ++j) kxi += Ki[j]*(xt[j]+kx1[j]-xtk1i);
+			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(xt[j]+k1[j]-htk1i);
+			k2[i] = ki/2.0;
+		}
+
+		// k3
+		for (size_t i=0; i<N; ++i) {
+			const double* const Ki = K+N*i;
+			const double htk2i = xt[i]+k2[i];
+			double ki = w[i];
+			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(xt[j]+k2[j]-htk2i);
+			k3[i] = ki/2.0;
+		}
+
+		// k4
+		for (size_t i=0; i<N; ++i) {
+			const double* const Ki = K+N*i;
+			const double htk3i = xt[i]+k3[i];
+			double ki = w[i];
+			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(xt[j]+k3[j]-htk3i);
+			k4[i] = ki;
+		}
+
+		// update next time step (adding in input already in xt1)
+		double* const xt1 = xt+N;
+		for (size_t i=0; i<N; ++i) {
+			xt1[i] += xt[i] + (k1[i]+4.0*k2[i]+4.0*k3[i]+k4[i])/6.0;
+		}
+	}
+}
+*/
+
+// Utilities
 
 void phase_wrap(const size_t m, double* const h)
 {

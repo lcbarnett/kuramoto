@@ -8,13 +8,12 @@ PREFIX ?= /usr/local
 SRC = kuramoto.c
 INC = kuramoto.h
 
-RM = rm -f
 LIB = libkuramoto.so
 LIBDIR ?= $(PREFIX)/lib
 INCDIR ?= $(PREFIX)/include/kuramoto
 
+RM ?= rm -f
 CC ?= gcc
-INSTALL = install -D
 
 CFLAGS = -std=c99 -march=native -O2 -Wall -Wextra -Winline -pedantic-errors -D_DEFAULT_SOURCE
 
@@ -26,12 +25,12 @@ $(LIB): $(SRC) $(INC)
 	$(CC) $(SRC) -shared -fPIC $(CFLAGS) -o $(LIB)
 
 install:
-	$(INSTALL) -m755 $(LIB) $(LIBDIR)/$(LIB)
-	$(INSTALL) -m644 $(INC) $(INCDIR)/$(INC)
+	install -m755 $(LIB) $(LIBDIR)
+	install -D -m644 kuramoto.h $(INCDIR)/kuramoto.h
 
 uninstall:
 	$(RM) $(LIBDIR)/$(LIB)
-	$(RM) $(INCDIR)/$(INC)
+	$(RM) $(INCDIR)/kuramoto.h
 
 clean:
 	$(RM) $(LIB)

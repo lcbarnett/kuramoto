@@ -20,13 +20,14 @@ int audio(int argc, char *argv[])
 	//
 	// Arg:  name    type    default       description
 	puts("\n---------------------------------------------------------------------------------------");
-	CLAP_ARG(N,      size_t, 4,            "number of oscillators");
+	CLAP_ARG(N,      size_t, 6,            "number of oscillators");
 	CLAP_ARG(T,      double, 5.0,          "total time (seconds)");
 	CLAP_ARG(f,      double, CD_SRATE,     "sampling frequency (Hz)");
 	CLAP_ARG(wmean,  double, 0.0,          "oscillator frequencies mean (Hz)");
-	CLAP_ARG(wsdev,  double, 3.0*MIDDLE_C, "oscillator frequencies std. dev. (Hz)");
-	CLAP_ARG(Kmean,  double, 8.0,          "coupling constants mean (Hz)");
-	CLAP_ARG(Ksdev,  double, Kmean/8.0,    "coupling constants std. dev. (Hz)");
+	CLAP_ARG(wsdev,  double, 2.0*MIDDLE_C, "oscillator frequencies std. dev. (Hz)");
+	CLAP_ARG(Kmean,  double, 4.0,          "coupling constants mean (dimensionless)");
+	CLAP_ARG(Ksdev,  double, Kmean/6.0,    "coupling constants std. dev. (dimensionless)");
+	CLAP_ARG(Kbias,  double, 0.5,          "coupling constants bias (probability");
 	CLAP_ARG(Isdev,  double, 0.2,          "input noise intensity (Hz: zero for deterministic)");
 	CLAP_ARG(RK4,    int,    0,            "RK4 solver flag (else Euler)");
 	CLAP_ARG(rseed,  uint,   0,            "random seed (or 0 for random random seed)");
@@ -69,15 +70,18 @@ int audio(int argc, char *argv[])
 		w[i] = dt*TWOPI*(wmean+wsdev*randn()); // scale frequencies by dt
 	}
 
-	// random coupling constants (normal distribution)
+	// random coupling constants (normal distribution); note that we take incoming couplings as
+	// multipliers for the corresponding oscillator's natural frequency - so that the become
+	// dimensionless - and scale by the number of oscillators
 
 	for (size_t i=0; i<N; ++i) {
+		const double ooNwi = ooN*w[i]; // multiplier is w[i]/N
 		for (size_t j=0; j<N; ++j) {
 			if (i == j) {
 				K[N*i+j] = 0.0; // no "self-connections"!
 			}
 			else {
-				K[N*i+j] = dt*TWOPI*ooN*(Kmean+Ksdev*randn()); // scale coupling constants by dt and N
+				K[N*i+j] = ooNwi*((randu()<Kbias?Kmean:-Kmean)+Ksdev*randn()); // scale coupling constants by dt, w[i] and N
 			}
 		}
 	}
@@ -91,7 +95,7 @@ int audio(int argc, char *argv[])
 		}
 	}
 	else {
-		memset(h,0,M*sizeof(double));  // zero-fill for no input [in fact here calloc will have done that]
+		memset(h,0,M*sizeof(double)); // zero-fill for no input [in fact here calloc will have done that]
 	}
 
 	// integrate Kuramoto ODE
@@ -109,7 +113,7 @@ int audio(int argc, char *argv[])
 
 	// calculate order parameter
 
-	order_param(N,n,h,r);
+	kuramoto_order_param(N,n,h,r,NULL);
 
 	// wrap oscillator phases to [-pi,pi) [if that's is what you want]
 	//
@@ -180,7 +184,7 @@ int audio(int argc, char *argv[])
 			perror("Failed to open PCM output file");
 			return EXIT_FAILURE;
 		}
-		if (pcm_write(rp,cagg?y:x,cagg?n:N*n,pcm,1.0,-1.0) == -1) { // write PCM data
+		if (pcm_write(rp,cagg?y:x,cagg?n:N*n,pcm,-1.0,1.0) == -1) { // write PCM data
 			return EXIT_FAILURE;
 		}
 		if (fclose(rp) != 0) {

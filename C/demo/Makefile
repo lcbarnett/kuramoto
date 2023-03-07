@@ -8,31 +8,24 @@ PREFIX ?= /usr/local
 SRC = main.c demo.c audio.c kutils.c clap.c
 INC = kutils.h clap.h
 
-RM = rm -f
 BIN = kuramoto
 
 LIBDIR ?= $(PREFIX)/lib
 INCDIR ?= $(PREFIX)/include/kuramoto
 BINDIR ?= $(PREFIX)/bin
 
+RM ?= rm -f
 CC ?= gcc
-INSTALL = install -D
 
 # If you don't have Gnuplot installed, omit the  -D_HAVE_GNUPLOT flag
 CFLAGS = -std=c99 -march=native -O2 -Wall -Wextra -Winline -pedantic-errors -D_DEFAULT_SOURCE -D_HAVE_GNUPLOT
 
-.PHONY: all clean install
+.PHONY: all clean
 
 all: $(BIN)
 
 $(BIN): $(SRC) $(INC)
 	$(CC) $(SRC) $(CFLAGS) -I$(INCDIR) -Wl,-rpath=$(LIBDIR) -lkuramoto -lm -o $(BIN)
-
-install:
-	$(INSTALL) -m755 $(BIN) $(BINDIR)/$(BIN)
-
-uninstall:
-	$(RM) $(BINDIR)/$(BIN)
 
 clean:
 	$(RM) $(BIN)

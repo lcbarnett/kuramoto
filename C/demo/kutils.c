@@ -73,12 +73,10 @@ void timer_stop(const double ts)
 
 // Linear PCM encoding
 
-#define O16 ((uint16_t)1)
-#define O32 ((uint32_t)1)
-int pcm_write(FILE* const fp, const double* const x, const size_t n, const int pcm, const double amax, const double amin)
+int pcm_write(FILE* const fp, const double* const x, const size_t n, const int pcm, const double amin, const double amax)
 {
 	if (pcm == 16) { // 2 bytes = uint16_t
-		const double maxfac = (double)((O16<<16)-O16)/(amax-amin); // 16-bit max factor
+		const double maxfac = (double)((uint16_t)~0)/(amax-amin); // 16-bit max factor
 		uint16_t* const u = calloc(n,sizeof(uint16_t));
 		if (u == NULL) {
 			perror("PCM memory allocation failed");
@@ -99,7 +97,8 @@ int pcm_write(FILE* const fp, const double* const x, const size_t n, const int p
 	}
 
 	if (pcm == 24) { // 3 bytes, but no native uint24_t type, so we use 3 unsigned chars
-		const double maxfac = (double)((O32<<24)-O32)/(amax-amin); // 24-bit max factor
+		const double   maxfac = (double)(((uint32_t)~0)>>8)/(amax-amin); // 24-bit max factor
+		const uint32_t lomask = ((uint32_t)~0)>>24;                      // low byte mask
 		const size_t nbytes = 3*n; // number of PCM bytes
 		uchar_t* const u = calloc(nbytes,sizeof(uchar_t));
 		if (u == NULL) {
@@ -107,7 +106,6 @@ int pcm_write(FILE* const fp, const double* const x, const size_t n, const int p
 			free(u);
 			return -1;
 		}
-		const uint32_t lomask = (O32<<8)-O32; // mask for low byte
 		uchar_t* uu = u;
 		for (const double* xx=x; xx<x+n; ++xx) {
 			const uint32_t xpcm = (uint32_t)(maxfac*(*xx-amin));
@@ -155,5 +153,3 @@ int pcm_write(FILE* const fp, const double* const x, const size_t n, const int p
 	error(0,0,"PCM must be unsigned 16- or 24-bit, or floating-point 32- or 64-bit");
 	return -1;
 }
-#undef O32
-#undef O16

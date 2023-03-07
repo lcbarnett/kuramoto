@@ -55,7 +55,6 @@ int demo(int argc, char *argv[])
 	double* const y = calloc(n,sizeof(double)); // oscillator agregated signal
 
 	// random frequencies (normal distribution)
-
 	for (size_t i=0; i<N; ++i) {
 		w[i] = dt*TWOPI*(wmean+wsdev*randn()); // scale frequencies by dt
 	}
@@ -68,7 +67,7 @@ int demo(int argc, char *argv[])
 				K[N*i+j] = 0.0; // no "self-connections"!
 			}
 			else {
-				K[N*i+j] = dt*ooN*TWOPI*(Kmean+Ksdev*randn()); // scale coupling constants by dt and N
+				K[N*i+j] = dt*TWOPI*ooN*(Kmean+Ksdev*randn()); // scale coupling constants by dt and N
 			}
 		}
 	}
@@ -98,7 +97,7 @@ int demo(int argc, char *argv[])
 
 	// calculate order parameter
 
-	order_param(N,n,h,r);
+	kuramoto_order_param(N,n,h,r,NULL);
 
 	// wrap oscillator phases to [-pi,pi) [if that's is what you want]
 	//
