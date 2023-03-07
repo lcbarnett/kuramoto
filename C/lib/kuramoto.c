@@ -217,7 +217,7 @@ void stulan_euler // Euler method
 	const double        dt, // time integration step
 	const double* const w,  // dt*frequencies
 	const double* const K,  // dt*frequencies*(coupling constants)/N
-	const double* const a,  // dt*(growth constants) - (K summed over 2nd index)
+	const double* const a,  // dt*(growth constants) - (K mean over 2nd index)
 	double*       const x,  // oscillator real part, to be computed by numerical ODE (pre-initialised with input)
 	double*       const y   // oscillator imag part, to be computed by numerical ODE (pre-initialised with input)
 )
@@ -230,13 +230,13 @@ void stulan_euler // Euler method
 			const double* const Ki = K+N*i;
 			const double xti = xt[i];
 			const double yti = yt[i];
-			const double vi = a[i]-dt*(xt[i]*xt[i]+yt[i]*yt[i]);
-			double dxti = vi*xti - w[i]*yt[i];
-			double dyti = vi*yti + w[i]*xt[i];
+			const double vi = a[i]-dt*(xti*xti+yti*yti);
+			double dxti = vi*xti - w[i]*yti;
+			double dyti = vi*yti + w[i]*xti;
 			for (size_t j=0; j<N; ++j) dxti += Ki[j]*xt[j];
 			for (size_t j=0; j<N; ++j) dyti += Ki[j]*yt[j];
-			yt1[i] += yti+dyti; // update next time step (adding in input already in xt1)
 			xt1[i] += xti+dxti; // update next time step (adding in input already in yt1)
+			yt1[i] += yti+dyti; // update next time step (adding in input already in xt1)
 		}
 	}
 }
