@@ -5,7 +5,7 @@
 
 PREFIX ?= /usr/local
 
-SRC = main.c demo.c audio.c kutils.c clap.c
+SRC = main.c demo.c audio.c stulan.c kutils.c clap.c
 INC = kutils.h clap.h
 
 BIN = kuramoto
