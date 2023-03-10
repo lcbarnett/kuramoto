@@ -83,9 +83,9 @@ end
 
 % Call mex ODE simulation (returned phase matrix h is N x n)
 %
-% Note: we transpose K so that K(i,j) is connection strength j --> i. Also a
+% Note: we transpose K so that K(i,j) is connection strength j --> i, same for a
 
-h = kuramoto_mex(N,n,dt*w,dt*K',a',sqrt(dt)*I,RK4);
+h = kuramoto_mex(N,n,dt,w,K',a',I,RK4);
 
 % Order parameter (if requested)
 

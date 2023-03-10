@@ -67,7 +67,7 @@ int audio(int argc, char *argv[])
 	// random frequencies (normal distribution)
 
 	for (size_t i=0; i<N; ++i) {
-		w[i] = dt*TWOPI*(wmean+wsdev*randn()); // scale frequencies by dt
+		w[i] = TWOPI*(wmean+wsdev*randn());
 	}
 
 	// random coupling constants (normal distribution); note that we take incoming couplings as
@@ -81,17 +81,16 @@ int audio(int argc, char *argv[])
 				K[N*i+j] = 0.0; // no "self-connections"!
 			}
 			else {
-				K[N*i+j] = ooNwi*((randu()<Kbias?Kmean:-Kmean)+Ksdev*randn()); // scale coupling constants by dt, w[i] and N
+				K[N*i+j] = ooNwi*((randu()<Kbias?Kmean:-Kmean)+Ksdev*randn()); // scale coupling constants by w[i] and N
 			}
 		}
 	}
 
 	// initialise oscillator phases with input (zero-mean Gaussian white noise)
 
-	const double sqrtdt = sqrt(dt);
 	if (Isdev > 0.0) {
 		for (size_t k=0; k<m; ++k) {
-			h[k] = sqrtdt*TWOPI*Isdev*randn(); // scale input by sqrt(dt) [cf. Ornstein-Uhlenbeck process]
+			h[k] = TWOPI*Isdev*randn();
 		}
 	}
 	else {
@@ -103,11 +102,11 @@ int audio(int argc, char *argv[])
 	const double ts1 = timer_start("simulating Kuramoto system");
 	if (RK4) {
 		double* const kbuff = calloc(4*N,sizeof(double)); // see kuramoto_rk4()
-		kuramoto_rk4(N,n,w,K,h,kbuff);
+		kuramoto_rk4(N,n,dt,w,K,h,kbuff);
 		free(kbuff);
 	}
 	else {
-		kuramoto_euler(N,n,w,K,h);
+		kuramoto_euler(N,n,dt,w,K,h);
 	}
 	timer_stop(ts1);
 
