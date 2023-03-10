@@ -1,6 +1,8 @@
+#include <math.h>     // for maths functions
+#include <string.h>   // for memcpy
+
 #include "matrix.h"   // for Matlab matrix stuff
 #include "kuramoto.h" // for Kuramoto ODE solvers
-#include <string.h>   // for memcpy
 
 #define UNUSED __attribute__ ((unused))
 

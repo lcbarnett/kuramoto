@@ -8,8 +8,9 @@
 
 // Program to demonstrate usage of coupled Stuart-Landau oscillators.
 
-int stulan(int argc, char *argv[])
+int stulan(int UNUSED argc, UNUSED char *argv[])
 {
+/*
 	// CLAP (command-line argument parser). Default values may
 	// be overriden on the command line as switches; e.g.:
 	//
@@ -189,6 +190,6 @@ int stulan(int argc, char *argv[])
 	free(h);
 	free(K);
 	free(w);
-
+*/
 	return EXIT_SUCCESS;
 }

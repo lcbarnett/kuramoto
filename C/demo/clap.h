@@ -8,6 +8,8 @@
 #define CLAP_ARGTYPE_MAX 100
 #define CLAP_ARGNAME_MAX 100
 
+#define UNUSED __attribute__ ((unused))
+
 typedef unsigned char     uchar;
 typedef unsigned int      uint;
 typedef unsigned long     ulong;
