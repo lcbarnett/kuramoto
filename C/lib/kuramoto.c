@@ -8,13 +8,23 @@
 
 void kuramoto_euler	// Euler method
 (
-	const size_t        N,  // number of oscillators
-	const size_t        n,  // number of integration increments
-	const double* const w,  // dt*frequencies
-	const double* const K,  // dt*(coupling constants)
-	double*       const h   // oscillator phases, to be computed by numerical ODE (pre-initialised with input)
+	const   size_t N,  // number of oscillators
+	const   size_t n,  // number of integration increments
+	const   double dt, // time increment (secs)
+	double* const  w,  // frequencies (radians/sec)
+	double* const  K,  // coupling constants (radians/sec)
+	double* const  h   // oscillator phases (radians), initialised with input
 )
 {
+	// scale parameters appropriately according to time increment
+
+	const double sqrtdt = sqrt(dt);
+	for (size_t i=0; i<N;   ++i) w[i] *= dt;
+	for (size_t i=0; i<N*N; ++i) K[i] *= dt;
+	for (size_t i=0; i<N*n; ++i) h[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
+
+	// ODE solver
+
 	for (double* ht=h; ht<h+N*(n-1); ht+=N) {
 		double* const ht1 = ht+N;
 		for (size_t i=0; i<N; ++i) {
@@ -29,14 +39,24 @@ void kuramoto_euler	// Euler method
 
 void kuramoto_eulerpl // Euler method with phase lags
 (
-	const size_t        N,  // number of oscillators
-	const size_t        n,  // number of integration increments
-	const double* const w,  // dt*frequencies
-	const double* const K,  // dt*(coupling constants)
-	const double* const a,  // phase lags
-	double*       const h   // oscillator phases, to be computed by numerical ODE (pre-initialised with input)
+	const   size_t N,  // number of oscillators
+	const   size_t n,  // number of integration increments
+	const   double dt, // time increment (secs)
+	double* const  w,  // frequencies (radians/sec)
+	double* const  K,  // coupling constants (radians/sec)
+	double* const  a,  // phase lags (radians)
+	double* const  h   // oscillator phases (radians), initialised with input
 )
 {
+	// scale parameters appropriately according to time increment
+
+	const double sqrtdt = sqrt(dt);
+	for (size_t i=0; i<N;   ++i) w[i] *= dt;
+	for (size_t i=0; i<N*N; ++i) K[i] *= dt;
+	for (size_t i=0; i<N*n; ++i) h[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
+
+	// ODE solver
+
 	for (double* ht=h; ht<h+N*(n-1); ht+=N) {
 		double* const ht1 = ht+N;
 		for (size_t i=0; i<N; ++i) {
@@ -52,17 +72,29 @@ void kuramoto_eulerpl // Euler method with phase lags
 
 void kuramoto_rk4 // Classic Runge-Kutta (RK4)
 (
-	const size_t        N, // number of oscillators
-	const size_t        n, // number of integration increments
-	const double* const w, // dt*frequencies
-	const double* const K, // dt*(coupling constants)
-	double*       const h, // oscillator phases, to be computed by numerical ODE (pre-initialised with input)
-	double*       const k1 // buffer for RK4 coefficients (size must be 4*N)
+	const   size_t N,  // number of oscillators
+	const   size_t n,  // number of integration increments
+	const   double dt, // time increment (secs)
+	double* const  w,  // frequencies (radians/sec)
+	double* const  K,  // coupling constants (radians/sec)
+	double* const  h,  // oscillator phases (radians), initialised with input
+	double* const  k1  // buffer for RK4 coefficients (size must be 4*N)
 )
 {
+	// scale parameters appropriately according to time increment
+
+	const double sqrtdt = sqrt(dt);
+	for (size_t i=0; i<N;   ++i) w[i] *= dt;
+	for (size_t i=0; i<N*N; ++i) K[i] *= dt;
+	for (size_t i=0; i<N*n; ++i) h[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
+
+	// set up coefficients buffers
+
 	double* const k2 = k1+N;
 	double* const k3 = k2+N;
 	double* const k4 = k3+N;
+
+	// ODE solver
 
 	for (double* ht=h; ht<h+N*(n-1); ht+=N) {
 
@@ -112,18 +144,30 @@ void kuramoto_rk4 // Classic Runge-Kutta (RK4)
 
 void kuramoto_rk4pl // Classic Runge-Kutta (RK4) with phase lags
 (
-	const size_t        N, // number of oscillators
-	const size_t        n, // number of integration increments
-	const double* const w, // dt*frequencies
-	const double* const K, // dt*(coupling constants)
-	const double* const a, // phase lags
-	double*       const h, // oscillator phases, to be computed by numerical ODE (pre-initialised with input)
-	double*       const k1 // buffer for RK4 coefficients (size must be 4*N)
+	const   size_t N,  // number of oscillators
+	const   size_t n,  // number of integration increments
+	const   double dt, // time increment (secs)
+	double* const  w,  // frequencies (radians/sec)
+	double* const  K,  // coupling constants (radians/sec)
+	double* const  a,  // phase lags (radians)
+	double* const  h,  // oscillator phases (radians), initialised with input
+	double* const  k1  // buffer for RK4 coefficients (size must be 4*N)
 )
 {
+	// scale parameters appropriately according to time increment
+
+	const double sqrtdt = sqrt(dt);
+	for (size_t i=0; i<N;   ++i) w[i] *= dt;
+	for (size_t i=0; i<N*N; ++i) K[i] *= dt;
+	for (size_t i=0; i<N*n; ++i) h[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
+
+	// set up coefficients buffers
+
 	double* const k2 = k1+N;
 	double* const k3 = k2+N;
 	double* const k4 = k3+N;
+
+	// ODE solver
 
 	for (double* ht=h; ht<h+N*(n-1); ht+=N) {
 
@@ -212,16 +256,27 @@ void kuramoto_order_param // calculate order parameter magnitude/phase
 
 void stulan_euler // Euler method
 (
-	const size_t        N,  // number of oscillators
-	const size_t        n,  // number of integration increments
-	const double        dt, // time integration step
-	const double* const w,  // dt*frequencies
-	const double* const K,  // dt*(coupling constants)
-	double*       const a,  // dt*(growth constants)
-	double*       const x,  // oscillator real part, to be computed by numerical ODE (pre-initialised with input)
-	double*       const y   // oscillator imag part, to be computed by numerical ODE (pre-initialised with input)
+	const   size_t N,  // number of oscillators
+	const   size_t n,  // number of integration increments
+	const   double dt, // time increment (secs)
+	double* const  w,  // frequencies (1/sec)
+	double* const  K,  // coupling constants (1/sec)
+	double* const  a,  // growth constants (1/sec)
+	double* const  x,  // oscillator real part (dimensionless), initialised with input
+	double* const  y   // oscillator imag part (dimensionless), initialised with input
 )
 {
+	// scale parameters appropriately according to time increment
+
+	const double sqrtdt = sqrt(dt);
+	for (size_t i=0; i<N;   ++i) w[i] *= dt;
+	for (size_t i=0; i<N*N; ++i) K[i] *= dt;
+	for (size_t i=0; i<N;   ++i) a[i] *= dt;
+	for (size_t i=0; i<N*n; ++i) x[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
+	for (size_t i=0; i<N*n; ++i) y[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
+
+	// adjust growth constants by mean coupling
+
 	for (size_t i=0; i<N; ++i) {
 		const double* const Ki = K+N*i;
 		double Kbari = 0.0;
@@ -229,8 +284,9 @@ void stulan_euler // Euler method
 		a[i] -= Kbari;
 	}
 
-	double* yt=y;
-	for (double* xt=x; xt<x+N*(n-1); xt+=N,yt+=N) {
+	// ODE solver
+
+	for (double *xt=x, *yt = y; xt<x+N*(n-1); xt+=N, yt+=N) {
 		double* const xt1 = xt+N;
 		double* const yt1 = yt+N;
 		for (size_t i=0; i<N; ++i) {
