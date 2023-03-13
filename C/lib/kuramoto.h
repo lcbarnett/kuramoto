@@ -51,11 +51,11 @@ void kuramoto_rk4pl // Classic Runge-Kutta (RK4) with phase lags
 
 void kuramoto_order_param // calculate order parameter magnitude/phase
 (
-	const size_t N,        // number of oscillators
-	const size_t n,        // number of integration increments
-	const double* const h, // oscillator phases
-	double* const r,       // order parameter magnitude
-	double* const psi      // order parameter phase (NULL if not required)
+	const   size_t N, // number of oscillators
+	const   size_t n, // number of integration increments
+	double* const  h, // oscillator phases
+	double* const  r, // order parameter magnitude
+	double* const  p  // order parameter phase (NULL if not required)
 );
 
 // Stuart-Landau model
@@ -70,6 +70,42 @@ void stulan_euler // Euler method
 	double* const  a,  // growth constants (1/sec)
 	double* const  x,  // oscillator real part (dimensionless), initialised with input
 	double* const  y   // oscillator imag part (dimensionless), initialised with input
+);
+
+static inline void stulan_magnitudes // calculate magnitudes of oscillators
+(
+	const size_t  N, // number of oscillators
+	const size_t  n, // number of integration increments
+	double* const x, // oscillator real part
+	double* const y, // oscillator imag part
+	double* const r  // oscillator magnitude
+)
+{
+	double* rt = r;
+	for (double *xt=x, *yt = y; xt<x+N*n; ++xt, ++yt) *rt++ = hypot(*xt,*yt);
+}
+
+static inline void stulan_phases // calculate phases of oscillators
+(
+	const size_t  N, // number of oscillators
+	const size_t  n, // number of integration increments
+	double* const x, // oscillator real part
+	double* const y, // oscillator imag part
+	double* const h  // oscillator phase
+)
+{
+	double* ht = h;
+	for (double *xt=x, *yt = y; xt<x+N*n; ++xt, ++yt) *ht++ = atan2(*yt,*xt);
+}
+
+void stulan_order_param // calculate order parameter magnitude/phase
+(
+	const   size_t N, // number of oscillators
+	const   size_t n, // number of integration increments
+	double* const  x, // oscillator real part
+	double* const  y, // oscillator imag part
+	double* const  r, // order parameter magnitude
+	double* const  p  // order parameter phase (NULL if not required)
 );
 
 // Utilities

@@ -221,34 +221,34 @@ void kuramoto_rk4pl // Classic Runge-Kutta (RK4) with phase lags
 
 void kuramoto_order_param // calculate order parameter magnitude/phase
 (
-	const size_t N,        // number of oscillators
-	const size_t n,        // number of integration increments
-	const double* const h, // oscillator phases
-	double* const r,       // order parameter magnitude
-	double* const psi      // order parameter phase (NULL if not required)
+	const   size_t N, // number of oscillators
+	const   size_t n, // number of integration increments
+	double* const  h, // oscillator phases
+	double* const  r, // order parameter magnitude
+	double* const  p  // order parameter phase (NULL if not required)
 )
 {
 	const double OON = 1.0/(double)N;
 	double* rt = r;
-	double* pt = psi;
+	double* pt = p;
 	for (const double* ht=h; ht<h+N*n; ht+=N) {
-		double x = 0.0;
-		double y = 0.0;
+		double xmt = 0.0;
+		double ymt = 0.0;
 		for (size_t i=0; i<N; ++i) {
 #ifdef _GNU_SOURCE
 			double c,s;
 			sincos(ht[i],&s,&c);
-			x += c;
-			y += s;
+			xmt += c;
+			ymt += s;
 #else
-			x += cos(ht[i]);
-			y += sin(ht[i]);
+			xmt += cos(ht[i]);
+			ymt += sin(ht[i]);
 #endif
 		}
-		x *= OON;
-		y *= OON;
-		*rt++ = hypot(x,y);
-		if (psi) *pt++ = atan2(y,x);
+		xmt *= OON;
+		ymt *= OON;
+		*rt++ = hypot(xmt,ymt);
+		if (p) *pt++ = atan2(ymt,xmt);
 	}
 }
 
@@ -301,6 +301,31 @@ void stulan_euler // Euler method
 			xt1[i] += xti+dxti; // update next time step (adding in input already in yt1)
 			yt1[i] += yti+dyti; // update next time step (adding in input already in xt1)
 		}
+	}
+}
+
+void stulan_order_param // calculate order parameter magnitude/phase
+(
+	const   size_t N, // number of oscillators
+	const   size_t n, // number of integration increments
+	double* const  x, // oscillator real part
+	double* const  y, // oscillator imag part
+	double* const  r, // order parameter magnitude
+	double* const  p  // order parameter phase (NULL if not required)
+)
+{
+	const double OON = 1.0/(double)N;
+	double* rt = r;
+	double* pt = p;
+	for (double *xt=x, *yt = y; xt<x+N*n; xt+=N, yt+=N) {
+		double xmt = 0.0;
+		for (size_t i=0; i<N; ++i)  xmt += xt[i];
+		xmt *= OON;
+		double ymt = 0.0;
+		for (size_t i=0; i<N; ++i)  ymt += yt[i];
+		ymt *= OON;
+		*rt++ = hypot(xmt,ymt);
+		if (p) *pt++ = atan2(ymt,xmt);
 	}
 }
 
