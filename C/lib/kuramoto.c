@@ -136,9 +136,7 @@ void kuramoto_rk4 // Classic Runge-Kutta (RK4)
 
 		// update next time step (adding in input already in ht1)
 		double* const ht1 = ht+N;
-		for (size_t i=0; i<N; ++i) {
-			ht1[i] += ht[i] + (k1[i]+4.0*k2[i]+4.0*k3[i]+k4[i])/6.0;
-		}
+		for (size_t i=0; i<N; ++i) ht1[i] += ht[i] + (k1[i]+4.0*k2[i]+4.0*k3[i]+k4[i])/6.0;
 	}
 }
 
@@ -213,9 +211,7 @@ void kuramoto_rk4pl // Classic Runge-Kutta (RK4) with phase lags
 
 		// update next time step (adding in input already in ht1)
 		double* const ht1 = ht+N;
-		for (size_t i=0; i<N; ++i) {
-			ht1[i] += ht[i] + (k1[i]+4.0*k2[i]+4.0*k3[i]+k4[i])/6.0;
-		}
+		for (size_t i=0; i<N; ++i) ht1[i] += ht[i] + (k1[i]+4.0*k2[i]+4.0*k3[i]+k4[i])/6.0;
 	}
 }
 
@@ -302,6 +298,32 @@ void stulan_euler // Euler method
 			yt1[i] += yti+dyti; // update next time step (adding in input already in xt1)
 		}
 	}
+}
+
+void stulan_magnitudes // calculate magnitudes of oscillators
+(
+	const   size_t N, // number of oscillators
+	const   size_t n, // number of integration increments
+	double* const  x, // oscillator real part
+	double* const  y, // oscillator imag part
+	double* const  r  // oscillator magnitude
+)
+{
+	double* rt = r;
+	for (double *xt=x, *yt = y; xt<x+N*n; ++xt, ++yt) *rt++ = hypot(*xt,*yt);
+}
+
+void stulan_phases // calculate phases of oscillators
+(
+	const   size_t N, // number of oscillators
+	const   size_t n, // number of integration increments
+	double* const  x, // oscillator real part
+	double* const  y, // oscillator imag part
+	double* const  h  // oscillator phase
+)
+{
+	double* ht = h;
+	for (double *xt=x, *yt = y; xt<x+N*n; ++xt, ++yt) *ht++ = atan2(*yt,*xt);
 }
 
 void stulan_order_param // calculate order parameter magnitude/phase
@@ -416,7 +438,5 @@ void stulan_rk4 // Classic Runge-Kutta (RK4)
 
 void phase_wrap(const size_t m, double* const h)
 {
-	for (size_t k=0; k<m; ++k) {
-		h[k] = wmpi2pi(h[k]);
-	}
+	for (size_t k=0; k<m; ++k) h[k] = wmpi2pi(h[k]);
 }

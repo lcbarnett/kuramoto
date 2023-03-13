@@ -40,9 +40,22 @@ static inline double randu()
 	return ((((uint64_t)random())|(((uint64_t)random())<<32))>>11)*(1.0/9007199254740992.0);
 }
 
+// Uniform random (IEEE-754 53-bit resolution) double on (0,1)
+
+static inline double randu0()
+{
+	double x;
+	do x = randu(); while (x == 0.0);
+	return x;
+}
+
 // Standard normal random double (Box-Muller, non-reantrant so not thread-safe)
 
 double randn();
+
+// Standard Cauchy random double
+
+double randc();
 
 // get a random random seed
 

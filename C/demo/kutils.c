@@ -30,6 +30,13 @@ double randn()
     return fac*v2;
 }
 
+// Standard Cauchy random double
+
+double randc()
+{
+	 return tan(M_PI*(randu0()-0.5));
+}
+
 // get a random random seed
 
 unsigned get_rand_seed()

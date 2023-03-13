@@ -72,31 +72,23 @@ void stulan_euler // Euler method
 	double* const  y   // oscillator imag part (dimensionless), initialised with input
 );
 
-static inline void stulan_magnitudes // calculate magnitudes of oscillators
+void stulan_magnitudes // calculate magnitudes of oscillators
 (
-	const size_t  N, // number of oscillators
-	const size_t  n, // number of integration increments
-	double* const x, // oscillator real part
-	double* const y, // oscillator imag part
-	double* const r  // oscillator magnitude
-)
-{
-	double* rt = r;
-	for (double *xt=x, *yt = y; xt<x+N*n; ++xt, ++yt) *rt++ = hypot(*xt,*yt);
-}
+	const   size_t N, // number of oscillators
+	const   size_t n, // number of integration increments
+	double* const  x, // oscillator real part
+	double* const  y, // oscillator imag part
+	double* const  r  // oscillator magnitude
+);
 
-static inline void stulan_phases // calculate phases of oscillators
+void stulan_phases // calculate phases of oscillators
 (
-	const size_t  N, // number of oscillators
-	const size_t  n, // number of integration increments
-	double* const x, // oscillator real part
-	double* const y, // oscillator imag part
-	double* const h  // oscillator phase
-)
-{
-	double* ht = h;
-	for (double *xt=x, *yt = y; xt<x+N*n; ++xt, ++yt) *ht++ = atan2(*yt,*xt);
-}
+	const   size_t N, // number of oscillators
+	const   size_t n, // number of integration increments
+	double* const  x, // oscillator real part
+	double* const  y, // oscillator imag part
+	double* const  h  // oscillator phase
+);
 
 void stulan_order_param // calculate order parameter magnitude/phase
 (
