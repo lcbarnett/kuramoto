@@ -10,7 +10,6 @@
 
 int stulan(int UNUSED argc, UNUSED char *argv[])
 {
-/*
 	// CLAP (command-line argument parser). Default values may
 	// be overriden on the command line as switches; e.g.:
 	//
@@ -25,8 +24,10 @@ int stulan(int UNUSED argc, UNUSED char *argv[])
 	CLAP_ARG(wsdev,  double, 1/8.0,     "oscillator frequencies std. dev.");
 	CLAP_ARG(Kmean,  double, 1/10.0,    "coupling constants mean");
 	CLAP_ARG(Ksdev,  double, Kmean/6.0, "coupling constants std. dev.");
+	CLAP_ARG(amean,  double, 1.0,       "growth constants mean");
+	CLAP_ARG(asdev,  double, 0.2,       "growth constants std. dev.");
 	CLAP_ARG(Isdev,  double, 1/80.0,    "input noise intensity (zero for deterministic)");
-	CLAP_ARG(RK4,    int,    0,         "RK4 solver flag (else Euler)");
+//	CLAP_ARG(RK4,    int,    0,         "RK4 solver flag (else Euler)");
 	CLAP_ARG(rseed,  uint,   0,         "random seed (or 0 for random random seed)");
 #ifdef _HAVE_GNUPLOT
 	CLAP_ARG(gpterm, cstr,   GPTERM,    "Gnuplot terminal type (if available)");
@@ -54,11 +55,11 @@ int stulan(int UNUSED argc, UNUSED char *argv[])
 	double* const x = calloc(m,sizeof(double)); // oscillator real part
 	double* const y = calloc(m,sizeof(double)); // oscillator imag part
 	double* const r = calloc(n,sizeof(double)); // order parameter
+	double* const s = calloc(m,sizeof(double));
 
 	// random frequencies (normal distribution)
-	for (size_t i=0; i<N; ++i) {
-		w[i] = dt*TWOPI*(wmean+wsdev*randn()); // scale frequencies by dt
-	}
+
+	for (size_t i=0; i<N; ++i) w[i] = wmean+wsdev*randn();
 
 	// random coupling constants (normal distribution)
 
@@ -68,56 +69,52 @@ int stulan(int UNUSED argc, UNUSED char *argv[])
 				K[N*i+j] = 0.0; // no "self-connections"!
 			}
 			else {
-				K[N*i+j] = dt*TWOPI*ooN*(Kmean+Ksdev*randn()); // scale coupling constants by dt and N
+				K[N*i+j] = ooN*(Kmean+Ksdev*randn()); // scale coupling constants by N
 			}
 		}
 	}
 
+	// random growth constants (log-normal distribution)
+
+	const double lm2 = 2.0*log(amean);
+	const double ls2 = log(amean*amean+asdev*asdev);
+	const double am  = lm2-0.5*ls2;
+	const double as  = sqrt(ls2-lm2);
+	for (size_t i=0; i<N; ++i)  a[i] = exp(am+as*randn());
+
 	// initialise oscillator phases with input (zero-mean Gaussian white noise)
 
-	const double sqrtdt = sqrt(dt);
 	if (Isdev > 0.0) {
-		for (size_t k=0; k<m; ++k) {
-			h[k] = sqrtdt*TWOPI*Isdev*randn(); // scale input by sqrt(dt) [cf. Ornstein-Uhlenbeck process]
-		}
+		for (size_t k=0; k<m; ++k) x[k] = Isdev*randn();
+		for (size_t k=0; k<m; ++k) y[k] = Isdev*randn();
 	}
 	else {
-		memset(h,0,M*sizeof(double));  // zero-fill for no input [in fact here calloc will have done that]
+		memset(x,0,m*sizeof(double));  // zero-fill for no input [in fact here calloc will have done that]
+		memset(y,0,m*sizeof(double));  // zero-fill for no input [in fact here calloc will have done that]
 	}
 
 	// integrate Kuramoto ODE
 
-	if (RK4) {
-		double* const kbuff = calloc(4*N,sizeof(double)); // see kuramoto_rk4()
-		kuramoto_rk4(N,n,w,K,h,kbuff);
-		free(kbuff);
-	}
-	else {
-		kuramoto_euler(N,n,w,K,h);
-	}
+//	if (RK4) {
+//		double* const kbuff = calloc(4*N,sizeof(double)); // see kuramoto_rk4()
+//		kuramoto_rk4(N,n,w,K,h,kbuff);
+//		free(kbuff);
+//	}
+//	else {
+		stulan_euler(N,n,dt,w,K,a,x,y);
+//	}
 
 	// calculate order parameter
 
-	kuramoto_order_param(N,n,h,r,NULL);
+	stulan_order_param(N,n,x,y,r,NULL);
 
-	// wrap oscillator phases to [-pi,pi) [if that's is what you want]
-	//
-	// phase_wrap(m,h);
+	// magnitudes
 
-	// generate signal from phases
-
-	for (size_t j=0; j<m; ++j) {
-		x[j] = sin(h[j]);
-	}
-	for (size_t k=0; k<n; ++k) {
-		double yk = 0.0;
-		for (size_t i=0; i<N; ++i) yk += x[N*k+i];
-		y[k] = ooN*yk;
-	}
+	stulan_magnitudes(N,n,x,y,s);
 
 	// write time stamp, order parameter and oscillator signals to file
 
-	char ofile[] = "/tmp/kuramoto_demo.asc";     // output file (ASCII)
+	char ofile[] = "/tmp/stulan_demo.asc";     // output file (ASCII)
 	FILE* const fp = fopen(ofile,"w");
 	if (fp == NULL) {
 		perror("Failed to open output file");
@@ -126,10 +123,7 @@ int stulan(int UNUSED argc, UNUSED char *argv[])
 	for (size_t k=0; k<n; ++k) {
 		fprintf(fp,"%17.8f",(double)(k+1)*dt); // time stamp
 		fprintf(fp," %17.8f",r[k]);            // order parameter
-		fprintf(fp," %17.8f",y[k]);            // aggregate signal
-		for (size_t i=0; i<N; ++i) {
-			fprintf(fp," %17.8f",x[N*k+i]);    // signal
-		}
+		for (size_t i=0; i<N; ++i) fprintf(fp," %17.8f",s[N*k+i]); // magnitudes
 		fprintf(fp,"\n");
 	}
 	if (fclose(fp) != 0) {
@@ -141,13 +135,13 @@ int stulan(int UNUSED argc, UNUSED char *argv[])
 	// Else use your favourite plotting program on data in output file.
 
 #ifdef _HAVE_GNUPLOT
-	char gfile[] = "/tmp/kuramoto_demo.gp"; // Gnuplot command file
+	char gfile[] = "/tmp/stulan_demo.gp"; // Gnuplot command file
 	FILE* const gp = fopen(gfile,"w");
 	if (gp == NULL) {
 		perror("failed to open Gnuplot command file\n");
 		return EXIT_FAILURE;
 	}
-	fprintf(gp,"set term \"%s\" title \"Kuramoto oscillator demo\" size 1600,1200\n",gpterm);
+	fprintf(gp,"set term \"%s\" title \"STuart-Landau oscillator demo\" size 1600,1200\n",gpterm);
 	fprintf(gp,"set xlabel \"time\"\n");
 	fprintf(gp,"set ylabel \"mean phase\"\n");
 	fprintf(gp,"set key right bottom Left rev\n");
@@ -184,12 +178,13 @@ int stulan(int UNUSED argc, UNUSED char *argv[])
 
 	// free memory
 
+	free(s);
+	free(r);
 	free(y);
 	free(x);
-	free(r);
-	free(h);
+	free(a);
 	free(K);
 	free(w);
-*/
+
 	return EXIT_SUCCESS;
 }
