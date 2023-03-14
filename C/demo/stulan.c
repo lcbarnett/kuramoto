@@ -8,12 +8,12 @@
 
 // Program to demonstrate usage of coupled Stuart-Landau oscillators.
 
-int stulan(int UNUSED argc, UNUSED char *argv[])
+int stulan(int argc, char *argv[])
 {
 	// CLAP (command-line argument parser). Default values may
 	// be overriden on the command line as switches; e.g.:
 	//
-	// kuramoto demo -N 10 -T 1000 -dt 0.001 -Isdev 0
+	// kuramoto stulan -N 10 -T 1000 -dt 0.001 -Isdev r0 = 3
 	//
 	// Arg:  name    type    default    description
 	puts("\n---------------------------------------------------------------------------------------");
@@ -26,7 +26,7 @@ int stulan(int UNUSED argc, UNUSED char *argv[])
 	CLAP_ARG(Ksdev,  double, Kmean/8.0, "coupling constants std. dev.");
 	CLAP_ARG(amean,  double, 1.0,       "growth constants mean");
 	CLAP_ARG(asdev,  double, amean/8.0, "growth constants std. dev.");
-	CLAP_ARG(r0,     double, 10.0,      "oscillator initial value");
+//	CLAP_ARG(r0,     double, 10.0,      "oscillator initial value");
 	CLAP_ARG(Isdev,  double, 0.0,       "input noise intensity");
 //	CLAP_ARG(RK4,    int,    0,         "RK4 solver flag (else Euler)");
 	CLAP_ARG(rseed,  uint,   0,         "random seed (or 0 for random random seed)");
@@ -94,14 +94,14 @@ int stulan(int UNUSED argc, UNUSED char *argv[])
 		memset(y,0,m*sizeof(double));  // zero-fill for no input [in fact here calloc will have done that]
 	}
 
-	// initialise oscillators (uniform random on circle of radius r0)
+	// initialise oscillators (uniform random on unit circle)
 
+//	const double r0adj = r0/(1.0+SLMAGIC*(double)(N-1));
 	for (size_t i=0; i<N; ++i) {
 		const double h = TWOPI*randu();
-		x[i] = r0*cos(h);
-		y[i] = r0*sin(h);
+		x[i] = cos(h);
+		y[i] = sin(h);
 	}
-
 
 	// integrate Kuramoto ODE
 

@@ -3,6 +3,11 @@
 
 #define TWOPI (2.0*M_PI)
 
+// Stuart-Landau: expected amplitude of sum of N oscillators
+// uniform random on unit circle is 1+(N-1)*SLMAGIC
+
+#define SLMAGIC (0.637026975907)
+
 // Kuramoto model
 
 void kuramoto_euler	// Euler method
