@@ -26,7 +26,7 @@ int stulan(int UNUSED argc, UNUSED char *argv[])
 	CLAP_ARG(Ksdev,  double, Kmean/8.0, "coupling constants std. dev.");
 	CLAP_ARG(amean,  double, 1.0,       "growth constants mean");
 	CLAP_ARG(asdev,  double, amean/8.0, "growth constants std. dev.");
-	CLAP_ARG(r0,     double, 1.5,       "oscillator initial value");
+	CLAP_ARG(r0,     double, 10.0,      "oscillator initial value");
 	CLAP_ARG(Isdev,  double, 0.0,       "input noise intensity");
 //	CLAP_ARG(RK4,    int,    0,         "RK4 solver flag (else Euler)");
 	CLAP_ARG(rseed,  uint,   0,         "random seed (or 0 for random random seed)");
@@ -94,13 +94,12 @@ int stulan(int UNUSED argc, UNUSED char *argv[])
 		memset(y,0,m*sizeof(double));  // zero-fill for no input [in fact here calloc will have done that]
 	}
 
-	// initialise oscillators
+	// initialise oscillators (uniform random on circle of radius r0)
 
-	const double r0fac = r0*(double)N;
 	for (size_t i=0; i<N; ++i) {
 		const double h = TWOPI*randu();
-		x[i] = r0fac*cos(h);
-		y[i] = r0fac*sin(h);
+		x[i] = r0*cos(h);
+		y[i] = r0*sin(h);
 	}
 
 
@@ -158,7 +157,7 @@ int stulan(int UNUSED argc, UNUSED char *argv[])
 	fprintf(gp,"set key right bottom Left rev\n");
 	fprintf(gp,"# set grid\n");
 //	fprintf(gp,"set xr [0:%g]\n",T);
-//	fprintf(gp,"set yr [0:1.05]\n");
+	fprintf(gp,"set yr [0:*]\n");
 //	fprintf(gp,"set ytics 0.5\n");
 	fprintf(gp,"set multiplot layout 2,1\n");
 	fprintf(gp,"set title \"Order parameter\"\n");
