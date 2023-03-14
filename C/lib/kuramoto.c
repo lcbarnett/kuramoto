@@ -21,7 +21,7 @@ void kuramoto_euler	// Euler method
 	const double sqrtdt = sqrt(dt);
 	for (size_t i=0; i<N;   ++i) w[i] *= dt;
 	for (size_t i=0; i<N*N; ++i) K[i] *= dt;
-	for (size_t i=0; i<N*n; ++i) h[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
+	for (size_t i=N; i<N*n; ++i) h[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
 
 	// ODE solver
 
@@ -53,7 +53,7 @@ void kuramoto_eulerpl // Euler method with phase lags
 	const double sqrtdt = sqrt(dt);
 	for (size_t i=0; i<N;   ++i) w[i] *= dt;
 	for (size_t i=0; i<N*N; ++i) K[i] *= dt;
-	for (size_t i=0; i<N*n; ++i) h[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
+	for (size_t i=N; i<N*n; ++i) h[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
 
 	// ODE solver
 
@@ -86,7 +86,7 @@ void kuramoto_rk4 // Classic Runge-Kutta (RK4)
 	const double sqrtdt = sqrt(dt);
 	for (size_t i=0; i<N;   ++i) w[i] *= dt;
 	for (size_t i=0; i<N*N; ++i) K[i] *= dt;
-	for (size_t i=0; i<N*n; ++i) h[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
+	for (size_t i=N; i<N*n; ++i) h[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
 
 	// set up coefficients buffers
 
@@ -157,7 +157,7 @@ void kuramoto_rk4pl // Classic Runge-Kutta (RK4) with phase lags
 	const double sqrtdt = sqrt(dt);
 	for (size_t i=0; i<N;   ++i) w[i] *= dt;
 	for (size_t i=0; i<N*N; ++i) K[i] *= dt;
-	for (size_t i=0; i<N*n; ++i) h[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
+	for (size_t i=N; i<N*n; ++i) h[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
 
 	// set up coefficients buffers
 
@@ -268,8 +268,8 @@ void stulan_euler // Euler method
 	for (size_t i=0; i<N;   ++i) w[i] *= dt;
 	for (size_t i=0; i<N*N; ++i) K[i] *= dt;
 	for (size_t i=0; i<N;   ++i) a[i] *= dt;
-	for (size_t i=0; i<N*n; ++i) x[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
-	for (size_t i=0; i<N*n; ++i) y[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
+	for (size_t i=N; i<N*n; ++i) x[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
+	for (size_t i=N; i<N*n; ++i) y[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
 
 	// adjust growth constants by mean coupling
 

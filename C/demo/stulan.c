@@ -17,16 +17,17 @@ int stulan(int UNUSED argc, UNUSED char *argv[])
 	//
 	// Arg:  name    type    default    description
 	puts("\n---------------------------------------------------------------------------------------");
-	CLAP_ARG(N,      size_t, 4,         "number of oscillators");
-	CLAP_ARG(T,      double, 200.0,     "total integration time");
+	CLAP_ARG(N,      size_t, 6,         "number of oscillators");
+	CLAP_ARG(T,      double, 500.0,     "total integration time");
 	CLAP_ARG(dt,     double, 0.01,      "integration step size");
 	CLAP_ARG(wmean,  double, 0.0,       "oscillator frequencies mean");
-	CLAP_ARG(wsdev,  double, 1/8.0,     "oscillator frequencies std. dev.");
-	CLAP_ARG(Kmean,  double, 1/10.0,    "coupling constants mean");
-	CLAP_ARG(Ksdev,  double, Kmean/6.0, "coupling constants std. dev.");
+	CLAP_ARG(wsdev,  double, 0.3,       "oscillator frequencies std. dev.");
+	CLAP_ARG(Kmean,  double, 0.1,       "coupling constants mean");
+	CLAP_ARG(Ksdev,  double, Kmean/8.0, "coupling constants std. dev.");
 	CLAP_ARG(amean,  double, 1.0,       "growth constants mean");
-	CLAP_ARG(asdev,  double, 0.2,       "growth constants std. dev.");
-	CLAP_ARG(Isdev,  double, 1/80.0,    "input noise intensity (zero for deterministic)");
+	CLAP_ARG(asdev,  double, amean/8.0, "growth constants std. dev.");
+	CLAP_ARG(r0,     double, 1.5,       "oscillator initial value");
+	CLAP_ARG(Isdev,  double, 0.0,       "input noise intensity");
 //	CLAP_ARG(RK4,    int,    0,         "RK4 solver flag (else Euler)");
 	CLAP_ARG(rseed,  uint,   0,         "random seed (or 0 for random random seed)");
 #ifdef _HAVE_GNUPLOT
@@ -76,13 +77,13 @@ int stulan(int UNUSED argc, UNUSED char *argv[])
 
 	// random growth constants (log-normal distribution)
 
-	const double lm2 = 2.0*log(amean);
-	const double ls2 = log(amean*amean+asdev*asdev);
-	const double am  = lm2-0.5*ls2;
-	const double as  = sqrt(ls2-lm2);
+	const double lna = log(amean*amean+asdev*asdev);
+	const double lnb = 2.0*log(amean);
+	const double am  = lnb-lna/2.0;
+	const double as  = sqrt(lna-lnb);
 	for (size_t i=0; i<N; ++i)  a[i] = exp(am+as*randn());
 
-	// initialise oscillator phases with input (zero-mean Gaussian white noise)
+	// input zero-mean Gaussian white noise
 
 	if (Isdev > 0.0) {
 		for (size_t k=0; k<m; ++k) x[k] = Isdev*randn();
@@ -92,6 +93,16 @@ int stulan(int UNUSED argc, UNUSED char *argv[])
 		memset(x,0,m*sizeof(double));  // zero-fill for no input [in fact here calloc will have done that]
 		memset(y,0,m*sizeof(double));  // zero-fill for no input [in fact here calloc will have done that]
 	}
+
+	// initialise oscillators
+
+	const double r0fac = r0*(double)N;
+	for (size_t i=0; i<N; ++i) {
+		const double h = TWOPI*randu();
+		x[i] = r0fac*cos(h);
+		y[i] = r0fac*sin(h);
+	}
+
 
 	// integrate Kuramoto ODE
 
@@ -141,24 +152,21 @@ int stulan(int UNUSED argc, UNUSED char *argv[])
 		perror("failed to open Gnuplot command file\n");
 		return EXIT_FAILURE;
 	}
-	fprintf(gp,"set term \"%s\" title \"STuart-Landau oscillator demo\" size 1600,1200\n",gpterm);
+	fprintf(gp,"set term \"%s\" title \"Coupled Stuart-Landau oscillators\" size 1600,1200\n",gpterm);
 	fprintf(gp,"set xlabel \"time\"\n");
-	fprintf(gp,"set ylabel \"mean phase\"\n");
+	fprintf(gp,"set ylabel \"mean amplitude\"\n");
 	fprintf(gp,"set key right bottom Left rev\n");
 	fprintf(gp,"# set grid\n");
-	fprintf(gp,"set xr [0:%g]\n",T);
-	fprintf(gp,"set yr [0:1.05]\n");
-	fprintf(gp,"set ytics 0.5\n");
-	fprintf(gp,"set multiplot layout 3,1\n");
+//	fprintf(gp,"set xr [0:%g]\n",T);
+//	fprintf(gp,"set yr [0:1.05]\n");
+//	fprintf(gp,"set ytics 0.5\n");
+	fprintf(gp,"set multiplot layout 2,1\n");
 	fprintf(gp,"set title \"Order parameter\"\n");
 	fprintf(gp,"plot \"%s\" u 1:2 w l not\n",ofile);
-	fprintf(gp,"set yr [-1.05:1.05]\n");
-	fprintf(gp,"set title \"Aggregate oscillator signal (waveform)\"\n");
-	fprintf(gp,"plot \"%s\" u 1:3 w l not\n",ofile);
-	fprintf(gp,"set title \"Oscillator signals (waveforms)\"\n");
+	fprintf(gp,"set title \"Oscillator amplitudes\"\n");
 	fprintf(gp,"set ylabel \"amplitude\"\n");
 	fprintf(gp,"plot \\\n");
-	for (size_t i=0; i<N; ++i) fprintf(gp,"\"%s\" u 1:%zu w l not ,\\\n",ofile,4+i);
+	for (size_t i=0; i<N; ++i) fprintf(gp,"\"%s\" u 1:%zu w l not ,\\\n",ofile,3+i);
 	fprintf(gp,"NaN not\n");
 	fprintf(gp,"unset multiplot\n");
 	if (fclose(gp) != 0) {
