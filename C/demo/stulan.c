@@ -56,7 +56,7 @@ int stulan(int argc, char *argv[])
 	double* const x = calloc(m,sizeof(double)); // oscillator real part
 	double* const y = calloc(m,sizeof(double)); // oscillator imag part
 	double* const r = calloc(n,sizeof(double)); // order parameter
-	double* const s = calloc(m,sizeof(double));
+	double* const s = calloc(m,sizeof(double)); // oscillator magnitudes
 
 	// random frequencies (normal distribution)
 
@@ -133,7 +133,8 @@ int stulan(int argc, char *argv[])
 	for (size_t k=0; k<n; ++k) {
 		fprintf(fp,"%17.8f",(double)(k+1)*dt); // time stamp
 		fprintf(fp," %17.8f",r[k]);            // order parameter
-		for (size_t i=0; i<N; ++i) fprintf(fp," %17.8f",s[N*k+i]); // magnitudes
+		for (size_t i=0; i<N; ++i) fprintf(fp," %17.8f",s[N*k+i]); // oscillator magnitudes
+		for (size_t i=0; i<N; ++i) fprintf(fp," %17.8f",x[N*k+i]); // oscillator signals
 		fprintf(fp,"\n");
 	}
 	if (fclose(fp) != 0) {
@@ -153,19 +154,25 @@ int stulan(int argc, char *argv[])
 	}
 	fprintf(gp,"set term \"%s\" title \"Coupled Stuart-Landau oscillators\" size 1600,1200\n",gpterm);
 	fprintf(gp,"set xlabel \"time\"\n");
-	fprintf(gp,"set ylabel \"mean amplitude\"\n");
 	fprintf(gp,"set key right bottom Left rev\n");
 	fprintf(gp,"# set grid\n");
 //	fprintf(gp,"set xr [0:%g]\n",T);
 	fprintf(gp,"set yr [0:*]\n");
 //	fprintf(gp,"set ytics 0.5\n");
-	fprintf(gp,"set multiplot layout 2,1\n");
+	fprintf(gp,"set multiplot layout 3,1\n");
 	fprintf(gp,"set title \"Order parameter\"\n");
+	fprintf(gp,"set ylabel \"mean magnitude\"\n");
 	fprintf(gp,"plot \"%s\" u 1:2 w l not\n",ofile);
-	fprintf(gp,"set title \"Oscillator amplitudes\"\n");
-	fprintf(gp,"set ylabel \"amplitude\"\n");
+	fprintf(gp,"set title \"Oscillator magnitudes\"\n");
+	fprintf(gp,"set ylabel \"magnitude\"\n");
 	fprintf(gp,"plot \\\n");
 	for (size_t i=0; i<N; ++i) fprintf(gp,"\"%s\" u 1:%zu w l not ,\\\n",ofile,3+i);
+	fprintf(gp,"NaN not\n");
+	fprintf(gp,"set title \"Oscillator signals\"\n");
+	fprintf(gp,"set ylabel \"amplitude\"\n");
+	fprintf(gp,"set yr [*:*]\n");
+	fprintf(gp,"plot \\\n");
+	for (size_t i=0; i<N; ++i) fprintf(gp,"\"%s\" u 1:%zu w l not ,\\\n",ofile,3+N+i);
 	fprintf(gp,"NaN not\n");
 	fprintf(gp,"unset multiplot\n");
 	if (fclose(gp) != 0) {
