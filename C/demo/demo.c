@@ -55,9 +55,8 @@ int demo(int argc, char *argv[])
 	double* const y = calloc(n,sizeof(double)); // oscillator agregated signal
 
 	// random frequencies (normal distribution)
-	for (size_t i=0; i<N; ++i) {
-		w[i] = TWOPI*(wmean+wsdev*randn());
-	}
+
+	for (size_t i=0; i<N; ++i) w[i] = TWOPI*(wmean+wsdev*randn());
 
 	// random coupling constants (normal distribution)
 
@@ -75,12 +74,10 @@ int demo(int argc, char *argv[])
 	// initialise oscillator phases with input (zero-mean Gaussian white noise)
 
 	if (Isdev > 0.0) {
-		for (size_t k=0; k<m; ++k) {
-			h[k] = TWOPI*Isdev*randn();
-		}
+		for (size_t k=0; k<m; ++k) h[k] = TWOPI*Isdev*randn();
 	}
 	else {
-		memset(h,0,M*sizeof(double)); // zero-fill for no input [in fact here calloc will have done that]
+		memset(h,0,m*sizeof(double)); // zero-fill for no input [in fact here calloc will have done that]
 	}
 
 	// integrate Kuramoto ODE
@@ -104,9 +101,7 @@ int demo(int argc, char *argv[])
 
 	// generate signal from phases
 
-	for (size_t j=0; j<m; ++j) {
-		x[j] = sin(h[j]);
-	}
+	for (size_t j=0; j<m; ++j) x[j] = sin(h[j]);
 	for (size_t k=0; k<n; ++k) {
 		double yk = 0.0;
 		for (size_t i=0; i<N; ++i) yk += x[N*k+i];
@@ -125,9 +120,7 @@ int demo(int argc, char *argv[])
 		fprintf(fp,"%17.8f",(double)(k+1)*dt); // time stamp
 		fprintf(fp," %17.8f",r[k]);            // order parameter
 		fprintf(fp," %17.8f",y[k]);            // aggregate signal
-		for (size_t i=0; i<N; ++i) {
-			fprintf(fp," %17.8f",x[N*k+i]);    // signal
-		}
+		for (size_t i=0; i<N; ++i) fprintf(fp," %17.8f",x[N*k+i]); // signal
 		fprintf(fp,"\n");
 	}
 	if (fclose(fp) != 0) {

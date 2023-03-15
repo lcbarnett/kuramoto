@@ -21,7 +21,7 @@ void kuramoto_euler	// Euler method
 	const double sqrtdt = sqrt(dt);
 	for (size_t i=0; i<N;   ++i) w[i] *= dt;
 	for (size_t i=0; i<N*N; ++i) K[i] *= dt;
-	for (size_t i=0; i<N*n; ++i) h[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
+	for (size_t i=N; i<N*n; ++i) h[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
 
 	// ODE solver
 
@@ -53,7 +53,7 @@ void kuramoto_eulerpl // Euler method with phase lags
 	const double sqrtdt = sqrt(dt);
 	for (size_t i=0; i<N;   ++i) w[i] *= dt;
 	for (size_t i=0; i<N*N; ++i) K[i] *= dt;
-	for (size_t i=0; i<N*n; ++i) h[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
+	for (size_t i=N; i<N*n; ++i) h[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
 
 	// ODE solver
 
@@ -86,7 +86,7 @@ void kuramoto_rk4 // Classic Runge-Kutta (RK4)
 	const double sqrtdt = sqrt(dt);
 	for (size_t i=0; i<N;   ++i) w[i] *= dt;
 	for (size_t i=0; i<N*N; ++i) K[i] *= dt;
-	for (size_t i=0; i<N*n; ++i) h[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
+	for (size_t i=N; i<N*n; ++i) h[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
 
 	// set up coefficients buffers
 
@@ -136,9 +136,7 @@ void kuramoto_rk4 // Classic Runge-Kutta (RK4)
 
 		// update next time step (adding in input already in ht1)
 		double* const ht1 = ht+N;
-		for (size_t i=0; i<N; ++i) {
-			ht1[i] += ht[i] + (k1[i]+4.0*k2[i]+4.0*k3[i]+k4[i])/6.0;
-		}
+		for (size_t i=0; i<N; ++i) ht1[i] += ht[i] + (k1[i]+4.0*k2[i]+4.0*k3[i]+k4[i])/6.0;
 	}
 }
 
@@ -159,7 +157,7 @@ void kuramoto_rk4pl // Classic Runge-Kutta (RK4) with phase lags
 	const double sqrtdt = sqrt(dt);
 	for (size_t i=0; i<N;   ++i) w[i] *= dt;
 	for (size_t i=0; i<N*N; ++i) K[i] *= dt;
-	for (size_t i=0; i<N*n; ++i) h[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
+	for (size_t i=N; i<N*n; ++i) h[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
 
 	// set up coefficients buffers
 
@@ -213,42 +211,40 @@ void kuramoto_rk4pl // Classic Runge-Kutta (RK4) with phase lags
 
 		// update next time step (adding in input already in ht1)
 		double* const ht1 = ht+N;
-		for (size_t i=0; i<N; ++i) {
-			ht1[i] += ht[i] + (k1[i]+4.0*k2[i]+4.0*k3[i]+k4[i])/6.0;
-		}
+		for (size_t i=0; i<N; ++i) ht1[i] += ht[i] + (k1[i]+4.0*k2[i]+4.0*k3[i]+k4[i])/6.0;
 	}
 }
 
 void kuramoto_order_param // calculate order parameter magnitude/phase
 (
-	const size_t N,        // number of oscillators
-	const size_t n,        // number of integration increments
-	const double* const h, // oscillator phases
-	double* const r,       // order parameter magnitude
-	double* const psi      // order parameter phase (NULL if not required)
+	const   size_t N, // number of oscillators
+	const   size_t n, // number of integration increments
+	double* const  h, // oscillator phases
+	double* const  r, // order parameter magnitude
+	double* const  p  // order parameter phase (NULL if not required)
 )
 {
 	const double OON = 1.0/(double)N;
 	double* rt = r;
-	double* pt = psi;
+	double* pt = p;
 	for (const double* ht=h; ht<h+N*n; ht+=N) {
-		double x = 0.0;
-		double y = 0.0;
+		double xmt = 0.0;
+		double ymt = 0.0;
 		for (size_t i=0; i<N; ++i) {
 #ifdef _GNU_SOURCE
 			double c,s;
 			sincos(ht[i],&s,&c);
-			x += c;
-			y += s;
+			xmt += c;
+			ymt += s;
 #else
-			x += cos(ht[i]);
-			y += sin(ht[i]);
+			xmt += cos(ht[i]);
+			ymt += sin(ht[i]);
 #endif
 		}
-		x *= OON;
-		y *= OON;
-		*rt++ = hypot(x,y);
-		if (psi) *pt++ = atan2(y,x);
+		xmt *= OON;
+		ymt *= OON;
+		*rt++ = hypot(xmt,ymt);
+		if (p) *pt++ = atan2(ymt,xmt);
 	}
 }
 
@@ -272,8 +268,8 @@ void stulan_euler // Euler method
 	for (size_t i=0; i<N;   ++i) w[i] *= dt;
 	for (size_t i=0; i<N*N; ++i) K[i] *= dt;
 	for (size_t i=0; i<N;   ++i) a[i] *= dt;
-	for (size_t i=0; i<N*n; ++i) x[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
-	for (size_t i=0; i<N*n; ++i) y[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
+	for (size_t i=N; i<N*n; ++i) x[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
+	for (size_t i=N; i<N*n; ++i) y[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
 
 	// adjust growth constants by mean coupling
 
@@ -301,6 +297,57 @@ void stulan_euler // Euler method
 			xt1[i] += xti+dxti; // update next time step (adding in input already in yt1)
 			yt1[i] += yti+dyti; // update next time step (adding in input already in xt1)
 		}
+	}
+}
+
+void stulan_magnitudes // calculate magnitudes of oscillators
+(
+	const   size_t N, // number of oscillators
+	const   size_t n, // number of integration increments
+	double* const  x, // oscillator real part
+	double* const  y, // oscillator imag part
+	double* const  r  // oscillator magnitude
+)
+{
+	double* rt = r;
+	for (double *xt=x, *yt = y; xt<x+N*n; ++xt, ++yt) *rt++ = hypot(*xt,*yt);
+}
+
+void stulan_phases // calculate phases of oscillators
+(
+	const   size_t N, // number of oscillators
+	const   size_t n, // number of integration increments
+	double* const  x, // oscillator real part
+	double* const  y, // oscillator imag part
+	double* const  h  // oscillator phase
+)
+{
+	double* ht = h;
+	for (double *xt=x, *yt = y; xt<x+N*n; ++xt, ++yt) *ht++ = atan2(*yt,*xt);
+}
+
+void stulan_order_param // calculate order parameter magnitude/phase
+(
+	const   size_t N, // number of oscillators
+	const   size_t n, // number of integration increments
+	double* const  x, // oscillator real part
+	double* const  y, // oscillator imag part
+	double* const  r, // order parameter magnitude
+	double* const  p  // order parameter phase (NULL if not required)
+)
+{
+	const double OON = 1.0/(double)N;
+	double* rt = r;
+	double* pt = p;
+	for (double *xt=x, *yt = y; xt<x+N*n; xt+=N, yt+=N) {
+		double xmt = 0.0;
+		for (size_t i=0; i<N; ++i)  xmt += xt[i];
+		xmt *= OON;
+		double ymt = 0.0;
+		for (size_t i=0; i<N; ++i)  ymt += yt[i];
+		ymt *= OON;
+		*rt++ = hypot(xmt,ymt);
+		if (p) *pt++ = atan2(ymt,xmt);
 	}
 }
 
@@ -391,7 +438,5 @@ void stulan_rk4 // Classic Runge-Kutta (RK4)
 
 void phase_wrap(const size_t m, double* const h)
 {
-	for (size_t k=0; k<m; ++k) {
-		h[k] = wmpi2pi(h[k]);
-	}
+	for (size_t k=0; k<m; ++k) h[k] = wmpi2pi(h[k]);
 }
