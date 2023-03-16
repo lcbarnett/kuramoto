@@ -4,6 +4,7 @@
 
 #include "clap.h"
 #include "kutils.h"
+#include "mt64.h"
 #include "kuramoto.h"
 
 // Program to demonstrate usage of coupled Stuart-Landau oscillators.
@@ -17,15 +18,15 @@ int scratch(int argc, char *argv[])
 	puts("\n---------------------------------------------------------------------------------------");
 	CLAP_ARG(nmax,   size_t, 40,        "maximum number of oscillators");
 	CLAP_ARG(S,      size_t, 10000,     "number of samples");
-	CLAP_ARG(rseed,  uint,   0,         "random seed (or 0 for random random seed)");
+	CLAP_ARG(rseed,  ulong,  0,         "random seed (or 0 for random random seed)");
 #ifdef _HAVE_GNUPLOT
 	CLAP_ARG(gpterm, cstr,   GPTERM,    "Gnuplot terminal type (if available)");
 #endif
 	puts("---------------------------------------------------------------------------------------");
 
-	const uint seed = rseed > 0 ? rseed : get_rand_seed();
-	printf("\nrandom seed = %u\n\n",seed);
-	srand(seed);
+	mt_t rng;
+	mtuint_t seed = mt_seed(&rng,rseed);
+	printf("\nrandom seed = %zu\n\n",seed);
 
 	double* const z = calloc(nmax,sizeof(double));
 
@@ -35,7 +36,7 @@ int scratch(int argc, char *argv[])
 		for (size_t s=0; s<S; ++s) {
 			double x = 0.0, y = 0.0;
 			for (size_t i=0; i<n; ++i) {
-				const double h = TWOPI*randu();
+				const double h = TWOPI*mt_rand(&rng);
 				x += cos(h);
 				y += sin(h);
 			}
