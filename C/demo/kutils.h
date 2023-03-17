@@ -36,8 +36,7 @@ typedef unsigned char uchar_t;
 
 static inline double randu()
 {
-	// random() only returns 32 random bits - glue two together.
-	return ((((uint64_t)random())|(((uint64_t)random())<<32))>>11)*(1.0/9007199254740992.0);
+	return (double)random()/(double)RAND_MAX;
 }
 
 // Uniform random (IEEE-754 53-bit resolution) double on (0,1)

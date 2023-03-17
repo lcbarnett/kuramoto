@@ -16,37 +16,29 @@ int scratch(int argc, char *argv[])
 	//
 	// Arg:  name    type    default    description
 	puts("\n---------------------------------------------------------------------------------------");
-	CLAP_ARG(nmax,   size_t, 100,        "maximum number of oscillators");
-	CLAP_ARG(S,      size_t, 100000,    "number of samples");
+	CLAP_ARG(S,      size_t, 10000000,  "number of samples");
+	CLAP_ARG(B,      size_t, 100,       "number of bins");
 	CLAP_ARG(rseed,  ulong,  0,         "random seed (or 0 for random random seed)");
-#ifdef _HAVE_GNUPLOT
 	CLAP_ARG(gpterm, cstr,   GPTERM,    "Gnuplot terminal type (if available)");
-#endif
 	puts("---------------------------------------------------------------------------------------");
 
 	mt_t rng;
-	mtuint_t seed = mt_seed(&rng,rseed);
-	printf("\nrandom seed = %zu\n\n",seed);
+	mtuint_t seed1 = mt_seed(&rng,rseed);
 
-	double* const z = calloc(nmax+1,sizeof(double));
+	const uint seed2 = rseed > 0 ? rseed : get_rand_seed();
+	srand(seed2);
 
-	for (size_t n=1; n<=nmax; ++n) {
-		printf("n = %3zu : ",n);
-		const double sqrtn = sqrt((double)n);
-		double zn = 0.0;
-		for (size_t s=0; s<S; ++s) {
-			double x = 0.0, y = 0.0;
-			for (size_t i=0; i<n; ++i) {
-				const double h = TWOPI*mt_rand(&rng);
-				x += cos(h);
-				y += sin(h);
-			}
-			zn += hypot(x,y);
-		}
-		z[n] = zn/(sqrtn*(double)S);
-		printf("z = %.12f\n",z[n]);
-	}
-	z[1] = 1.0; // because it really is :-)
+	printf("\nrandom seed 1 = %zu\n",seed1);
+	printf("random seed 2 = %u\n",seed2);
+
+	const double DB = (double)B;
+	const double DS = (double)S;
+
+	double* const c1 = calloc(B,sizeof(size_t));
+	double* const c2 = calloc(B,sizeof(size_t));
+
+	for (size_t s=0; s<S; ++s) ++c1[(size_t)floor(DB*mt_rand(&rng))];
+	for (size_t s=0; s<S; ++s) ++c2[(size_t)floor(DB*randu())];
 
 	char ofile[] = "/tmp/stulan_scratch.asc";
 	FILE* const fp = fopen(ofile,"w");
@@ -54,9 +46,10 @@ int scratch(int argc, char *argv[])
 		perror("Failed to open output file");
 		return EXIT_FAILURE;
 	}
-	for (size_t n=1; n<=nmax; ++n) {
-		fprintf(fp,"%6zu",n);
-		fprintf(fp," %17.8f",z[n]);
+	for (size_t b=0; b<B; ++b) {
+		fprintf(fp,"%6zu",b);
+		fprintf(fp," %17.8f",(double)(c1[b])/DS);
+		fprintf(fp," %17.8f",(double)(c2[b])/DS);
 		fprintf(fp,"\n");
 	}
 	if (fclose(fp) != 0) {
@@ -75,14 +68,13 @@ int scratch(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 	fprintf(gp,"set term \"%s\" size 1600,1200\n",gpterm);
-	fprintf(gp,"set title \"Oscillator mean amplitude scaling\"\n");
-	fprintf(gp,"set xlabel \"number of oscillators\"\n");
-	fprintf(gp,"set ylabel \"mean amplitude\"\n");
-	fprintf(gp,"set key right bottom Left rev\n");
+	fprintf(gp,"set title \"Uniform rand histogram\"\n");
+	fprintf(gp,"unset key\n");
 	fprintf(gp,"set grid\n");
-	fprintf(gp,"set xr [0.5:%g]\n",(double)nmax+0.5);
+//	fprintf(gp,"set xr [0.5:%g]\n",(double)nmax+0.5);
 	fprintf(gp,"set yr [0:*]\n");
-	fprintf(gp,"plot \"%s\" u 1:2 w p pt 7 not\n",ofile);
+	fprintf(gp,"plot \"%s\" u 1:2 w p pt 7 not, \\\n",ofile);
+	fprintf(gp,"\"%s\" u 1:3 w p pt 7 not\n",ofile);
 	if (fclose(gp) != 0) {
 		perror("Failed to close Gnuplot command file");
 		return EXIT_FAILURE;
@@ -100,7 +92,8 @@ int scratch(int argc, char *argv[])
 
 	// free memory
 
-	free(z);
+	free(c2);
+	free(c1);
 
 	return EXIT_SUCCESS;
 }
