@@ -28,6 +28,8 @@
 
 typedef unsigned char uchar_t;
 
+/* random() and friends deprecated in favour of (thread-safe) Mersenne Twister
+
 // Uniform random (IEEE-754 53-bit resolution) double on [0,1)
 //
 // Note: uses POSIX random(), which is non-reantrant
@@ -59,6 +61,8 @@ double randc();
 // get a random random seed
 
 unsigned get_rand_seed();
+
+*/
 
 // A basic stopwatch
 

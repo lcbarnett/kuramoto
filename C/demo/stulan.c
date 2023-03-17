@@ -4,6 +4,7 @@
 
 #include "clap.h"
 #include "kutils.h"
+#include "mt64.h"
 #include "kuramoto.h"
 
 // Program to demonstrate usage of coupled Stuart-Landau oscillators.
@@ -37,9 +38,9 @@ int stulan(int argc, char *argv[])
 
 	// seed random number generator (from command line if you want predictability)
 
-	const uint seed = rseed > 0 ? rseed : get_rand_seed();
-	printf("\nrandom seed = %u\n\n",seed);
-	srand(seed);
+	mt_t rng;
+	mtuint_t seed = mt_seed(&rng,rseed);
+	printf("\nrandom seed = %lu\n\n",seed);
 
 	// some convenient constants
 
@@ -60,7 +61,7 @@ int stulan(int argc, char *argv[])
 
 	// random frequencies (normal distribution)
 
-	for (size_t i=0; i<N; ++i) w[i] = wmean+wsdev*randn();
+	for (size_t i=0; i<N; ++i) w[i] = wmean+wsdev*mt_randn(&rng);
 
 	// random coupling constants (normal distribution)
 
@@ -70,7 +71,7 @@ int stulan(int argc, char *argv[])
 				K[N*i+j] = 0.0; // no "self-connections"!
 			}
 			else {
-				K[N*i+j] = ooN*(Kmean+Ksdev*randn()); // scale coupling constants by N
+				K[N*i+j] = ooN*(Kmean+Ksdev*mt_randn(&rng)); // scale coupling constants by N
 			}
 		}
 	}
@@ -81,13 +82,13 @@ int stulan(int argc, char *argv[])
 	const double lnb = 2.0*log(amean);
 	const double am  = lnb-lna/2.0;
 	const double as  = sqrt(lna-lnb);
-	for (size_t i=0; i<N; ++i)  a[i] = exp(am+as*randn());
+	for (size_t i=0; i<N; ++i)  a[i] = exp(am+as*mt_randn(&rng));
 
 	// input zero-mean Gaussian white noise
 
 	if (Isdev > 0.0) {
-		for (size_t k=0; k<m; ++k) x[k] = Isdev*randn();
-		for (size_t k=0; k<m; ++k) y[k] = Isdev*randn();
+		for (size_t k=0; k<m; ++k) x[k] = Isdev*mt_randn(&rng);
+		for (size_t k=0; k<m; ++k) y[k] = Isdev*mt_randn(&rng);
 	}
 	else {
 		memset(x,0,m*sizeof(double));  // zero-fill for no input [in fact here calloc will have done that]
@@ -98,7 +99,7 @@ int stulan(int argc, char *argv[])
 
 //	const double r0adj = r0/(1.0+SLMAGIC*(double)(N-1));
 	for (size_t i=0; i<N; ++i) {
-		const double h = TWOPI*randu();
+		const double h = TWOPI*mt_rand(&rng);
 		x[i] = cos(h);
 		y[i] = sin(h);
 	}

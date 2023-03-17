@@ -26,7 +26,7 @@ int scratch(int argc, char *argv[])
 
 	mt_t rng;
 	mtuint_t seed = mt_seed(&rng,rseed);
-	printf("\nrandom seed = %zu\n\n",seed);
+	printf("\nrandom seed = %lu\n\n",seed);
 
 	double* const z = calloc(nmax+1,sizeof(double));
 
