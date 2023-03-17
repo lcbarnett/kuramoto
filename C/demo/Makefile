@@ -25,7 +25,7 @@ CFLAGS = -std=c99 -march=native -O2 -Wall -Wextra -Winline -pedantic-errors -D_D
 all: $(BIN)
 
 $(BIN): $(SRC) $(INC)
-	$(CC) $(SRC) $(CFLAGS) -I$(INCDIR) -Wl,-rpath=$(LIBDIR) -lkuramoto -lm -o $(BIN)
+	$(CC) $(SRC) $(CFLAGS) -I$(INCDIR) -Wl,-rpath=$(LIBDIR) -lkuramoto -lm -lpthread -o $(BIN)
 
 clean:
 	$(RM) $(BIN)
