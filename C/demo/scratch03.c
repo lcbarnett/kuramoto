@@ -9,8 +9,8 @@
 #include "kuramoto.h"
 
 typedef struct {
-	size_t tnum;
-	size_t nipert;
+	size_t t;
+	size_t npt;
 	size_t S;
 	double* z;
 } targ_t;
@@ -21,29 +21,29 @@ void* compfun(void *arg)
 
 	mt_t rng;
 	mt_seed(&rng,0);
-	printf("thread %zu start\n",targ->tnum);
+	printf("thread %zu start\n",targ->t);
 	fflush(stdout);
 
-	const size_t toff = targ->tnum*targ->nipert+1;
+	const size_t toff = targ->t*targ->npt+1;
 
-	for (size_t n=toff; n<toff+targ->nipert; ++n) {
+	for (size_t n=toff; n<toff+targ->npt; ++n) {
 		const double sqrtn = sqrt((double)n);
 		double zn = 0.0;
 		for (size_t s=0; s<targ->S; ++s) {
 			double x = 0.0, y = 0.0;
 			for (size_t i=0; i<n; ++i) {
-				const double theta = TWOPI*mt_rand(&rng);
-				x += cos(theta);
-				y += sin(theta);
+				const double h = TWOPI*mt_rand(&rng);
+				x += cos(h);
+				y += sin(h);
 			}
 			zn += hypot(x,y);
 		}
 		targ->z[n] += zn/(sqrtn*(double)targ->S);
-		printf("thread %zu : n = %3zu : z = %.12f\n",targ->tnum,n,targ->z[n]);
+		printf("thread %zu : n = %3zu : z = %.12f\n",targ->t,n,targ->z[n]);
 		fflush(stdout);
 	}
 
-	printf("thread %zu exit\n",targ->tnum);
+	printf("thread %zu exit\n",targ->t);
 	fflush(stdout);
 	pthread_exit(NULL);
 }
@@ -53,51 +53,52 @@ int scratch(int argc, char *argv[])
 	// CLAP (command-line argument parser). Default values may
 	// be overriden on the command line as switches.
 	//
-	// Arg:  name      type    default    description
+	// Arg:  name    type    default    description
 	puts("\n---------------------------------------------------------------------------------------");
-	CLAP_ARG(nmax,     size_t, 60,        "maximum number of oscillators");
-	CLAP_ARG(nthreads, size_t, 3,         "maximum number of oscillators");
-	CLAP_ARG(S,        size_t, 1000000,   "number of samples");
+	CLAP_ARG(nmax,   size_t, 60,        "maximum number of oscillators");
+	CLAP_ARG(nthr,   size_t, 3,         "maximum number of oscillators");
+	CLAP_ARG(S,      size_t, 100000,    "number of samples");
 #ifdef _HAVE_GNUPLOT
-	CLAP_ARG(gpterm,   cstr,   GPTERM,    "Gnuplot terminal type (if available)");
+	CLAP_ARG(gpterm, cstr,   GPTERM,    "Gnuplot terminal type (if available)");
 #endif
-	puts("---------------------------------------------------------------------------------------\n");
+	puts("---------------------------------------------------------------------------------------");
 
-	const size_t nipert = nmax/nthreads;
-	if (nthreads*nipert != nmax) {
+	const size_t npt = nmax/nthr;
+	if (nthr*npt != nmax) {
 		fprintf(stderr,"Error: number of threqads must divide maximum number of oscillators");
 		exit(EXIT_FAILURE);
 	}
 
 	double* const z = calloc(nmax+1,sizeof(double));
 
-	pthread_t threads[nthreads];
+	pthread_t threads[nthr];
 	pthread_attr_t attr;
 
 	// initialize and set thread joinable
 	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr,PTHREAD_CREATE_JOINABLE);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
 	// kick off computation threads
-	targ_t targ[nipert];
-	for (size_t tnum=0; tnum<nthreads; ++tnum) {
-		targ[tnum].tnum = tnum;
-		targ[tnum].nipert = nipert;
-		targ[tnum].S = S;
-		targ[tnum].z = z;
-		const int tres = pthread_create(&threads[tnum],&attr,compfun,(void*)&targ[tnum]);
+	targ_t targ[npt];
+	for (size_t t=0; t<nthr; ++t) {
+		targ[t].t = t;
+		targ[t].npt = npt;
+		targ[t].S = S;
+		targ[t].z = z;
+		const int tres = pthread_create(&threads[t],&attr,compfun,(void*)&targ[t]);
 		if (tres) {
-			fprintf(stderr,"Error: unable to create thread %zu",tnum);
+			fprintf(stderr,"Error: unable to create thread %zu",t);
 			exit(EXIT_FAILURE);
 		}
+
 	}
 
 	// free attribute and wait for the other threads
 	pthread_attr_destroy(&attr);
-	for (size_t tnum=0; tnum<nthreads; ++tnum) {
-		const int tres = pthread_join(threads[tnum],NULL);
+	for (size_t t=0; t<nthr; ++t) {
+		const int tres = pthread_join(threads[t],NULL);
 		if (tres) {
-			fprintf(stderr,"Error: unable to join thread %zu",tnum);
+			fprintf(stderr,"Error: unable to join thread %zu",t);
 			exit(EXIT_FAILURE);
 		}
 	}

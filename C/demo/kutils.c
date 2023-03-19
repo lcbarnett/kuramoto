@@ -8,6 +8,9 @@
 
 #include "kutils.h"
 
+
+/* random() and friends deprecated in favour of (thread-safe) Mersenne Twister
+
 // Standard normal random double (Box-Muller, non-reantrant so not thread-safe)
 
 double randn()
@@ -64,6 +67,7 @@ unsigned get_rand_seed()
 #endif
 	return seed;
 }
+*/
 
 double timer_start(const char mesg[])
 {

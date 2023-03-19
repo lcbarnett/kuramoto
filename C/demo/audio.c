@@ -4,6 +4,7 @@
 
 #include "clap.h"
 #include "kutils.h"
+#include "mt64.h"
 #include "kuramoto.h"
 
 #define CD_SRATE 44100.0
@@ -42,9 +43,9 @@ int audio(int argc, char *argv[])
 
 	// seed random number generator (from command line if you want predictability)
 
-	const uint seed = rseed > 0 ? rseed : get_rand_seed();
-	printf("\nrandom seed = %u\n\n",seed);
-	srand(seed);
+	mt_t rng;
+	mtuint_t seed = mt_seed(&rng,rseed);
+	printf("\nrandom seed = %lu\n\n",seed);
 
 	// some convenient constants
 
@@ -67,7 +68,7 @@ int audio(int argc, char *argv[])
 	// random frequencies (normal distribution)
 
 	for (size_t i=0; i<N; ++i) {
-		w[i] = TWOPI*(wmean+wsdev*randn());
+		w[i] = TWOPI*(wmean+wsdev*mt_randn(&rng));
 	}
 
 	// random coupling constants (normal distribution); note that we take incoming couplings as
@@ -81,7 +82,7 @@ int audio(int argc, char *argv[])
 				K[N*i+j] = 0.0; // no "self-connections"!
 			}
 			else {
-				K[N*i+j] = ooNwi*((randu()<Kbias?Kmean:-Kmean)+Ksdev*randn()); // scale coupling constants by w[i] and N
+				K[N*i+j] = ooNwi*((mt_rand(&rng)<Kbias?Kmean:-Kmean)+Ksdev*mt_randn(&rng)); // scale coupling constants by w[i] and N
 			}
 		}
 	}
@@ -89,7 +90,7 @@ int audio(int argc, char *argv[])
 	// initialise oscillator phases with input (zero-mean Gaussian white noise)
 
 	if (Isdev > 0.0) {
-		for (size_t k=0; k<m; ++k) h[k] = TWOPI*Isdev*randn();
+		for (size_t k=0; k<m; ++k) h[k] = TWOPI*Isdev*mt_randn(&rng);
 	}
 	else {
 		memset(h,0,m*sizeof(double)); // zero-fill for no input [in fact here calloc will have done that]

@@ -28,6 +28,8 @@
 
 typedef unsigned char uchar_t;
 
+/* random() and friends deprecated in favour of (thread-safe) Mersenne Twister
+
 // Uniform random (IEEE-754 53-bit resolution) double on [0,1)
 //
 // Note: uses POSIX random(), which is non-reantrant
@@ -36,8 +38,7 @@ typedef unsigned char uchar_t;
 
 static inline double randu()
 {
-	// random() only returns 32 random bits - glue two together.
-	return ((((uint64_t)random())|(((uint64_t)random())<<32))>>11)*(1.0/9007199254740992.0);
+	return (double)random()/(double)RAND_MAX;
 }
 
 // Uniform random (IEEE-754 53-bit resolution) double on (0,1)
@@ -60,6 +61,8 @@ double randc();
 // get a random random seed
 
 unsigned get_rand_seed();
+
+*/
 
 // A basic stopwatch
 
