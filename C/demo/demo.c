@@ -16,20 +16,20 @@ int demo(int argc, char *argv[])
 	//
 	// kuramoto demo -N 10 -T 1000 -dt 0.001 -Isdev 0
 	//
-	// Arg:  name    type    default    description
+	// Arg:   name    type    default    description
 	puts("\n---------------------------------------------------------------------------------------");
-	CLAP_ARG(N,      size_t, 4,         "number of oscillators");
-	CLAP_ARG(T,      double, 200.0,     "total integration time");
-	CLAP_ARG(dt,     double, 0.01,      "integration step size");
-	CLAP_ARG(wmean,  double, 0.0,       "oscillator frequencies mean");
-	CLAP_ARG(wsdev,  double, 1/8.0,     "oscillator frequencies std. dev.");
-	CLAP_ARG(Kmean,  double, 1/10.0,    "coupling constants mean");
-	CLAP_ARG(Ksdev,  double, Kmean/6.0, "coupling constants std. dev.");
-	CLAP_ARG(Isdev,  double, 1/80.0,    "input noise intensity (zero for deterministic)");
-	CLAP_ARG(RK4,    int,    0,         "RK4 solver flag (else Euler)");
-	CLAP_ARG(rseed,  ulong,  0,         "random seed (or 0 for random random seed)");
+	CLAP_CARG(N,      size_t, 4,         "number of oscillators");
+	CLAP_CARG(T,      double, 200.0,     "total integration time");
+	CLAP_CARG(dt,     double, 0.01,      "integration step size");
+	CLAP_CARG(wmean,  double, 0.0,       "oscillator frequencies mean");
+	CLAP_CARG(wsdev,  double, 1/8.0,     "oscillator frequencies std. dev.");
+	CLAP_CARG(Kmean,  double, 1/10.0,    "coupling constants mean");
+	CLAP_CARG(Ksdev,  double, Kmean/6.0, "coupling constants std. dev.");
+	CLAP_CARG(Isdev,  double, 1/80.0,    "input noise intensity (zero for deterministic)");
+	CLAP_CARG(RK4,    int,    0,         "RK4 solver flag (else Euler)");
+	CLAP_CARG(rseed,  ulong,  0,         "random seed (or 0 for random random seed)");
 #ifdef _HAVE_GNUPLOT
-	CLAP_ARG(gpterm, cstr,   GPTERM,    "Gnuplot terminal type (if available)");
+	CLAP_CARG(gpterm, cstr,   GPTERM,    "Gnuplot terminal type (if available)");
 #endif
 	puts("---------------------------------------------------------------------------------------");
 

@@ -53,13 +53,13 @@ int scratch(int argc, char *argv[])
 	// CLAP (command-line argument parser). Default values may
 	// be overriden on the command line as switches.
 	//
-	// Arg:  name      type    default    description
+	// Arg:   name      type    default    description
 	puts("\n---------------------------------------------------------------------------------------");
-	CLAP_ARG(nmax,     size_t, 60,        "maximum number of oscillators");
-	CLAP_ARG(nthreads, size_t, 3,         "maximum number of oscillators");
-	CLAP_ARG(S,        size_t, 1000000,   "number of samples");
+	CLAP_CARG(nmax,     size_t, 60,        "maximum number of oscillators");
+	CLAP_CARG(nthreads, size_t, 3,         "maximum number of oscillators");
+	CLAP_CARG(S,        size_t, 1000000,   "number of samples");
 #ifdef _HAVE_GNUPLOT
-	CLAP_ARG(gpterm,   cstr,   GPTERM,    "Gnuplot terminal type (if available)");
+	CLAP_CARG(gpterm,   cstr,   GPTERM,    "Gnuplot terminal type (if available)");
 #endif
 	puts("---------------------------------------------------------------------------------------\n");
 

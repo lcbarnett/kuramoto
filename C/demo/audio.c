@@ -19,25 +19,25 @@ int audio(int argc, char *argv[])
 	//
 	// kuramoto audio -N 10 -T 5 -f 20000 -Isdev 0
 	//
-	// Arg:  name    type    default       description
+	// Arg:   name    type    default       description
 	puts("\n---------------------------------------------------------------------------------------");
-	CLAP_ARG(N,      size_t, 6,            "number of oscillators");
-	CLAP_ARG(T,      double, 5.0,          "total time (seconds)");
-	CLAP_ARG(f,      double, CD_SRATE,     "sampling frequency (Hz)");
-	CLAP_ARG(wmean,  double, 0.0,          "oscillator frequencies mean (Hz)");
-	CLAP_ARG(wsdev,  double, 2.0*MIDDLE_C, "oscillator frequencies std. dev. (Hz)");
-	CLAP_ARG(Kmean,  double, 4.0,          "coupling constants mean (dimensionless)");
-	CLAP_ARG(Ksdev,  double, Kmean/6.0,    "coupling constants std. dev. (dimensionless)");
-	CLAP_ARG(Kbias,  double, 0.5,          "coupling constants bias (probability");
-	CLAP_ARG(Isdev,  double, 0.2,          "input noise intensity (Hz: zero for deterministic)");
-	CLAP_ARG(RK4,    int,    0,            "RK4 solver flag (else Euler)");
-	CLAP_ARG(rseed,  uint,   0,            "random seed (or 0 for random random seed)");
-	CLAP_ARG(pcm,    int,    16,           "PCM bits: 16 or 24 (unsigned), -32 or -64 (fp), or zero for no PCM");
-	CLAP_ARG(cagg,   int,    1,            "PCM aggregate channels?");
+	CLAP_CARG(N,      size_t, 6,            "number of oscillators");
+	CLAP_CARG(T,      double, 5.0,          "total time (seconds)");
+	CLAP_CARG(f,      double, CD_SRATE,     "sampling frequency (Hz)");
+	CLAP_CARG(wmean,  double, 0.0,          "oscillator frequencies mean (Hz)");
+	CLAP_CARG(wsdev,  double, 2.0*MIDDLE_C, "oscillator frequencies std. dev. (Hz)");
+	CLAP_CARG(Kmean,  double, 4.0,          "coupling constants mean (dimensionless)");
+	CLAP_CARG(Ksdev,  double, Kmean/6.0,    "coupling constants std. dev. (dimensionless)");
+	CLAP_CARG(Kbias,  double, 0.5,          "coupling constants bias (probability");
+	CLAP_CARG(Isdev,  double, 0.2,          "input noise intensity (Hz: zero for deterministic)");
+	CLAP_CARG(RK4,    int,    0,            "RK4 solver flag (else Euler)");
+	CLAP_CARG(rseed,  uint,   0,            "random seed (or 0 for random random seed)");
+	CLAP_CARG(pcm,    int,    16,           "PCM bits: 16 or 24 (unsigned), -32 or -64 (fp), or zero for no PCM");
+	CLAP_CARG(cagg,   int,    1,            "PCM aggregate channels?");
 #ifdef _HAVE_GNUPLOT
-	CLAP_ARG(Ts,     double, 1.0,          "display time start (seconds)");
-	CLAP_ARG(Te,     double, 1.1,          "display time end   (seconds)");
-	CLAP_ARG(gpterm, cstr,   GPTERM,       "Gnuplot terminal type (if available) or \"noplot\"");
+	CLAP_CARG(Ts,     double, 1.0,          "display time start (seconds)");
+	CLAP_CARG(Te,     double, 1.1,          "display time end   (seconds)");
+	CLAP_CARG(gpterm, cstr,   GPTERM,       "Gnuplot terminal type (if available) or \"noplot\"");
 #endif
 	puts("---------------------------------------------------------------------------------------");
 

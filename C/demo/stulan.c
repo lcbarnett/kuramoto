@@ -16,23 +16,22 @@ int stulan(int argc, char *argv[])
 	//
 	// kuramoto stulan -N 10 -T 1000 -dt 0.001 -Isdev r0 = 3
 	//
-	// Arg:  name    type    default    description
+	// Arg:   name    type    default    description
 	puts("\n---------------------------------------------------------------------------------------");
-	CLAP_ARG(N,      size_t, 6,         "number of oscillators");
-	CLAP_ARG(T,      double, 500.0,     "total integration time");
-	CLAP_ARG(dt,     double, 0.01,      "integration step size");
-	CLAP_ARG(wmean,  double, 0.0,       "oscillator frequencies mean");
-	CLAP_ARG(wsdev,  double, 0.3,       "oscillator frequencies std. dev.");
-	CLAP_ARG(Kmean,  double, 0.1,       "coupling constants mean");
-	CLAP_ARG(Ksdev,  double, Kmean/8.0, "coupling constants std. dev.");
-	CLAP_ARG(amean,  double, 1.0,       "growth constants mean");
-	CLAP_ARG(asdev,  double, amean/8.0, "growth constants std. dev.");
-//	CLAP_ARG(r0,     double, 10.0,      "oscillator initial value");
-	CLAP_ARG(Isdev,  double, 0.0,       "input noise intensity");
-//	CLAP_ARG(RK4,    int,    0,         "RK4 solver flag (else Euler)");
-	CLAP_ARG(rseed,  uint,   0,         "random seed (or 0 for random random seed)");
+	CLAP_CARG(N,      size_t, 6,         "number of oscillators");
+	CLAP_CARG(T,      double, 500.0,     "total integration time");
+	CLAP_CARG(dt,     double, 0.01,      "integration step size");
+	CLAP_CARG(wmean,  double, 0.0,       "oscillator frequencies mean");
+	CLAP_CARG(wsdev,  double, 0.3,       "oscillator frequencies std. dev.");
+	CLAP_CARG(Kmean,  double, 0.1,       "coupling constants mean");
+	CLAP_CARG(Ksdev,  double, Kmean/8.0, "coupling constants std. dev.");
+	CLAP_CARG(amean,  double, 1.0,       "growth constants mean");
+	CLAP_CARG(asdev,  double, amean/8.0, "growth constants std. dev.");
+	CLAP_CARG(Isdev,  double, 0.0,       "input noise intensity");
+//	CLAP_CARG(RK4,    int,    0,         "RK4 solver flag (else Euler)");
+	CLAP_CARG(rseed,  uint,   0,         "random seed (or 0 for random random seed)");
 #ifdef _HAVE_GNUPLOT
-	CLAP_ARG(gpterm, cstr,   GPTERM,    "Gnuplot terminal type (if available)");
+	CLAP_CARG(gpterm, cstr,   GPTERM,    "Gnuplot terminal type (if available)");
 #endif
 	puts("---------------------------------------------------------------------------------------");
 
