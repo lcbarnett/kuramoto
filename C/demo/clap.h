@@ -1,9 +1,15 @@
 #ifndef CLAP_H
 #define CLAP_H
 
-// CLAP: a simple command-line parser
+// CLAP: a simple command-line parser.
 //
-// argc, argv are the standard parameters for your `main' routine.
+// Variables registered with CLAP may be optionally overriden by
+// switches on the command line (see main.c and demo.c for usage).
+// Variables may be registered as either const or non-const.
+//
+// Invocation:
+//
+// kuramoto clapfun -argname1 argval1 -argname2 argval2 ...
 
 #define CLAP_ARGTYPE_MAX 100
 #define CLAP_ARGNAME_MAX 100

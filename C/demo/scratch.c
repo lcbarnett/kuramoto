@@ -59,13 +59,13 @@ int scratch(int argc, char *argv[])
 	CLAP_CARG(nthreads, size_t, 3,         "maximum number of oscillators");
 	CLAP_CARG(S,        size_t, 1000000,   "number of samples");
 #ifdef _HAVE_GNUPLOT
-	CLAP_CARG(gpterm,   cstr,   GPTERM,    "Gnuplot terminal type (if available)");
+	CLAP_CARG(gpterm,   cstr,   GPTERM,    "Gnuplot terminal type");
 #endif
 	puts("---------------------------------------------------------------------------------------\n");
 
-	const size_t nipert = nmax/nthreads;
+	const size_t nipert = nmax/nthreads; // number of iterations per thread
 	if (nthreads*nipert != nmax) {
-		fprintf(stderr,"Error: number of threqads must divide maximum number of oscillators");
+		fprintf(stderr,"Error: number of threads must divide maximum number of oscillators\n");
 		exit(EXIT_FAILURE);
 	}
 

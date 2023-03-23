@@ -15,9 +15,7 @@
 int audio(int argc, char *argv[])
 {
 	// CLAP (command-line argument parser). Default values may
-	// be overriden on the command line as switches; e.g.:
-	//
-	// kuramoto audio -N 10 -T 5 -f 20000 -Isdev 0
+	// be overriden on the command line as switches.
 	//
 	// Arg:   name    type    default       description
 	puts("\n---------------------------------------------------------------------------------------");
@@ -37,7 +35,7 @@ int audio(int argc, char *argv[])
 #ifdef _HAVE_GNUPLOT
 	CLAP_CARG(Ts,     double, 1.0,          "display time start (seconds)");
 	CLAP_CARG(Te,     double, 1.1,          "display time end   (seconds)");
-	CLAP_CARG(gpterm, cstr,   GPTERM,       "Gnuplot terminal type (if available) or \"noplot\"");
+	CLAP_CARG(gpterm, cstr,   GPTERM,       "Gnuplot terminal type (or \"noplot\"");
 #endif
 	puts("---------------------------------------------------------------------------------------");
 

@@ -12,9 +12,7 @@
 int stulan(int argc, char *argv[])
 {
 	// CLAP (command-line argument parser). Default values may
-	// be overriden on the command line as switches; e.g.:
-	//
-	// kuramoto stulan -N 10 -T 1000 -dt 0.001 -Isdev r0 = 3
+	// be overriden on the command line as switches.
 	//
 	// Arg:   name    type    default    description
 	puts("\n---------------------------------------------------------------------------------------");
@@ -31,7 +29,7 @@ int stulan(int argc, char *argv[])
 //	CLAP_CARG(RK4,    int,    0,         "RK4 solver flag (else Euler)");
 	CLAP_CARG(rseed,  uint,   0,         "random seed (or 0 for random random seed)");
 #ifdef _HAVE_GNUPLOT
-	CLAP_CARG(gpterm, cstr,   GPTERM,    "Gnuplot terminal type (if available)");
+	CLAP_CARG(gpterm, cstr,   GPTERM,    "Gnuplot terminal type");
 #endif
 	puts("---------------------------------------------------------------------------------------");
 
