@@ -7,25 +7,23 @@ function [h,r,psi] = kuramoto(N,w,K,a,n,dt,I,mode)
 % To compile "mex" files, see Makefile in this directory
 %
 % N     number of oscillators                 (positive integer)
-% w     oscillator frequencies                (scalar or vector of length N)
-% K     oscillator coupling constants         (scalar or square matrix of size N)
-% a     phase lags                            (scalar or square matrix of size N)
+% w     oscillator frequencies                (scalar or vector of length N)       : radians/second
+% K     oscillator coupling constants         (scalar or square matrix of size N)  : radians/second
+% a     phase lags                            (scalar or square matrix of size N)  : radians
 % n     number of time increments             (positive integer)
-% dt    integration time increment            (positive double)
-% I     input                                 (N x n matrix or empty for no input)
+% dt    integration time increment            (positive double)                    : seconds
+% I     input                                 (N x n matrix or empty for no input) : radians
 % mode  simulation mode                       ('Euler' or 'RK4')
 %
-% h     oscillator phases (unwrapped)         (N x n matrix)
-% r     order parameter magnitude             (row vector of length n)
-% psi   order parameter phase (wrapped)       (row vector of length n)
+% h     oscillator phases (unwrapped)         (N x n matrix)                       : radians
+% r     order parameter magnitude             (row vector of length n)             : dimensionless
+% psi   order parameter phase (wrapped)       (row vector of length n)             : radians
 %
 % NOTE 1: K(i,j) is connection strength from oscillator j to oscillator i.
 %
 % NOTE 2: Euler method is faster (by a factor of about 5), but RK4 is more accurate.
 %
-% NOTE 3: Input is scaled by sqrt(dt), as per Ito SDE simulation (cf. Ornstein-Uhlenbeck)
-%
-% NOTE 4: To wrap the oscillator phases h to [-pi,pi), do:
+% NOTE 3: To wrap the oscillator phases h to [-pi,pi), do:
 %
 %     h = mod(h+pi,2*pi)-pi;
 %
@@ -84,8 +82,14 @@ end
 % Call mex ODE simulation (returned phase matrix h is N x n)
 %
 % Note: we transpose K so that K(i,j) is connection strength j --> i, same for a
+%
+% Note: hack because kuramoto.c w, K and I are changed!
 
-h = kuramoto_mex(N,n,dt,w,K',a',I,RK4);
+ww = w; ww(1) = 0; ww(1) = w(1); % not insane - force copy-on-write (Doh!)
+KK = K; KK(1) = 0; KK(1) = K(1); % not insane - force copy-on-write (Doh!)
+II = I; II(1) = 0; II(1) = I(1); % not insane - force copy-on-write (Doh!)
+
+h = kuramoto_mex(N,n,dt,ww,KK',a',II,RK4);
 
 % Order parameter (if requested)
 
