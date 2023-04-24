@@ -32,25 +32,29 @@ K = K/N;                    % scale by system size
 n = round(T/dt);
 assert(n > 0,'Simulation time too short, or time increment too large!');
 T = n*dt; % adjusted simulation time
+t = linspace(0,T,n)';
 
 if nmean > 0 % with input noise
 	if ~isempty(nseed), rstate = rng(nseed); end
 	lnv = log(1+nsdev^2/nmean^2);
-	nmag = lognrnd(log(nmean)-lnv/2,sqrt(lnv),N,1); % per-oscillator noise magnitudes drawn from log-normal distribution
+	nmag = lognrnd(log(nmean)-lnv/2,sqrt(lnv),1,N); % per-oscillator noise magnitudes drawn from log-normal distribution
 	if ~isempty(nseed), rng(rstate); end
 end
 
-% Generate input
+% Generate input noise
 
 if nmean > 0 % with input noise
 	if ~isempty(Iseed), rstate = rng(Iseed); end
-	I = nmag.*randn(N,n); % uncorrelated Gaussian white noise
+	I = nmag.*randn(n,N); % uncorrelated Gaussian white noise
 	if ~isempty(Iseed), rng(rstate); end
 else
-	I = zeros(N,n); % no input
+	I = []; % no input
 end
+
+ % Initial phases uniform on [-pi,pi]
+
 if ~isempty(hseed), rstate = rng(hseed); end
-I(:,1) = pi*(2*rand(N,1)-1);      % initial phases uniform on [-pi,pi]
+h0 = pi*(2*rand(1,N)-1);
 if ~isempty(hseed), rng(rstate); end
 
 % Run Kuramoto Euler and Rung-Kutta simulations with specified parameters
@@ -58,27 +62,28 @@ if ~isempty(hseed), rng(rstate); end
 fprintf('\n');
 
 st1 = tic;
-[h1,r1,psi1] = kuramoto(N,w,K,a,n,dt,I,'Euler');
+[h1,r1,psi1] = kuramoto(N,n,dt,w,K,a,h0,I,'Euler');
 et1 = toc(st1);
 fprintf('Euler method : %g seconds\n',et1);
 
 st2 = tic;
-[h2,r2,psi2] = kuramoto(N,w,K,a,n,dt,I,'RK4');
+[h2,r2,psi2] = kuramoto(N,n,dt,w,K,a,h0,I,'RK4');
 et2 = toc(st2);
 fprintf('RK4 method   : %g seconds\n',et2);
 
 % Transpose stuff, etc., for plots
 
-t   = linspace(0,T,n)';
-r   = [r1;r2]';
-psi = [psi1;psi2]';
-h1  = h1';
-h2  = h2';
+h1   = h1';
+h2   = h2';
+r1   = r1';
+r2   = r2';
+psi1 = psi1';
+psi2 = psi2';
 
-% Display order parameter magnitude
+% Display order parameters
 
 figure(1); clf;
-plot(t,r);
+plot(t,[r1 r2]);
 legend({'Euler','RK4'});
 ylim([0,1]);
 xlabel('time');
@@ -101,5 +106,5 @@ sgtitle(sprintf('\nKuramoto system: N = %d - oscillator phases\n',N));
 if anim
 	figure(3); clf;
 	title(sprintf('\nKuramoto system: N = %d - complex order parameters (z)\n',N));
-	clock_plot(t,r,psi,{'Euler','RK4'},{'b','r'})
+	clock_plot(t,[r1 r2],[psi1 psi2],{'Euler','RK4'},{'b','r'})
 end

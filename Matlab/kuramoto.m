@@ -1,4 +1,4 @@
-function [h,r,psi] = kuramoto(N,w,K,a,n,dt,I,mode)
+function [h,r,psi] = kuramoto(N,n,dt,w,K,a,h0,I,mode)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -7,13 +7,14 @@ function [h,r,psi] = kuramoto(N,w,K,a,n,dt,I,mode)
 % To compile "mex" files, see Makefile in this directory
 %
 % N     number of oscillators                 (positive integer)
+% n     number of time increments             (positive integer)
+% dt    time integration step                 (scalar)                             : seconds
 % w     oscillator frequencies                (scalar or vector of length N)       : radians/second
 % K     oscillator coupling constants         (scalar or square matrix of size N)  : radians/second
 % a     phase lags                            (scalar or square matrix of size N)  : radians
-% n     number of time increments             (positive integer)
-% dt    integration time increment            (positive double)                    : seconds
-% I     input                                 (N x n matrix or empty for no input) : radians
-% mode  simulation mode                       ('Euler' or 'RK4')
+% h0    initial phases                        (vector of length N)                 : radians
+% I     input                                 (n x N matrix or empty for no input) : radians
+% mode  simulation mode                       ('Euler' or 'RK4')                   : string
 %
 % h     oscillator phases (unwrapped)         (N x n matrix)                       : radians
 % r     order parameter magnitude             (row vector of length n)             : dimensionless
@@ -35,6 +36,11 @@ function [h,r,psi] = kuramoto(N,w,K,a,n,dt,I,mode)
 
 N = double(N);
 assert(isscalar(N) && floor(N) == N && N > 0,'Number of oscillators must be a positive scalar integer');
+
+n = double(n);
+assert(isscalar(n) && floor(n) == n && n > 0,'Number of time increments must be a positive scalar integer');
+
+assert(isa(dt,'double') && isscalar(dt) && dt > 0,'Integration increment must be a positive scalar double');
 
 assert(isa(w,'double'),'Frequencies must be a scalar double or a vector of doubles matching the specified number of oscillators');
 if isscalar(w)
@@ -61,12 +67,9 @@ if ~isempty(a)
 	end
 end
 
-n = double(n);
-assert(isscalar(n) && floor(n) == n && n > 0,'Number of time increments must be a positive scalar integer');
+assert(isempty(h0) || (isa(h0,'double') && isvector(h0) && length(h0) == N),'Initial phases must be empty, or a vector of doubles of length N');
 
-assert(isa(dt,'double') && isscalar(dt) && dt > 0,'Integration increment must be a positive scalar double');
-
-assert(isempty(I) || (isa(I,'double') && ismatrix(I) && size(I,1) == N && size(I,2) == n),'Input must be empty, or an N x n matrix of doubles');
+assert(isempty(I) || (isa(I,'double') && ismatrix(I) && size(I,1) == n && size(I,2) == N),'Input noise must be empty, or an n x N matrix of doubles');
 
 if isempty(mode)
 	RK4 = 1;
@@ -79,17 +82,11 @@ else
 	end
 end
 
-% Call mex ODE simulation (returned phase matrix h is N x n)
+% Call mex ODE simulation (returned phase matrix h is n x N)
 %
 % Note: we transpose K so that K(i,j) is connection strength j --> i, same for a
-%
-% Note: hack because kuramoto.c w, K and I are changed!
 
-ww = w; ww(1) = 0; ww(1) = w(1); % not insane - force copy-on-write (Doh!)
-KK = K; KK(1) = 0; KK(1) = K(1); % not insane - force copy-on-write (Doh!)
-II = I; II(1) = 0; II(1) = I(1); % not insane - force copy-on-write (Doh!)
-
-h = kuramoto_mex(N,n,dt,ww,KK',a',II,RK4);
+h = kuramoto_mex(N,n,w*dt,K'*dt,a',h0,I*sqrt(dt),RK4);
 
 % Order parameter (if requested)
 
