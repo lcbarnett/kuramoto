@@ -8,30 +8,22 @@
 
 void kuramoto_euler	// Euler method
 (
-	const   size_t N,  // number of oscillators
-	const   size_t n,  // number of integration increments
-	const   double dt, // time increment (secs)
-	double* const  w,  // frequencies (radians/sec)
-	double* const  K,  // coupling constants (radians/sec)
-	double* const  h   // oscillator phases (radians), initialised with input
+	const   size_t        N,   // number of oscillators
+	const   size_t        n,   // number of integration increments
+	const   double* const wdt, // frequencies x dt (radians)
+	const   double* const Kdt, // coupling constants x dt (radians)
+	double* const         h    // oscillator phases, initialised with input (radians)
 )
 {
-	// scale parameters appropriately according to time increment
-
-	const double sqrtdt = sqrt(dt);
-	for (size_t i=0; i<N;   ++i) w[i] *= dt;
-	for (size_t i=0; i<N*N; ++i) K[i] *= dt;
-	for (size_t i=N; i<N*n; ++i) h[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
-
 	// ODE solver
 
 	for (double* ht=h; ht<h+N*(n-1); ht+=N) {
 		double* const ht1 = ht+N;
 		for (size_t i=0; i<N; ++i) {
-			const double* const Ki = K+N*i;
+			const double* const Kdti = Kdt+N*i;
 			const double hti = ht[i];
-			double dhti = w[i];
-			for (size_t j=0; j<N; ++j) dhti += Ki[j]*sin(ht[j]-hti);
+			double dhti = wdt[i];
+			for (size_t j=0; j<N; ++j) dhti += Kdti[j]*sin(ht[j]-hti);
 			ht1[i] += hti+dhti; // update next time step (adding in input already in ht1)
 		}
 	}
@@ -39,32 +31,24 @@ void kuramoto_euler	// Euler method
 
 void kuramoto_eulerpl // Euler method with phase lags
 (
-	const   size_t N,  // number of oscillators
-	const   size_t n,  // number of integration increments
-	const   double dt, // time increment (secs)
-	double* const  w,  // frequencies (radians/sec)
-	double* const  K,  // coupling constants (radians/sec)
-	double* const  a,  // phase lags (radians)
-	double* const  h   // oscillator phases (radians), initialised with input
+	const   size_t        N,   // number of oscillators
+	const   size_t        n,   // number of integration increments
+	const   double* const wdt, // frequencies x dt (radians)
+	const   double* const Kdt, // coupling constants x dt (radians)
+	const   double* const a,   // phase lags (radians)
+	double* const         h    // oscillator phases, initialised with input (radians)
 )
 {
-	// scale parameters appropriately according to time increment
-
-	const double sqrtdt = sqrt(dt);
-	for (size_t i=0; i<N;   ++i) w[i] *= dt;
-	for (size_t i=0; i<N*N; ++i) K[i] *= dt;
-	for (size_t i=N; i<N*n; ++i) h[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
-
 	// ODE solver
 
 	for (double* ht=h; ht<h+N*(n-1); ht+=N) {
 		double* const ht1 = ht+N;
 		for (size_t i=0; i<N; ++i) {
-			const double* const Ki = K+N*i;
+			const double* const Kdti = Kdt+N*i;
 			const double* const ai = a+N*i;
 			const double hti = ht[i];
-			double dhti = w[i];
-			for (size_t j=0; j<N; ++j) dhti += Ki[j]*sin(ht[j]-hti-ai[j]);
+			double dhti = wdt[i];
+			for (size_t j=0; j<N; ++j) dhti += Kdti[j]*sin(ht[j]-hti-ai[j]);
 			ht1[i] += hti+dhti; // update next time step (adding in input already in ht1)
 		}
 	}
@@ -72,22 +56,14 @@ void kuramoto_eulerpl // Euler method with phase lags
 
 void kuramoto_rk4 // Classic Runge-Kutta (RK4)
 (
-	const   size_t N,  // number of oscillators
-	const   size_t n,  // number of integration increments
-	const   double dt, // time increment (secs)
-	double* const  w,  // frequencies (radians/sec)
-	double* const  K,  // coupling constants (radians/sec)
-	double* const  h,  // oscillator phases (radians), initialised with input
-	double* const  k1  // buffer for RK4 coefficients (size must be 4*N)
+	const   size_t  N,          // number of oscillators
+	const   size_t  n,          // number of integration increments
+	const   double* const  wdt, // frequencies x dt (radians)
+	const   double* const  Kdt, // coupling constants x dt (radians)
+	double* const   k1,         // buffer for RK4 coefficients (size must be 4*N)
+	double* const   h           // oscillator phases, initialised with input (radians)
 )
 {
-	// scale parameters appropriately according to time increment
-
-	const double sqrtdt = sqrt(dt);
-	for (size_t i=0; i<N;   ++i) w[i] *= dt;
-	for (size_t i=0; i<N*N; ++i) K[i] *= dt;
-	for (size_t i=N; i<N*n; ++i) h[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
-
 	// set up coefficients buffers
 
 	double* const k2 = k1+N;
@@ -100,37 +76,37 @@ void kuramoto_rk4 // Classic Runge-Kutta (RK4)
 
 		// k1
 		for (size_t i=0; i<N; ++i) {
-			const double* const Ki = K+N*i;
+			const double* const Kdti = Kdt+N*i;
 			const double hti = ht[i];
-			double ki = w[i];
-			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(ht[j]-hti);
+			double ki = wdt[i];
+			for (size_t j=0; j<N; ++j) ki += Kdti[j]*sin(ht[j]-hti);
 			k1[i] = ki;
 		}
 
 		// k2
 		for (size_t i=0; i<N; ++i) {
-			const double* const Ki = K+N*i;
+			const double* const Kdti = Kdt+N*i;
 			const double htk1i = ht[i]+k1[i];
-			double ki = w[i];
-			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(ht[j]+k1[j]-htk1i);
+			double ki = wdt[i];
+			for (size_t j=0; j<N; ++j) ki += Kdti[j]*sin(ht[j]+k1[j]-htk1i);
 			k2[i] = ki/2.0;
 		}
 
 		// k3
 		for (size_t i=0; i<N; ++i) {
-			const double* const Ki = K+N*i;
+			const double* const Kdti = Kdt+N*i;
 			const double htk2i = ht[i]+k2[i];
-			double ki = w[i];
-			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(ht[j]+k2[j]-htk2i);
+			double ki = wdt[i];
+			for (size_t j=0; j<N; ++j) ki += Kdti[j]*sin(ht[j]+k2[j]-htk2i);
 			k3[i] = ki/2.0;
 		}
 
 		// k4
 		for (size_t i=0; i<N; ++i) {
-			const double* const Ki = K+N*i;
+			const double* const Kdti = Kdt+N*i;
 			const double htk3i = ht[i]+k3[i];
-			double ki = w[i];
-			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(ht[j]+k3[j]-htk3i);
+			double ki = wdt[i];
+			for (size_t j=0; j<N; ++j) ki += Kdti[j]*sin(ht[j]+k3[j]-htk3i);
 			k4[i] = ki;
 		}
 
@@ -142,25 +118,15 @@ void kuramoto_rk4 // Classic Runge-Kutta (RK4)
 
 void kuramoto_rk4pl // Classic Runge-Kutta (RK4) with phase lags
 (
-	const   size_t N,  // number of oscillators
-	const   size_t n,  // number of integration increments
-	const   double dt, // time increment (secs)
-	double* const  w,  // frequencies (radians/sec)
-	double* const  K,  // coupling constants (radians/sec)
-	double* const  a,  // phase lags (radians)
-	double* const  h,  // oscillator phases (radians), initialised with input
-	double* const  k1  // buffer for RK4 coefficients (size must be 4*N)
+	const   size_t        N,   // number of oscillators
+	const   size_t        n,   // number of integration increments
+	const   double* const wdt, // frequencies x dt (radians)
+	const   double* const Kdt, // coupling constants x dt (radians)
+	const   double* const a,   // phase lags (radians)
+	double* const         k1,  // buffer for RK4 coefficients (size must be 4*N)
+	double* const         h    // oscillator phases, initialised with input (radians)
 )
 {
-	// scale parameters appropriately according to time increment
-
-	const double sqrtdt = sqrt(dt);
-	for (size_t i=0; i<N;   ++i) w[i] *= dt;
-	for (size_t i=0; i<N*N; ++i) K[i] *= dt;
-	for (size_t i=N; i<N*n; ++i) h[i] *= sqrtdt; // cf. Ornstein-Uhlenbeck process
-
-	// set up coefficients buffers
-
 	double* const k2 = k1+N;
 	double* const k3 = k2+N;
 	double* const k4 = k3+N;
@@ -171,41 +137,41 @@ void kuramoto_rk4pl // Classic Runge-Kutta (RK4) with phase lags
 
 		// k1
 		for (size_t i=0; i<N; ++i) {
-			const double* const Ki = K+N*i;
+			const double* const Kdti = Kdt+N*i;
 			const double* const ai = a+N*i;
 			const double hti = ht[i];
-			double ki = w[i];
-			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(ht[j]-hti-ai[j]);
+			double ki = wdt[i];
+			for (size_t j=0; j<N; ++j) ki += Kdti[j]*sin(ht[j]-hti-ai[j]);
 			k1[i] = ki;
 		}
 
 		// k2
 		for (size_t i=0; i<N; ++i) {
-			const double* const Ki = K+N*i;
+			const double* const Kdti = Kdt+N*i;
 			const double* const ai = a+N*i;
 			const double htk1i = ht[i]+k1[i];
-			double ki = w[i];
-			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(ht[j]+k1[j]-htk1i-ai[j]);
+			double ki = wdt[i];
+			for (size_t j=0; j<N; ++j) ki += Kdti[j]*sin(ht[j]+k1[j]-htk1i-ai[j]);
 			k2[i] = ki/2.0;
 		}
 
 		// k3
 		for (size_t i=0; i<N; ++i) {
-			const double* const Ki = K+N*i;
+			const double* const Kdti = Kdt+N*i;
 			const double* const ai = a+N*i;
 			const double htk2i = ht[i]+k2[i];
-			double ki = w[i];
-			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(ht[j]+k2[j]-htk2i-ai[j]);
+			double ki = wdt[i];
+			for (size_t j=0; j<N; ++j) ki += Kdti[j]*sin(ht[j]+k2[j]-htk2i-ai[j]);
 			k3[i] = ki/2.0;
 		}
 
 		// k4
 		for (size_t i=0; i<N; ++i) {
-			const double* const Ki = K+N*i;
+			const double* const Kdti = Kdt+N*i;
 			const double* const ai = a+N*i;
 			const double htk3i = ht[i]+k3[i];
-			double ki = w[i];
-			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(ht[j]+k3[j]-htk3i-ai[j]);
+			double ki = wdt[i];
+			for (size_t j=0; j<N; ++j) ki += Kdti[j]*sin(ht[j]+k3[j]-htk3i-ai[j]);
 			k4[i] = ki;
 		}
 
@@ -217,11 +183,11 @@ void kuramoto_rk4pl // Classic Runge-Kutta (RK4) with phase lags
 
 void kuramoto_order_param // calculate order parameter magnitude/phase
 (
-	const   size_t N, // number of oscillators
-	const   size_t n, // number of integration increments
-	double* const  h, // oscillator phases
-	double* const  r, // order parameter magnitude
-	double* const  p  // order parameter phase (NULL if not required)
+	const   size_t         N, // number of oscillators
+	const   size_t         n, // number of integration increments
+	const   double* const  h, // oscillator phases
+	double* const          r, // order parameter magnitude
+	double* const          p  // order parameter phase (NULL if not required)
 )
 {
 	const double OON = 1.0/(double)N;

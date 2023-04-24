@@ -12,55 +12,51 @@
 
 void kuramoto_euler	// Euler method
 (
-	const   size_t N,  // number of oscillators
-	const   size_t n,  // number of integration increments
-	const   double dt, // time increment (secs)
-	double* const  w,  // frequencies (radians/sec)
-	double* const  K,  // coupling constants (radians/sec)
-	double* const  h   // oscillator phases (radians), initialised with input
+	const   size_t        N,   // number of oscillators
+	const   size_t        n,   // number of integration increments
+	const   double* const wdt, // frequencies x dt (radians)
+	const   double* const Kdt, // coupling constants x dt (radians)
+	double* const         h    // oscillator phases, initialised with input (radians)
 );
 
 void kuramoto_eulerpl // Euler method with phase lags
 (
-	const   size_t N,  // number of oscillators
-	const   size_t n,  // number of integration increments
-	const   double dt, // time increment (secs)
-	double* const  w,  // frequencies (radians/sec)
-	double* const  K,  // coupling constants (radians/sec)
-	double* const  a,  // phase lags (radians)
-	double* const  h   // oscillator phases (radians), initialised with input
+	const   size_t        N,   // number of oscillators
+	const   size_t        n,   // number of integration increments
+	const   double* const wdt, // frequencies x dt (radians)
+	const   double* const Kdt, // coupling constants x dt (radians)
+	const   double* const a,   // phase lags (radians)
+	double* const         h    // oscillator phases, initialised with input (radians)
 );
 
 void kuramoto_rk4 // Classic Runge-Kutta (RK4)
 (
-	const   size_t N,  // number of oscillators
-	const   size_t n,  // number of integration increments
-	const   double dt, // time increment (secs)
-	double* const  w,  // frequencies (radians/sec)
-	double* const  K,  // coupling constants (radians/sec)
-	double* const  h,  // oscillator phases (radians), initialised with input
-	double* const  k1  // buffer for RK4 coefficients (size must be 4*N)
+	const   size_t        N,   // number of oscillators
+	const   size_t        n,   // number of integration increments
+	const   double* const wdt, // frequencies x dt (radians)
+	const   double* const Kdt, // coupling constants x dt (radians)
+	double* const         k1,  // buffer for RK4 coefficients (size must be 4*N)
+	double* const         h    // oscillator phases, initialised with input (radians)
 );
 
 void kuramoto_rk4pl // Classic Runge-Kutta (RK4) with phase lags
 (
-	const   size_t N,  // number of oscillators
-	const   size_t n,  // number of integration increments
-	const   double dt, // time increment (secs)
-	double* const  w,  // frequencies (radians/sec)
-	double* const  K,  // coupling constants (radians/sec)
-	double* const  a,  // phase lags (radians)
-	double* const  h,  // oscillator phases (radians), initialised with input
-	double* const  k1  // buffer for RK4 coefficients (size must be 4*N)
+	const   size_t        N,   // number of oscillators
+	const   size_t        n,   // number of integration increments
+	const   double* const wdt, // frequencies x dt (radians)
+	const   double* const Kdt, // coupling constants x dt (radians)
+	const   double* const a,   // phase lags (radians)
+	double* const         k1,  // buffer for RK4 coefficients (size must be 4*N)
+	double* const         h    // oscillator phases, initialised with input (radians)
 );
 
 void kuramoto_order_param // calculate order parameter magnitude/phase
 (
-	const   size_t N, // number of oscillators
-	const   size_t n, // number of integration increments
-	double* const  h, // oscillator phases
-	double* const  r, // order parameter magnitude
-	double* const  p  // order parameter phase (NULL if not required)
+	const   size_t         N, // number of oscillators
+	const   size_t         n, // number of integration increments
+	const   double* const  h, // oscillator phases
+	double* const          r, // order parameter magnitude
+	double* const          p  // order parameter phase (NULL if not required)
 );
 
 // Stuart-Landau model
