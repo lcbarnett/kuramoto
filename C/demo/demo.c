@@ -46,34 +46,35 @@ int demo(int argc, char *argv[])
 
 	// allocate memory
 
-	double* const w = calloc(N,sizeof(double)); // oscillator frequencies
-	double* const K = calloc(M,sizeof(double)); // coupling constants
-	double* const h = calloc(m,sizeof(double)); // oscillator phases
-	double* const r = calloc(n,sizeof(double)); // order parameter
-	double* const x = calloc(m,sizeof(double)); // oscillator signal
-	double* const y = calloc(n,sizeof(double)); // oscillator agregated signal
+	double* const wdt = calloc(N,sizeof(double)); // oscillator frequencies
+	double* const Kdt = calloc(M,sizeof(double)); // coupling constants
+	double* const h   = calloc(m,sizeof(double)); // oscillator phases
+	double* const r   = calloc(n,sizeof(double)); // order parameter
+	double* const x   = calloc(m,sizeof(double)); // oscillator signal
+	double* const y   = calloc(n,sizeof(double)); // oscillator agregated signal
 
 	// random frequencies (normal distribution)
 
-	for (size_t i=0; i<N; ++i) w[i] = TWOPI*(wmean+wsdev*mt_randn(&rng));
+	for (size_t i=0; i<N; ++i) wdt[i] = dt*TWOPI*(wmean+wsdev*mt_randn(&rng));
 
 	// random coupling constants (normal distribution)
 
 	for (size_t i=0; i<N; ++i) {
 		for (size_t j=0; j<N; ++j) {
 			if (i == j) {
-				K[N*i+j] = 0.0; // no "self-connections"!
+				Kdt[N*i+j] = 0.0; // no "self-connections"!
 			}
 			else {
-				K[N*i+j] = TWOPI*ooN*(Kmean+Ksdev*mt_randn(&rng)); // scale coupling constants by N
+				Kdt[N*i+j] = dt*TWOPI*ooN*(Kmean+Ksdev*mt_randn(&rng)); // scale coupling constants by N
 			}
 		}
 	}
 
 	// initialise oscillator phases with input (zero-mean Gaussian white noise)
 
+	const double sqrtdt = sqrt(dt);
 	if (Isdev > 0.0) {
-		for (size_t k=0; k<m; ++k) h[k] = TWOPI*Isdev*mt_randn(&rng);
+		for (size_t k=0; k<m; ++k) h[k] = sqrtdt*TWOPI*Isdev*mt_randn(&rng);
 	}
 	else {
 		memset(h,0,m*sizeof(double)); // zero-fill for no input [in fact here calloc will have done that]
@@ -83,11 +84,11 @@ int demo(int argc, char *argv[])
 
 	if (RK4) {
 		double* const kbuff = calloc(4*N,sizeof(double)); // see kuramoto_rk4()
-		kuramoto_rk4(N,n,dt,w,K,h,kbuff);
+		kuramoto_rk4(N,n,wdt,Kdt,h,kbuff);
 		free(kbuff);
 	}
 	else {
-		kuramoto_euler(N,n,dt,w,K,h);
+		kuramoto_euler(N,n,wdt,Kdt,h);
 	}
 
 	// calculate order parameter
@@ -178,8 +179,8 @@ int demo(int argc, char *argv[])
 	free(x);
 	free(r);
 	free(h);
-	free(K);
-	free(w);
+	free(Kdt);
+	free(wdt);
 
 	return EXIT_SUCCESS;
 }
