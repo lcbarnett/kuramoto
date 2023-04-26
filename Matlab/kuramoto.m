@@ -13,18 +13,20 @@ function [h,r,psi] = kuramoto(N,n,dt,w,K,a,h0,I,mode)
 % K     oscillator coupling constants         (scalar or square matrix of size N)  : radians/second
 % a     phase lags                            (scalar or square matrix of size N)  : radians
 % h0    initial phases                        (vector of length N)                 : radians
-% I     input                                 (n x N matrix or empty for no input) : radians
+% I     input noise                           (n x N matrix or empty for no input) : radians/sqrt(second)
 % mode  simulation mode                       ('Euler' or 'RK4')                   : string
 %
 % h     oscillator phases (unwrapped)         (N x n matrix)                       : radians
 % r     order parameter magnitude             (row vector of length n)             : dimensionless
 % psi   order parameter phase (wrapped)       (row vector of length n)             : radians
 %
-% NOTE 1: K(i,j) is connection strength from oscillator j to oscillator i.
+% NOTE 1: Phases are interpreted as radians on [0,2*pi), and frequencies angular; i.e., in radians/second
 %
-% NOTE 2: Euler method is faster (by a factor of about 5), but RK4 is more accurate.
+% NOTE 2: K(i,j) is connection strength from oscillator j to oscillator i.
 %
-% NOTE 3: To wrap the oscillator phases h to [-pi,pi), do:
+% NOTE 3: Euler method is faster (by a factor of about 5), but RK4 is more accurate.
+%
+% NOTE 4: To wrap the oscillator phases h to [-pi,pi), do:
 %
 %     h = mod(h+pi,2*pi)-pi;
 %
@@ -84,7 +86,9 @@ end
 
 % Call mex ODE simulation (returned phase matrix h is n x N)
 %
-% Note: we transpose K so that K(i,j) is connection strength j --> i, same for a
+% We transpose K so that K(i,j) is connection strength j --> i, same for a
+%
+% Input noise is Weiner (Brownian), so scaled by sqrt(dt); cf. Ito simulation of Ornstein-Uhlenbeck process
 
 h = kuramoto_mex(N,n,w*dt,K'*dt,a',h0,I*sqrt(dt),RK4);
 
