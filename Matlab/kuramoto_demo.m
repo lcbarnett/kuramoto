@@ -1,22 +1,23 @@
 
 % Default parameters (override on command line - see 'defvar.h')
+%
+% Note: phases are in radians on [0,2*pi), frequencies are in radians/unit time
 
 defvar('N',     10      ); % number of oscillators
-defvar('Te',    20      ); % simulation equilibriation time - may be zero (secs)
-defvar('T',     200     ); % simulation display time (secs)
-defvar('dt',    0.01    ); % integration time increment (secs)
-defvar('fs',    1000    ); % sampling frequency (arbitrary, Hz)
-defvar('wmean', 200     ); % oscillator frequencies mean (Hz)
-defvar('wsdev', wmean/2 ); % oscillator frequencies std. dev. (Hz)
+defvar('Te',    20      ); % simulation equilibriation time - may be zero
+defvar('T',     200     ); % simulation display time
+defvar('dt',    0.01    ); % integration time increment
+defvar('wmean', 2*pi/5  ); % oscillator frequencies mean
+defvar('wsdev', wmean/2 ); % oscillator frequencies std. dev.
 defvar('wseed', []      ); % oscillator frequencies random seed (empty for no seeding)
-defvar('Kmean', 100     ); % oscillator coupling constants mean (Hz)
-defvar('Ksdev', Kmean/2 ); % oscillator coupling constants std. dev. (Hz)
+defvar('Kmean', 2*pi/8  ); % oscillator coupling constants mean
+defvar('Ksdev', Kmean/2 ); % oscillator coupling constants std. dev.
 defvar('Kiprob',0.1     ); % oscillator coupling constants inhibitory connection probability
 defvar('Kseed', []      ); % oscillator coupling constants random seed (empty for no seeding)
 defvar('a',     []      ); % oscillator phase lag constant
 defvar('hseed', []      ); % oscillator initial phases random seed (empty for no seeding)
-defvar('nmean', 10      ); % oscillator input noise magnitude mean (Hz, zero for no noise)
-defvar('nsdev', nmean/4 ); % oscillator input noise magnitude std. dev. (Hz)
+defvar('nmean', 0.01    ); % oscillator input noise magnitude mean (zero for no noise)
+defvar('nsdev', nmean/4 ); % oscillator input noise magnitude std. dev.
 defvar('nseed', []      ); % oscillator input noise magnitude random seed (empty for no seeding)
 defvar('Iseed', []      ); % oscillator input noise random seed (empty for no seeding)
 defvar('unwrp', true    ); % oscillator phase plot: unwrapped and detrended? (else display on cylinder)
@@ -29,22 +30,22 @@ n = round(T/dt);
 assert(n > 0,'Simulation time too short, or time increment too large!');
 T = n*dt; % adjusted simulation time
 
-% Oscillator frequencies, beta-distributed on (0,fs)
+% Oscillator frequencies, beta-distributed on (0,2*pi)
 
-wm = wmean/fs; % normalise to [0,1)
-ws = wsdev/fs; % normalise to [0,1)
+wm = wmean/(2*pi); % normalise to [0,1)
+ws = wsdev/(2*pi); % normalise to [0,1)
 wg = (wm*(1-wm))/(ws^2)-1;
 assert(wg > 0,'Frequencies variance too big!');
 if ~isempty(wseed), rstate = rng(wseed); end
 w = 2*pi*betarnd(wm*wg,(1-wm)*wg,N,1); % convert to radians/sec
 if ~isempty(wseed), rng(rstate); end
 fprintf('\nOscillator natural frequencies =\n');
-disp(fs*w/2/pi)
+disp(w/(2*pi))
 
-% Oscillator coupling constants, beta-distributed on (0,fs), some inhibitory, scaled by number of oscillators
+% Oscillator coupling constants, beta-distributed on (0,2*pi), some inhibitory, scaled by number of oscillators
 
-km = Kmean/fs; % normalise to [0,1)
-ks = Ksdev/fs; % normalise to [0,1)
+km = Kmean/(2*pi); % normalise to [0,1)
+ks = Ksdev/(2*pi); % normalise to [0,1)
 kg = (km*(1-km))/(ks^2)-1;
 if ~isempty(Kseed), rstate = rng(Kseed); end
 K = 2*pi*betarnd(km*kg,(1-km)*kg,N)/N; % convert to radians/sec
@@ -59,7 +60,7 @@ fprintf('Inhibitory connections: %d of %d\n',length(i),N*(N-1));
 if nmean > 0 % with input noise
 	if ~isempty(nseed), rstate = rng(nseed); end
 	lnv = log(1+nsdev^2/nmean^2);
-	nmag = (lognrnd(log(nmean)-lnv/2,sqrt(lnv),1,N))/fs; % normalise by sampling rate
+	nmag = (lognrnd(log(nmean)-lnv/2,sqrt(lnv),1,N)); % normalise by sampling rate
 	if ~isempty(nseed), rng(rstate); end
 
 	if ~isempty(Iseed), rstate = rng(Iseed); end

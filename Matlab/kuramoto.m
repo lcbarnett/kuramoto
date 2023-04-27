@@ -20,7 +20,7 @@ function [h,r,psi] = kuramoto(N,n,dt,w,K,a,h0,I,mode)
 % r     order parameter magnitude             (row vector of length n)             : dimensionless
 % psi   order parameter phase (wrapped)       (row vector of length n)             : radians
 %
-% NOTE 1: Phases are interpreted as radians on [0,2*pi), and frequencies angular; i.e., in radians/second
+% NOTE 1: Phases are in radians on [0,2*pi), and frequencies angular; i.e., in radians/unit time
 %
 % NOTE 2: K(i,j) is connection strength from oscillator j to oscillator i.
 %
