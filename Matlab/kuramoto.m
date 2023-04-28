@@ -9,8 +9,8 @@ function [h,r,psi] = kuramoto(N,n,dt,w,K,a,h0,I,mode)
 % N     number of oscillators                 (positive integer)
 % n     number of time increments             (positive integer)
 % dt    time integration step                 (scalar)                             : seconds
-% w     oscillator frequencies                (scalar or vector of length N)       : radians/second
-% K     oscillator coupling constants         (scalar or square matrix of size N)  : radians/second
+% w     oscillator frequencies                (scalar or vector of length N)       : Hz
+% K     oscillator coupling constants         (scalar or square matrix of size N)  : Hz
 % a     phase lags                            (scalar or square matrix of size N)  : radians
 % h0    initial phases                        (vector of length N)                 : radians
 % I     input noise                           (n x N matrix or empty for no input) : radians/sqrt(second)
@@ -90,7 +90,7 @@ end
 %
 % Input noise is Weiner (Brownian), so scaled by sqrt(dt); cf. Ito simulation of Ornstein-Uhlenbeck process
 
-h = kuramoto_mex(N,n,w*dt,K'*dt,a',h0,I*sqrt(dt),RK4);
+h = kuramoto_mex(N,n,2*pi*w*dt,2*pi*K'*dt,a',h0,2*pi*I*sqrt(dt),RK4);
 
 % Order parameter (if requested)
 
