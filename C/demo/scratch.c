@@ -25,7 +25,7 @@ int scratch(int argc, char *argv[])
 	CLAP_CARG(Ksdev,  double, Kmean/5.0, "coupling constants std. dev. (Hz)");
 	CLAP_CARG(rseed,  ulong,  0,         "random seed (or 0 for random random seed)");
 #ifdef _HAVE_GNUPLOT
-	CLAP_CARG(gpterm, cstr,   GPTERM,    "Gnuplot terminal type");
+	CLAP_CARG(gpterm, cstr,   GPTERM,    "Gnuplot terminal type (\"none\" for no plotting)");
 #endif
 	puts("---------------------------------------------------------------------------------------");
 
@@ -115,48 +115,50 @@ int scratch(int argc, char *argv[])
 
 	// if Gnuplot installed display order parameter and oscillator signals.
 	// Else use your favourite plotting program on data in output file.
-/*
+
 #ifdef _HAVE_GNUPLOT
-	char gfile[] = "/tmp/kuramoto_demo.gp"; // Gnuplot command file
-	FILE* const gp = fopen(gfile,"w");
-	if (gp == NULL) {
-		perror("failed to open Gnuplot command file\n");
-		return EXIT_FAILURE;
-	}
-	fprintf(gp,"set term \"%s\" title \"Kuramoto oscillator demo\" size 1600,1200\n",gpterm);
-	fprintf(gp,"set xlabel \"time\"\n");
-	fprintf(gp,"set ylabel \"mean phase\"\n");
-	fprintf(gp,"set key right bottom Left rev\n");
-	fprintf(gp,"# set grid\n");
-	fprintf(gp,"set xr [0:%g]\n",T);
-	fprintf(gp,"set yr [-1.05:1.05]\n");
-	fprintf(gp,"set ytics 0.5\n");
-	fprintf(gp,"set ylabel \"amplitude\"\n");
-	fprintf(gp,"set multiplot layout 2,1\n");
-	fprintf(gp,"set title \"Oscillator signals\"\n");
-	fprintf(gp,"plot \\\n");
-	for (size_t i=0; i<N; ++i) fprintf(gp,"\"%s\" u 1:%zu w l not ,\\\n",ofile,i+2);
-	fprintf(gp,"NaN not\n");
-	fprintf(gp,"set title \"Oscillator signals x\"\n");
-	fprintf(gp,"plot \\\n");
-	for (size_t i=0; i<N; ++i) fprintf(gp,"\"%s\" u 1:%zu w l not ,\\\n",ofile,i+2+N);
-	fprintf(gp,"NaN not\n");
-	fprintf(gp,"unset multiplot\n");
-	if (fclose(gp) != 0) {
-		perror("Failed to close Gnuplot command file");
-		return EXIT_FAILURE;
-	}
-	const size_t strlen = 100;
-	char gpcmd[strlen+1];
-	strncpy(gpcmd,"gnuplot -p ",strlen);
-	strncat(gpcmd,gfile,strlen);
-	printf("Gnuplot command: %s\n\n",gpcmd);
-	if (system(gpcmd) == -1) {
-		perror("Failed to run Gnuplot command");
-		return EXIT_FAILURE;
+	if  (strncasecmp(gpterm,"none",4) != 0) {
+		char gfile[] = "/tmp/kuramoto_demo.gp"; // Gnuplot command file
+		FILE* const gp = fopen(gfile,"w");
+		if (gp == NULL) {
+			perror("failed to open Gnuplot command file\n");
+			return EXIT_FAILURE;
+		}
+		fprintf(gp,"set term \"%s\" title \"Kuramoto oscillator demo\" size 1600,1200\n",gpterm);
+		fprintf(gp,"set xlabel \"time\"\n");
+		fprintf(gp,"set ylabel \"mean phase\"\n");
+		fprintf(gp,"set key right bottom Left rev\n");
+		fprintf(gp,"# set grid\n");
+		fprintf(gp,"set xr [0:%g]\n",T);
+		fprintf(gp,"set yr [-1.05:1.05]\n");
+		fprintf(gp,"set ytics 0.5\n");
+		fprintf(gp,"set ylabel \"amplitude\"\n");
+		fprintf(gp,"set multiplot layout 2,1\n");
+		fprintf(gp,"set title \"Oscillator signals\"\n");
+		fprintf(gp,"plot \\\n");
+		for (size_t i=0; i<N; ++i) fprintf(gp,"\"%s\" u 1:%zu w l not ,\\\n",ofile,i+2);
+		fprintf(gp,"NaN not\n");
+		fprintf(gp,"set title \"Oscillator signals x\"\n");
+		fprintf(gp,"plot \\\n");
+		for (size_t i=0; i<N; ++i) fprintf(gp,"\"%s\" u 1:%zu w l not ,\\\n",ofile,i+2+N);
+		fprintf(gp,"NaN not\n");
+		fprintf(gp,"unset multiplot\n");
+		if (fclose(gp) != 0) {
+			perror("Failed to close Gnuplot command file");
+			return EXIT_FAILURE;
+		}
+		const size_t strlen = 100;
+		char gpcmd[strlen+1];
+		strncpy(gpcmd,"gnuplot -p ",strlen);
+		strncat(gpcmd,gfile,strlen);
+		printf("Gnuplot command: %s\n\n",gpcmd);
+		if (system(gpcmd) == -1) {
+			perror("Failed to run Gnuplot command");
+			return EXIT_FAILURE;
+		}
 	}
 #endif
-*/
+
 	// free memory
 
 	matfree(xx);
