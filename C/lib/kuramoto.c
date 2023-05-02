@@ -1,10 +1,35 @@
 #include <math.h>   // for maths functions
 #include <stdlib.h> // for malloc, etc.
+#include <stdio.h>  // for malloc, etc.
 
 #include "kuramoto.h"
 
 // NOTE:  C is row-major; bear in mind when writing interfaces! E.g. for
 // Matlab (column-major) you should transpose the matrices K and a before calling.
+
+// Experimental /////////////////////////////////////////////////////////////////
+
+void kuramoto_euler_alt	// Euler method
+(
+	const   size_t        N,   // number of oscillators
+	const   size_t        n,   // number of integration increments
+	const   double* const wdt, // frequencies x dt (radians)
+	const   darray* const Kdt, // coupling constants x dt (radians)
+	darray* const         h    // oscillator phases, initialised with input (radians)
+)
+{
+	// ODE solver
+
+	for (size_t t=0; t<n-1; ++t) {
+		for (size_t i=0; i<N; ++i) {
+			double dhti = wdt[i];
+			for (size_t j=0; j<N; ++j) dhti += Kdt[i][j]*sin(h[t][j]-h[t][i]);
+			h[t+1][i] += h[t][i] + dhti; // update next time step (adding in input already in h[t+1][i])
+		}
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////////////
 
 void kuramoto_euler	// Euler method
 (

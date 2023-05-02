@@ -1,118 +1,111 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include <pthread.h>
 
 #include "clap.h"
 #include "kutils.h"
 #include "mt64.h"
 #include "kuramoto.h"
 
-typedef struct {
-	size_t tnum;
-	size_t nipert;
-	size_t S;
-	double* z;
-} targ_t;
-
-void* compfun(void *arg)
-{
-	targ_t* targ = (targ_t*)arg;
-
-	mt_t rng;
-	mt_seed(&rng,0);
-	printf("thread %zu start\n",targ->tnum);
-	fflush(stdout);
-
-	const size_t toff = targ->tnum*targ->nipert+1;
-
-	for (size_t n=toff; n<toff+targ->nipert; ++n) {
-		const double sqrtn = sqrt((double)n);
-		double zn = 0.0;
-		for (size_t s=0; s<targ->S; ++s) {
-			double x = 0.0, y = 0.0;
-			for (size_t i=0; i<n; ++i) {
-				const double theta = TWOPI*mt_rand(&rng);
-				x += cos(theta);
-				y += sin(theta);
-			}
-			zn += hypot(x,y);
-		}
-		targ->z[n] += zn/(sqrtn*(double)targ->S);
-		printf("thread %zu : n = %3zu : z = %.12f\n",targ->tnum,n,targ->z[n]);
-		fflush(stdout);
-	}
-
-	printf("thread %zu exit\n",targ->tnum);
-	fflush(stdout);
-	pthread_exit(NULL);
-}
+// Program to demonstrate usage of Kuramoto C library.
 
 int scratch(int argc, char *argv[])
 {
 	// CLAP (command-line argument parser). Default values may
 	// be overriden on the command line as switches.
 	//
-	// Arg:   name      type    default    description
+	// Arg:   name    type    default    description
 	puts("\n---------------------------------------------------------------------------------------");
-	CLAP_CARG(nmax,     size_t, 60,        "maximum number of oscillators");
-	CLAP_CARG(nthreads, size_t, 3,         "maximum number of oscillators");
-	CLAP_CARG(S,        size_t, 1000000,   "number of samples");
+	CLAP_CARG(N,      size_t, 4,         "number of oscillators");
+	CLAP_CARG(T,      double, 200.0,     "total integration time");
+	CLAP_CARG(dt,     double, 0.01,      "integration step size");
+	CLAP_CARG(wmean,  double, 0.0,       "oscillator frequencies mean (Hz)");
+	CLAP_CARG(wsdev,  double, 0.2,       "oscillator frequencies std. dev. (Hz)");
+	CLAP_CARG(Kmean,  double, 0.1,       "coupling constants mean (Hz)");
+	CLAP_CARG(Ksdev,  double, Kmean/5.0, "coupling constants std. dev. (Hz)");
+	CLAP_CARG(rseed,  ulong,  0,         "random seed (or 0 for random random seed)");
 #ifdef _HAVE_GNUPLOT
-	CLAP_CARG(gpterm,   cstr,   GPTERM,    "Gnuplot terminal type");
+	CLAP_CARG(gpterm, cstr,   GPTERM,    "Gnuplot terminal type");
 #endif
-	puts("---------------------------------------------------------------------------------------\n");
+	puts("---------------------------------------------------------------------------------------");
 
-	const size_t nipert = nmax/nthreads; // number of iterations per thread
-	if (nthreads*nipert != nmax) {
-		fprintf(stderr,"Error: number of threads must divide maximum number of oscillators\n");
-		exit(EXIT_FAILURE);
-	}
+	// seed random number generator (from command line if you want predictability)
 
-	double* const z = calloc(nmax+1,sizeof(double));
+	mt_t rng;
+	mtuint_t seed = mt_seed(&rng,rseed);
+	printf("\nrandom seed = %lu\n\n",seed);
 
-	pthread_t threads[nthreads];
-	pthread_attr_t attr;
+	// some convenient constants
 
-	// initialize and set thread joinable
-	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr,PTHREAD_CREATE_JOINABLE);
+	const size_t n   = (size_t)ceil(T/dt); // number of integration steps
+	const size_t m   = N*n; // size of oscillator buffers
+	const size_t M   = N*N; // number of coupling constants
+	const double ooN = 1.0/(double)N;
 
-	// kick off computation threads
-	targ_t targ[nipert];
-	for (size_t tnum=0; tnum<nthreads; ++tnum) {
-		targ[tnum].tnum = tnum;
-		targ[tnum].nipert = nipert;
-		targ[tnum].S = S;
-		targ[tnum].z = z;
-		const int tres = pthread_create(&threads[tnum],&attr,compfun,(void*)&targ[tnum]);
-		if (tres) {
-			fprintf(stderr,"Error: unable to create thread %zu",tnum);
-			exit(EXIT_FAILURE);
+	// allocate memory
+
+	double* const wdt = calloc(N,sizeof(double)); // oscillator frequencies
+	double* const Kdt = calloc(M,sizeof(double)); // coupling constants
+	double* const h   = calloc(m,sizeof(double)); // oscillator phases
+	double* const x   = calloc(m,sizeof(double)); // oscillator signal
+
+	darray* const Kdtx = matalloc(N,N,NULL);
+	darray* const hx   = matalloc(n,N,NULL);
+	darray* const xx   = matalloc(n,N,NULL);
+
+	// random frequencies (normal distribution)
+
+	for (size_t i=0; i<N; ++i) wdt[i] = dt*TWOPI*(wmean+wsdev*mt_randn(&rng));
+
+	// random coupling constants (normal distribution)
+
+	for (size_t i=0; i<N; ++i) {
+		for (size_t j=0; j<N; ++j) {
+			if (i == j) {
+				Kdt[N*i+j] = 0.0; // no "self-connections"!
+			}
+			else {
+				Kdt[N*i+j] = dt*TWOPI*ooN*(Kmean+Ksdev*mt_randn(&rng)); // scale coupling constants by N
+			}
 		}
 	}
 
-	// free attribute and wait for the other threads
-	pthread_attr_destroy(&attr);
-	for (size_t tnum=0; tnum<nthreads; ++tnum) {
-		const int tres = pthread_join(threads[tnum],NULL);
-		if (tres) {
-			fprintf(stderr,"Error: unable to join thread %zu",tnum);
-			exit(EXIT_FAILURE);
-		}
-	}
+	memcpy(*Kdtx,Kdt,M*sizeof(double));
 
-	z[1] = 1.0; // because it is :-)
+	// integrate Kuramoto ODE
 
-	char ofile[] = "/tmp/stulan_scratch.asc";
+	memset(h,0,    m*sizeof(double)); // zero-fill for no input [in fact here calloc will have done that]
+	kuramoto_euler(N,n,wdt,Kdt,h); // dry run :-)
+
+	memset(h,0,    m*sizeof(double)); // zero-fill for no input [in fact here calloc will have done that]
+	const double ts1 = timer_start("algo 1");
+	kuramoto_euler(N,n,wdt,Kdt,h);
+	timer_stop(ts1);
+
+	memset(*hx,0,m*sizeof(double)); // zero-fill for no input [in fact here calloc will have done that]
+	const double ts2 = timer_start("algo 2");
+	kuramoto_euler_alt(N,n,wdt,Kdtx,hx);
+	timer_stop(ts2);
+
+	// generate signal from phases
+
+	for (size_t j=0; j<m; ++j) x[j] = sin(h[j]);
+
+	for (size_t j=0; j<m; ++j) xx[0][j] = sin(hx[0][j]);
+
+
+	// write time stamp, order parameter and oscillator signals to file
+
+	char ofile[] = "/tmp/kuramoto_demo.asc";     // output file (ASCII)
 	FILE* const fp = fopen(ofile,"w");
 	if (fp == NULL) {
 		perror("Failed to open output file");
 		return EXIT_FAILURE;
 	}
-	for (size_t n=1; n<=nmax; ++n) {
-		fprintf(fp,"%6zu",n);
-		fprintf(fp," %17.8f",z[n]);
+	for (size_t t=0; t<n; ++t) {
+		fprintf(fp,"%17.8f",(double)(t+1)*dt); // time stamp
+		for (size_t i=0; i<N; ++i) fprintf(fp," %17.8f",x[N*t+i]); // signal
+		for (size_t i=0; i<N; ++i) fprintf(fp," %17.8f",xx[t][i]); // signal
 		fprintf(fp,"\n");
 	}
 	if (fclose(fp) != 0) {
@@ -122,23 +115,33 @@ int scratch(int argc, char *argv[])
 
 	// if Gnuplot installed display order parameter and oscillator signals.
 	// Else use your favourite plotting program on data in output file.
-
+/*
 #ifdef _HAVE_GNUPLOT
-	char gfile[] = "/tmp/stulan_scratch.gp"; // Gnuplot command file
+	char gfile[] = "/tmp/kuramoto_demo.gp"; // Gnuplot command file
 	FILE* const gp = fopen(gfile,"w");
 	if (gp == NULL) {
 		perror("failed to open Gnuplot command file\n");
 		return EXIT_FAILURE;
 	}
-	fprintf(gp,"set term \"%s\" size 1600,1200\n",gpterm);
-	fprintf(gp,"set title \"Oscillator mean amplitude scaling\"\n");
-	fprintf(gp,"set xlabel \"number of oscillators\"\n");
-	fprintf(gp,"set ylabel \"mean amplitude\"\n");
+	fprintf(gp,"set term \"%s\" title \"Kuramoto oscillator demo\" size 1600,1200\n",gpterm);
+	fprintf(gp,"set xlabel \"time\"\n");
+	fprintf(gp,"set ylabel \"mean phase\"\n");
 	fprintf(gp,"set key right bottom Left rev\n");
-	fprintf(gp,"set grid\n");
-	fprintf(gp,"set xr [0.5:%g]\n",(double)nmax+0.5);
-	fprintf(gp,"set yr [0:*]\n");
-	fprintf(gp,"plot \"%s\" u 1:2 w p pt 7 not\n",ofile);
+	fprintf(gp,"# set grid\n");
+	fprintf(gp,"set xr [0:%g]\n",T);
+	fprintf(gp,"set yr [-1.05:1.05]\n");
+	fprintf(gp,"set ytics 0.5\n");
+	fprintf(gp,"set ylabel \"amplitude\"\n");
+	fprintf(gp,"set multiplot layout 2,1\n");
+	fprintf(gp,"set title \"Oscillator signals\"\n");
+	fprintf(gp,"plot \\\n");
+	for (size_t i=0; i<N; ++i) fprintf(gp,"\"%s\" u 1:%zu w l not ,\\\n",ofile,i+2);
+	fprintf(gp,"NaN not\n");
+	fprintf(gp,"set title \"Oscillator signals x\"\n");
+	fprintf(gp,"plot \\\n");
+	for (size_t i=0; i<N; ++i) fprintf(gp,"\"%s\" u 1:%zu w l not ,\\\n",ofile,i+2+N);
+	fprintf(gp,"NaN not\n");
+	fprintf(gp,"unset multiplot\n");
 	if (fclose(gp) != 0) {
 		perror("Failed to close Gnuplot command file");
 		return EXIT_FAILURE;
@@ -147,16 +150,23 @@ int scratch(int argc, char *argv[])
 	char gpcmd[strlen+1];
 	strncpy(gpcmd,"gnuplot -p ",strlen);
 	strncat(gpcmd,gfile,strlen);
-	printf("\nGnuplot command: %s\n\n",gpcmd);
+	printf("Gnuplot command: %s\n\n",gpcmd);
 	if (system(gpcmd) == -1) {
 		perror("Failed to run Gnuplot command");
 		return EXIT_FAILURE;
 	}
 #endif
-
+*/
 	// free memory
 
-	free(z);
+	matfree(xx);
+	matfree(hx);
+	matfree(Kdtx);
 
-	pthread_exit(NULL);
+	free(x);
+	free(h);
+	free(Kdt);
+	free(wdt);
+
+	return EXIT_SUCCESS;
 }

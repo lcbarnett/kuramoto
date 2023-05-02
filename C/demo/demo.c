@@ -19,11 +19,12 @@ int demo(int argc, char *argv[])
 	CLAP_CARG(N,      size_t, 4,         "number of oscillators");
 	CLAP_CARG(T,      double, 200.0,     "total integration time");
 	CLAP_CARG(dt,     double, 0.01,      "integration step size");
-	CLAP_CARG(wmean,  double, 0.0,       "oscillator frequencies mean");
-	CLAP_CARG(wsdev,  double, 1/8.0,     "oscillator frequencies std. dev.");
-	CLAP_CARG(Kmean,  double, 1/10.0,    "coupling constants mean");
-	CLAP_CARG(Ksdev,  double, Kmean/6.0, "coupling constants std. dev.");
-	CLAP_CARG(Isdev,  double, 1/80.0,    "input noise intensity (zero for deterministic)");
+	CLAP_CARG(wmean,  double, 0.0,       "oscillator frequencies mean (Hz)");
+	CLAP_CARG(wsdev,  double, 0.2,       "oscillator frequencies std. dev. (Hz)");
+	CLAP_CARG(Kmean,  double, 0.1,       "coupling constants mean (Hz)");
+	CLAP_CARG(Ksdev,  double, Kmean/5.0, "coupling constants std. dev. (Hz)");
+	CLAP_CARG(nmean,  double, 0.01,      "oscillator input noise magnitude mean (zero for no noise)");
+	CLAP_CARG(nsdev,  double, nmean/5.0, "oscillator input noise magnitude std. dev.");
 	CLAP_CARG(RK4,    int,    0,         "RK4 solver flag (else Euler)");
 	CLAP_CARG(rseed,  ulong,  0,         "random seed (or 0 for random random seed)");
 #ifdef _HAVE_GNUPLOT
@@ -70,15 +71,28 @@ int demo(int argc, char *argv[])
 		}
 	}
 
-	// initialise oscillator phases with input (zero-mean Gaussian white noise)
+	// oscillator input noise (Wiener, with magnitudes log-normally distributed per oscillator)
 
-	const double sqrtdt = sqrt(dt);
-	if (Isdev > 0.0) {
-		for (size_t k=0; k<m; ++k) h[k] = sqrtdt*TWOPI*Isdev*mt_randn(&rng);
+	if (nmean > 0.0) {
+		const double sqrtdt = sqrt(dt);
+		const double lnv = log(1.0+(nsdev*nsdev)/(nmean*nmean));
+		const double mu  = log(nmean)-0.5*lnv;
+		const double sig = sqrt(lnv);
+		for (size_t i=0; i<N; ++i) {
+			const double nmagi = sqrtdt*TWOPI*exp(mu+sig*mt_randn(&rng)); // log-normal magnitude, Wiener scaling
+			for (size_t k=i; k<m+i; k += N) {
+				h[k] = nmagi*mt_randn(&rng);
+			}
+		}
 	}
 	else {
 		memset(h,0,m*sizeof(double)); // zero-fill for no input [in fact here calloc will have done that]
 	}
+
+	// initial phases uniformly distributed on [0,2pi)
+
+	for (size_t i=0; i<N; ++i) h[i] = TWOPI*mt_rand(&rng);
+
 
 	// integrate Kuramoto ODE
 

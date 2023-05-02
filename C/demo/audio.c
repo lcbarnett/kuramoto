@@ -192,8 +192,8 @@ int audio(int argc, char *argv[])
 
 #ifdef _HAVE_GNUPLOT
 	if (strncmp(gpterm,"noplot",7) != 0) {
-		const size_t ns  = (size_t)ceil(Ts*f);  // start time step
-		const size_t ne  = (size_t)ceil(Te*f);  // start time step
+		const size_t ns  = (size_t)floor(Ts*f);  // start time step
+		const size_t ne  = (size_t)ceil (Te*f);  // end   time step
 		char gfile[] = "/tmp/kuramoto_audio.gp"; // Gnuplot command file
 		FILE* const gp = fopen(gfile,"w");
 		if (gp == NULL) {
