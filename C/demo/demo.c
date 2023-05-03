@@ -17,13 +17,13 @@ int demo(int argc, char *argv[])
 	// Arg:   name    type    default    description
 	puts("\n---------------------------------------------------------------------------------------");
 	CLAP_CARG(N,      size_t, 4,         "number of oscillators");
-	CLAP_CARG(T,      double, 200.0,     "total integration time");
-	CLAP_CARG(dt,     double, 0.01,      "integration step size");
-	CLAP_CARG(wmean,  double, 0.0,       "oscillator frequencies mean (Hz)");
-	CLAP_CARG(wsdev,  double, 0.2,       "oscillator frequencies std. dev. (Hz)");
-	CLAP_CARG(Kmean,  double, 0.1,       "coupling constants mean (Hz)");
+	CLAP_CARG(T,      double, 1.0,       "total time (secs)");
+	CLAP_CARG(fs,     double, 1000.0,    "ODE integration sampling frequency (Hz)");
+	CLAP_CARG(wmax,   double, 20.0,      "oscillator frequency max (Hz)");
+	CLAP_CARG(wmin,   double, 1.0,       "oscillator frequency min (Hz)");
+	CLAP_CARG(Kmean,  double, 3.0,       "coupling constants mean (Hz)");
 	CLAP_CARG(Ksdev,  double, Kmean/5.0, "coupling constants std. dev. (Hz)");
-	CLAP_CARG(nmean,  double, 0.01,      "oscillator input noise magnitude mean (zero for no noise)");
+	CLAP_CARG(nmean,  double, 0.3,       "oscillator input noise magnitude mean (zero for no noise)");
 	CLAP_CARG(nsdev,  double, nmean/5.0, "oscillator input noise magnitude std. dev.");
 	CLAP_CARG(RK4,    int,    0,         "RK4 solver flag (else Euler)");
 	CLAP_CARG(rseed,  ulong,  0,         "random seed (or 0 for random random seed)");
@@ -40,10 +40,13 @@ int demo(int argc, char *argv[])
 
 	// some convenient constants
 
-	const size_t n   = (size_t)ceil(T/dt); // number of integration steps
-	const size_t m   = N*n; // size of oscillator buffers
-	const size_t M   = N*N; // number of coupling constants
-	const double ooN = 1.0/(double)N;
+	const size_t n    = (size_t)ceil(T*fs); // number of integration steps
+	const size_t m    = N*n;                // size of oscillator buffers
+	const size_t M    = N*N;                // number of coupling constants
+	const double ooN  = 1.0/(double)N;      // 1/N
+	const double ffac = (2.0*M_PI)/fs;      // frequency scaling factor
+	const double nfac = 1.0/sqrt(fs);       // Wiener noise scaling factor
+	const double ffoN = ffac*ooN;           // coupling scaling factor
 
 	// allocate memory
 
@@ -54,9 +57,9 @@ int demo(int argc, char *argv[])
 	double* const x   = calloc(m,sizeof(double)); // oscillator signal
 	double* const y   = calloc(n,sizeof(double)); // oscillator agregated signal
 
-	// random frequencies (normal distribution)
+	// random frequencies up to Nyqvist
 
-	for (size_t i=0; i<N; ++i) wdt[i] = dt*TWOPI*(wmean+wsdev*mt_randn(&rng));
+	for (size_t i=0; i<N; ++i) wdt[i] = ffac*(wmin + (wmax-wmin)*mt_rand(&rng));
 
 	// random coupling constants (normal distribution)
 
@@ -66,7 +69,7 @@ int demo(int argc, char *argv[])
 				Kdt[N*i+j] = 0.0; // no "self-connections"!
 			}
 			else {
-				Kdt[N*i+j] = dt*TWOPI*ooN*(Kmean+Ksdev*mt_randn(&rng)); // scale coupling constants by N
+				Kdt[N*i+j] = ffoN*(Kmean+Ksdev*mt_randn(&rng)); // scale coupling constants by N
 			}
 		}
 	}
@@ -74,12 +77,11 @@ int demo(int argc, char *argv[])
 	// oscillator input noise (Wiener, with magnitudes log-normally distributed per oscillator)
 
 	if (nmean > 0.0) {
-		const double sqrtdt = sqrt(dt);
 		const double lnv = log(1.0+(nsdev*nsdev)/(nmean*nmean));
 		const double mu  = log(nmean)-0.5*lnv;
 		const double sig = sqrt(lnv);
 		for (size_t i=0; i<N; ++i) {
-			const double nmagi = sqrtdt*TWOPI*exp(mu+sig*mt_randn(&rng)); // log-normal magnitude, Wiener scaling
+			const double nmagi = nfac*exp(mu+sig*mt_randn(&rng)); // log-normal magnitude, Wiener scaling
 			for (size_t k=i; k<m+i; k += N) {
 				h[k] = nmagi*mt_randn(&rng);
 			}
@@ -131,7 +133,7 @@ int demo(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 	for (size_t k=0; k<n; ++k) {
-		fprintf(fp,"%17.8f",(double)(k+1)*dt); // time stamp
+		fprintf(fp,"%17.8f",(double)(k+1)/fs); // time stamp
 		fprintf(fp," %17.8f",r[k]);            // order parameter
 		fprintf(fp," %17.8f",y[k]);            // aggregate signal
 		for (size_t i=0; i<N; ++i) fprintf(fp," %17.8f",x[N*k+i]); // signal
