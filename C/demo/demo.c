@@ -91,7 +91,9 @@ int demo(int argc, char *argv[])
 
 	if (RK4) {
 		double* const kbuff = calloc(4*N,sizeof(double)); // see kuramoto_rk4()
-		kuramoto_rk4(N,n,wdt,Kdt,h,kbuff);
+printf("before\n");
+		kuramoto_rk4(N,n,wdt,Kdt,kbuff,h);
+printf("after\n");
 		free(kbuff);
 	}
 	else {
