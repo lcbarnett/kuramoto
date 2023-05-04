@@ -18,12 +18,12 @@ int demo(int argc, char *argv[])
 	puts("\n---------------------------------------------------------------------------------------");
 	CLAP_CARG(N,      size_t, 4,         "number of oscillators");
 	CLAP_CARG(T,      double, 1.0,       "total time (secs)");
-	CLAP_CARG(fs,     double, 1000.0,    "ODE integration sampling frequency (Hz)");
+	CLAP_CARG(fs,     double, 1000.0,    "Sampling frequency (Hz)");
 	CLAP_CARG(wmax,   double, 20.0,      "oscillator frequency max (Hz)");
-	CLAP_CARG(wmin,   double, 1.0,       "oscillator frequency min (Hz)");
+	CLAP_CARG(wmin,   double, 0.0,       "oscillator frequency min (Hz)");
 	CLAP_CARG(Kmean,  double, 3.0,       "coupling constants mean (Hz)");
 	CLAP_CARG(Ksdev,  double, Kmean/5.0, "coupling constants std. dev. (Hz)");
-	CLAP_CARG(nmean,  double, 0.3,       "oscillator input noise magnitude mean (zero for no noise)");
+	CLAP_CARG(nmean,  double, 0.1,       "oscillator input noise magnitude mean (zero for no noise)");
 	CLAP_CARG(nsdev,  double, nmean/5.0, "oscillator input noise magnitude std. dev.");
 	CLAP_CARG(RK4,    int,    0,         "RK4 solver flag (else Euler)");
 	CLAP_CARG(rseed,  ulong,  0,         "random seed (or 0 for random random seed)");
@@ -45,8 +45,8 @@ int demo(int argc, char *argv[])
 	const size_t M    = N*N;                // number of coupling constants
 	const double ooN  = 1.0/(double)N;      // 1/N
 	const double ffac = (2.0*M_PI)/fs;      // frequency scaling factor
-	const double nfac = 1.0/sqrt(fs);       // Wiener noise scaling factor
-	const double ffoN = ffac*ooN;           // coupling scaling factor
+	const double nfac = sqrt(ffac);         // Wiener noise scaling factor
+	const double ffoN = ffac*ooN;           // coupling constants scaling factor
 
 	// allocate memory
 
@@ -57,21 +57,14 @@ int demo(int argc, char *argv[])
 	double* const x   = calloc(m,sizeof(double)); // oscillator signal
 	double* const y   = calloc(n,sizeof(double)); // oscillator agregated signal
 
-	// random frequencies up to Nyqvist
+	// random frequencies (uniform)
 
-	for (size_t i=0; i<N; ++i) wdt[i] = ffac*(wmin + (wmax-wmin)*mt_rand(&rng));
+	for (size_t i=0; i<N; ++i) wdt[i] = ffac*(wmin+(wmax-wmin)*mt_rand(&rng));
 
-	// random coupling constants (normal distribution)
+	// random coupling constants (normal distribution), scaled by number of oscillators
 
 	for (size_t i=0; i<N; ++i) {
-		for (size_t j=0; j<N; ++j) {
-			if (i == j) {
-				Kdt[N*i+j] = 0.0; // no "self-connections"!
-			}
-			else {
-				Kdt[N*i+j] = ffoN*(Kmean+Ksdev*mt_randn(&rng)); // scale coupling constants by N
-			}
-		}
+		for (size_t j=0; j<N; ++j) Kdt[N*i+j] = i == j ? 0.0 : ffoN*(Kmean+Ksdev*mt_randn(&rng)); // no "self-connections"!
 	}
 
 	// oscillator input noise (Wiener, with magnitudes log-normally distributed per oscillator)
@@ -82,9 +75,7 @@ int demo(int argc, char *argv[])
 		const double sig = sqrt(lnv);
 		for (size_t i=0; i<N; ++i) {
 			const double nmagi = nfac*exp(mu+sig*mt_randn(&rng)); // log-normal magnitude, Wiener scaling
-			for (size_t k=i; k<m+i; k += N) {
-				h[k] = nmagi*mt_randn(&rng);
-			}
+			for (size_t k=i; k<m+i; k += N) h[k] = nmagi*mt_randn(&rng);
 		}
 	}
 	else {
@@ -93,7 +84,7 @@ int demo(int argc, char *argv[])
 
 	// initial phases uniformly distributed on [0,2pi)
 
-	for (size_t i=0; i<N; ++i) h[i] = TWOPI*mt_rand(&rng);
+	for (size_t i=0; i<N; ++i) h[i] = 2.0*M_PI*mt_rand(&rng);
 
 
 	// integrate Kuramoto ODE
@@ -111,7 +102,7 @@ int demo(int argc, char *argv[])
 
 	kuramoto_order_param(N,n,h,r,NULL);
 
-	// wrap oscillator phases to [-pi,pi) [if that's is what you want]
+	// wrap oscillator phases to [-pi,pi) [if that's what you want]
 	//
 	// phase_wrap(m,h);
 
@@ -155,6 +146,7 @@ int demo(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 	fprintf(gp,"set term \"%s\" title \"Kuramoto oscillator demo\" size 1600,1200\n",gpterm);
+	fprintf(gp,"datfile = \"%s\"\n",ofile);
 	fprintf(gp,"set xlabel \"time\"\n");
 	fprintf(gp,"set ylabel \"mean phase\"\n");
 	fprintf(gp,"set key right bottom Left rev\n");
@@ -164,14 +156,14 @@ int demo(int argc, char *argv[])
 	fprintf(gp,"set ytics 0.5\n");
 	fprintf(gp,"set multiplot layout 3,1\n");
 	fprintf(gp,"set title \"Order parameter\"\n");
-	fprintf(gp,"plot \"%s\" u 1:2 w l not\n",ofile);
+	fprintf(gp,"plot datfile u 1:2 w l not\n");
 	fprintf(gp,"set yr [-1.05:1.05]\n");
 	fprintf(gp,"set title \"Aggregate oscillator signal (waveform)\"\n");
-	fprintf(gp,"plot \"%s\" u 1:3 w l not\n",ofile);
+	fprintf(gp,"plot datfile u 1:3 w l not\n");
 	fprintf(gp,"set title \"Oscillator signals (waveforms)\"\n");
 	fprintf(gp,"set ylabel \"amplitude\"\n");
 	fprintf(gp,"plot \\\n");
-	for (size_t i=0; i<N; ++i) fprintf(gp,"\"%s\" u 1:%zu w l not ,\\\n",ofile,4+i);
+	for (size_t i=0; i<N; ++i) fprintf(gp,"datfile u 1:%zu w l not ,\\\n",4+i);
 	fprintf(gp,"NaN not\n");
 	fprintf(gp,"unset multiplot\n");
 	if (fclose(gp) != 0) {
