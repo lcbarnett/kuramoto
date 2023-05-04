@@ -90,7 +90,8 @@ end
 %
 % Input noise is Weiner (Brownian), so scaled by sqrt(dt); cf. Ito simulation of Ornstein-Uhlenbeck process
 
-h = kuramoto_mex(N,n,2*pi*w*dt,2*pi*K'*dt,a',h0,2*pi*I*sqrt(dt),RK4);
+ffac = 2*pi*dt;
+h = kuramoto_mex(N,n,ffac*w,ffac*K',a',h0,sqrt(ffac)*I,RK4);
 
 % Order parameter (if requested)
 

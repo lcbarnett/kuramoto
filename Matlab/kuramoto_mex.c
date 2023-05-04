@@ -1,5 +1,6 @@
 #include <math.h>     // for maths functions
 #include <string.h>   // for memcpy
+#include <stdio.h>    // for perror
 
 #include "matrix.h"   // for Matlab matrix stuff
 #include "kuramoto.h" // for Kuramoto ODE solvers
