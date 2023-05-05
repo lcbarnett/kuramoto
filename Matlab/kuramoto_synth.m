@@ -6,7 +6,7 @@ global seqno
 % Default parameters (override on command line - see 'defvar.h')
 
 defvar('N',     8            ); % number of oscillators
-defvar('T',     10           ); % sample time (seconds)
+defvar('T',     5            ); % sample time (seconds)
 defvar('Td',    0.1          ); % sample display time (seconds)
 defvar('fs',    CD_SRATE     ); % sampling frequency (Hz)
 defvar('wmin',  0            ); % oscillator frequencies minimum (Hz)
@@ -25,6 +25,8 @@ defvar('wwin',  []           ); % Welch PSD window size (if empty set to number 
 defvar('codec', 'flac'       ); % audio codec
 defvar('afseq', []           ); % audio file sequence number (empty to increment)
 defvar('play',  false        ); % play audio?
+
+assert(2*(N/2) == N,'Must be an even number of oscillators');
 
 if isempty(afseq), seqno = seqno+1; else, seqno = afseq; end
 
@@ -91,7 +93,10 @@ r = r';
 % Signal
 
 x = sin(h);
-y = mean(x,2); % aggregate signal
+
+left = 1:N/2;
+right = N/2+1:N;
+y = [mean(x(:,left), 2) mean(x(:,right),2)]; % left/right aggregate signal
 
 % truncated for display
 
@@ -99,34 +104,36 @@ td = linspace(0,Td,nd)';
 hd = h(1:nd,:);
 rd = r(1:nd  );
 xd = x(1:nd,:);
-yd = y(1:nd  );
+yd = y(1:nd,:);
 
 % Display order parameters
 
 figure(1); clf;
-subplot(3,1,1);
+sgtitle(sprintf('Kuramoto synth: %d oscillators',N));
+
+subplot(2,2,1);
 plot(td,rd);
 xlim([0 Td]);
 ylim([0,1]);
 xlabel('time');
 ylabel('r','Rotation',0);
-title(sprintf('\nKuramoto synth (%d oscillators): order parameter magnitudes (r)\n',N));
+title(sprintf('\norder parameter magnitudes\n'));
 
-% Display aggregate signal
+% Display all oscillator signals
 
-subplot(3,1,2);
-plot(td,yd);
-title(sprintf('\nKuramoto synth (%d oscillators): aggregate signal\n',N));
+subplot(2,2,3);
+plot(td,xd);
+title(sprintf('\nOscillator signals\n'));
 xlabel('time');
 ylabel('magnitude');
 xlim([0 Td]);
 ylim([-1.05,+1.05]);
 
-% Display all oscillator signals
+% Display aggregate signal
 
-subplot(3,1,3);
-plot(td,xd);
-title(sprintf('\nKuramoto synth (%d oscillators): oscillator signals\n',N));
+subplot(2,2,2);
+plot(td,yd);
+title(sprintf('\nStereo signal\n'));
 xlabel('time');
 ylabel('magnitude');
 xlim([0 Td]);
@@ -134,15 +141,13 @@ ylim([-1.05,+1.05]);
 
 % Display aggregate signal PSD
 
-figure(2); clf;
+subplot(2,2,4);
 if isempty(wwin), wwin = n/50; end
-[psd,f] = pwelch(x,wwin,[],[],fs);
+[psd,f] = pwelch(y,wwin,[],[],fs);
 semilogy(f,psd);
-title(sprintf('\nKuramoto synth (%d oscillators): power spectral density\n',N));
+title(sprintf('\nPower spectral density\n'));
 xline(w);
 xlim([0,2*wmax]);
-%xticks([0,pi/4,pi/2,3*pi/4,pi]);
-%xticklabels({'0','\pi/4','\pi/2','3\pi/4','\pi'});
 xlabel('frequency (Hz)');
 ylabel('power (dB)');
 
@@ -155,7 +160,7 @@ if ~isempty(codec)
 	audiowrite(audiofile,y,fs);
 	fprintf(' done\n\n');
 	if play
-		sound(audioread(audiofile));
+		sound(y,fs);
 	end
 end
 
