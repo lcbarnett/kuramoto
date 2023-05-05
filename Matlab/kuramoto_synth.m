@@ -1,29 +1,42 @@
-CD_SRATE = 44100.0
-MIDDLE_C = 261.625565
+CD_SRATE = 44100;
+MIDDLE_C = 261.625565;
+
+global seqno
 
 % Default parameters (override on command line - see 'defvar.h')
 
-defvar('N',     8          ); % number of oscillators
-defvar('T',     10         ); % sample time (seconds)
-defvar('fs',    CD_SRATE   ); % sampling frequency (Hz)
-defvar('wmin',  0          ); % oscillator frequencies minimum (Hz)
-defvar('wmax',  3*MIDDLE_C ); % oscillator frequencies maximum (Hz)
-defvar('wseed', []         ); % oscillator frequencies random seed (empty for no seeding)
-defvar('kmean', 0.1        ); % oscillator coupling constants mean      (frequency multiplier - dimensionless)
-defvar('ksdev', kmean/2    ); % oscillator coupling constants std. dev. (frequency multiplier - dimensionless)
-defvar('kinhp', 0.1        ); % oscillator coupling probability of inhibitory connection
-defvar('kseed', []         ); % oscillator coupling constants random seed (empty for no seeding)
-defvar('hseed', []         ); % oscillator initial phases random seed (empty for no seeding)
-defvar('nmean', 0.01       ); % oscillator input noise magnitude mean (zero for no noise)
-defvar('nsdev', nmean/5    ); % oscillator input noise magnitude std. dev.
-defvar('nseed', []         ); % oscillator input noise magnitude random seed (empty for no seeding)
-defvar('Iseed', []         ); % oscillator input noise random seed (empty for no seeding)
+defvar('N',     8            ); % number of oscillators
+defvar('T',     10           ); % sample time (seconds)
+defvar('Td',    0.1          ); % sample display time (seconds)
+defvar('fs',    CD_SRATE     ); % sampling frequency (Hz)
+defvar('wmin',  0            ); % oscillator frequencies minimum (Hz)
+defvar('wmax',  3*MIDDLE_C   ); % oscillator frequencies maximum (Hz)
+defvar('wseed', []           ); % oscillator frequencies random seed (empty for no seeding)
+defvar('kmean', 0.1          ); % oscillator coupling constants mean      (frequency multiplier - dimensionless)
+defvar('ksdev', kmean/2      ); % oscillator coupling constants std. dev. (frequency multiplier - dimensionless)
+defvar('kinhp', 0.1          ); % oscillator coupling probability of inhibitory connection
+defvar('kseed', []           ); % oscillator couplinghttps://www.mathworks.com/help/releases/R2023a/matlab/ref/audiowrite.html?doclanguage=en&nocookie=true&prodfilter=ML%20SL%205G%20AE%20AT%20AA%20AU%20DR%20AS%20BI%20BL%20C2%20CM%20VP%20CT%20CF%20DB%20DF%20DD%20DH%20NN%20HS%20DS%20ET%20EC%20FH%20IT%20FI%20PO%20FL%20GD%20GC%20HD%20ES%20IA%20IP%20OT%20IC%20LP%20LS%20MG%20ME%20CO%20MJ%20MR%20TE%20DX%20AM%20MP%20MT%20NV%20OP%20DM%20PD%20AR%20PW%20PM%20RA%20RL%20RQ%20RB%20RP%20RF%20RK%20RO%20RC%20RR%20SI%20TF%20SX%20SQ%20SG%20SB%20SE%20SS%20BT%20LD%20PS%20SH%20MS%20VR%20VV%20CI%20RT%20SK%20SD%20CV%20SO%20DV%20PL%20XP%20SR%20SZ%20HW%20SF%20ST%20SM%20ZC%20ID%20TA%20UV%20VE%20VN%20VT%20WA%20LH%20WB%20WL&docviewer=helpbrowser&docrelease=R2023a&s_cid=pl_webdoc&loginurl=https%3A%2F%2F127.0.0.1%3A31515%2Ftoolbox%2Fmatlab%2Flogin%2Fweb%2Findex.html%3Fsnc%3DIANGSD%26external%3Dtrue%26channel%3D__mlfpmc__&searchsource=mw&snc=6TZA19&container=jshelpbrowser#d124e12665 constants random seed (empty for no seeding)
+defvar('hseed', []           ); % oscillator initial phases random seed (empty for no seeding)
+defvar('nmean', 0.01         ); % oscillator input noise magnitude mean (zero for no noise)
+defvar('nsdev', nmean/5      ); % oscillator input noise magnitude std. dev.
+defvar('nseed', []           ); % oscillator input noise magnitude random seed (empty for no seeding)
+defvar('Iseed', []           ); % oscillator input noise random seed (empty for no seeding)
+defvar('wwin',  []           ); % Welch PSD window size (if empty set to number of samples/50)
+defvar('codec', 'flac'       ); % audio codec
+defvar('afseq', []           ); % audio file sequence number (empty to increment)
+defvar('play',  false        ); % play audio?
+
+if isempty(afseq), seqno = seqno+1; else, seqno = afseq; end
 
 % Times
 
 n = round(T*fs);
-assert(n > 0,'Simulation time too short, or time increment too large!');
+assert(n > 0,'Simulation time too short!');
 T = n/fs; % adjusted simulation time
+
+nd = round(Td*fs);
+assert(nd > 0,'Display time too short!');
+Td = nd/fs; % adjusted simulation time
 
 % Oscillator frequencies uniform random on [wmin,wmax)
 
@@ -33,17 +46,17 @@ if ~isempty(wseed), rng(rstate); end
 fprintf('\nOscillator natural frequencies (Hz) =\n\n');
 disp(w)
 
-% Oscillator coupling multipliers are gamma-distributed with given mean/standard deviation,
-% inhibitory with given probability, then scaled by number of oscillators
+% Oscillator coupling multipliers are lognormal-distributed with given mean/standard deviation,
+% inhibitory with given probability, scaled by number of oscillators
 
 if ~isempty(kseed), rstate = rng(kseed); end
 kln = log(1+ksdev^2/kmean^2);
-K = w.*(lognrnd(log(kmean)-kln/2,sqrt(kln),N,N)); % normalise by sampling rate
+K = w.*(lognrnd(log(kmean)-kln/2,sqrt(kln),N,N))/N;
 K(1:N+1:N^2) = 0;  % zero-out self-connections
 kinhib = rand(N)<kinhp;
 K(kinhib) = -K(kinhib);
 if ~isempty(kseed), rng(rstate); end
-fprintf('\nOscillator coupling constants =\n\n');
+fprintf('Oscillator coupling constants =\n\n');
 disp(K)
 
 % Uncorrelated Gaussian white noise, magnitudes log-normally distributed
@@ -68,90 +81,82 @@ if ~isempty(hseed), rng(rstate); end
 
 % Run Kuramoto Euler and Rung-Kutta simulations with specified parameters
 
-fprintf('\n'); st = tic;
+st = tic;
 [h,r] = kuramoto(N,n,1/fs,w,K,[],h0,I,'Euler');
 et = toc(st); fprintf('Euler method : %g seconds\n',et);
 
-h   = h';
-r   = r';
+h = h';
+r = r';
 
 % Signal
 
 x = sin(h);
+y = mean(x,2); % aggregate signal
 
-t = linspace(0,T,n)';
+% truncated for display
+
+td = linspace(0,Td,nd)';
+hd = h(1:nd,:);
+rd = r(1:nd  );
+xd = x(1:nd,:);
+yd = y(1:nd  );
 
 % Display order parameters
 
 figure(1); clf;
-plot(t,r);
-xlim([t(1) t(end)]);
+subplot(3,1,1);
+plot(td,rd);
+xlim([0 Td]);
 ylim([0,1]);
 xlabel('time');
 ylabel('r','Rotation',0);
-title(sprintf('\nKuramoto system: N = %d - order parameter magnitudes (r)\n',N));
+title(sprintf('\nKuramoto synth (%d oscillators): order parameter magnitudes (r)\n',N));
 
-return;
-
-% Display oscillator phases
-
-figure(2); clf;
-subplot(3,1,1);
-if unwrp % Unwrapped, detrended
-	h = ldetrend(h1,t);
-	plot(t,h);
-	title(sprintf('\nKuramoto system: N = %d - oscillator phases (unwrapped/detrended)\n',N));
-	xlabel('time');
-	ylabel('phase');
-else      % On cylinder
-	cylinder_plot(t,h1);
-	title(sprintf('\nKuramoto system: N = %d - oscillator phases\n',N));
-end
-xlim([t(1) t(end)]);
-
-% Display oscillator agregate signal
-
-x = sin(h1);
-y = mean(x,2);
+% Display aggregate signal
 
 subplot(3,1,2);
-plot(t,y);
-title(sprintf('\nKuramoto system: N = %d - oscillator agregate signal\n',N));
+plot(td,yd);
+title(sprintf('\nKuramoto synth (%d oscillators): aggregate signal\n',N));
 xlabel('time');
 ylabel('magnitude');
-xlim([t(1) t(end)]);
+xlim([0 Td]);
 ylim([-1.05,+1.05]);
 
 % Display all oscillator signals
 
 subplot(3,1,3);
-plot(t,x);
-title(sprintf('\nKuramoto system: N = %d - oscillator signals\n',N));
+plot(td,xd);
+title(sprintf('\nKuramoto synth (%d oscillators): oscillator signals\n',N));
 xlabel('time');
 ylabel('magnitude');
-xlim([t(1) t(end)]);
+xlim([0 Td]);
 ylim([-1.05,+1.05]);
 
-% Display oscillator PSDs
-%{
-[psd,f] = pwelch(x);
-subplot(3,1,3);
+% Display aggregate signal PSD
+
+figure(2); clf;
+if isempty(wwin), wwin = n/50; end
+[psd,f] = pwelch(x,wwin,[],[],fs);
 semilogy(f,psd);
-title(sprintf('\nKuramoto system: N = %d - power spectral density\n',N));
-xline(2*pi*dt*w);
-xlim([0,pi]);
-xticks([0,pi/4,pi/2,3*pi/4,pi]);
-xticklabels({'0','\pi/4','\pi/2','3\pi/4','\pi'});
-xlabel('angular frequency (rad/sec)');
+title(sprintf('\nKuramoto synth (%d oscillators): power spectral density\n',N));
+xline(w);
+xlim([0,2*wmax]);
+%xticks([0,pi/4,pi/2,3*pi/4,pi]);
+%xticklabels({'0','\pi/4','\pi/2','3\pi/4','\pi'});
+xlabel('frequency (Hz)');
 ylabel('power (dB)');
-%}
 
-% Optionally display complex order parameter (animation)
+% Encode aggregate signal
 
-if anim
-	figure(3); clf;
-	title(sprintf('\nKuramoto system: N = %d - complex order parameters (z)\n',N));
-	clock_plot(t,[r1 r2],[psi1 psi2],{'Euler','RK4'},{'b','r'})
+if ~isempty(codec)
+	afid = sprintf('kurasynth_mono_%03d.%s',seqno,codec);
+	audiofile = fullfile(tempdir,afid);
+	fprintf('\nWriting audio data to %s ...',audiofile);
+	audiowrite(audiofile,y,fs);
+	fprintf(' done\n\n');
+	if play
+		sound(audioread(audiofile));
+	end
 end
 
 function [a,b] = betamv2ab(m,v)

@@ -13,7 +13,7 @@ function [h,r,psi] = kuramoto(N,n,dt,w,K,a,h0,I,mode)
 % K     oscillator coupling constants         (scalar or square matrix of size N)  : Hz
 % a     phase lags                            (scalar or square matrix of size N)  : radians
 % h0    initial phases                        (vector of length N)                 : radians
-% I     input noise                           (n x N matrix or empty for no input) : radians/sqrt(second)
+% I     input noise                           (n x N matrix or empty for no input) : sqrt(Hz)
 % mode  simulation mode                       ('Euler' or 'RK4')                   : string
 %
 % h     oscillator phases (unwrapped)         (N x n matrix)                       : radians
