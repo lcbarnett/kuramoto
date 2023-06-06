@@ -20,7 +20,7 @@ make -C C/demo
 ```
 and to build the Matlab interface, run
 ```
-make -C matlab
+make -C Matlab
 ```
 ### Testing
 To test the C interface, try running
