@@ -96,8 +96,8 @@ h = kuramoto_mex(N,n,ffac*w,ffac*K',a',h0,sqrt(ffac)*I,RK4);
 % Order parameter (if requested)
 
 if nargout > 1
-	x = mean(cos(h));
-	y = mean(sin(h));
+	x = mean(cos(h),1);
+	y = mean(sin(h),1);
 	r = hypot(x,y);
 	if nargout > 2
 		psi = atan2(y,x); % wrapped on [-pi,pi)

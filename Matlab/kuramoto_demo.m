@@ -19,7 +19,7 @@ defvar('nmean', 0.01    ); % oscillator input noise magnitude mean (zero for no 
 defvar('nsdev', nmean/5 ); % oscillator input noise magnitude std. dev.
 defvar('nseed', []      ); % oscillator input noise magnitude random seed (empty for no seeding)
 defvar('Iseed', []      ); % oscillator input noise random seed (empty for no seeding)
-defvar('unwrp', true    ); % oscillator phase plot: unwrapped and detrended? (else display on cylinder)
+defvar('dtord', 1       ); % oscillator phase poly-detrend order (if empty, display phases on cylinder)
 defvar('anim',  true    ); % order parameter animation?
 
 % Times
@@ -112,8 +112,12 @@ title(sprintf('order parameter magnitudes (r)\n'));
 % Display oscillator phases
 
 subplot(4,1,2);
-if unwrp % Unwrapped, detrended
-	h = ldetrend(h1,t);
+if ~isempty(dtord) % Unwrapped, detrended
+	if dtord == 0
+		h = h1; % just display unwrapped phases
+	else
+		h = detrend(h1,dtord);
+	end
 	plot(t,h);
 	title(sprintf('\noscillator phases (unwrapped/detrended)\n'));
 	xlabel('time');
