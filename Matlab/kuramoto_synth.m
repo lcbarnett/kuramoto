@@ -1,7 +1,4 @@
-CD_SRATE = 44100;
-MIDDLE_C = 261.625565;
-
-global seqno
+global seqno CD_SRATE MIDDLE_C
 
 % Default parameters (override on command line - see 'defvar.h')
 
