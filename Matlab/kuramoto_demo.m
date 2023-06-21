@@ -90,43 +90,45 @@ h2   = h2(:,ne+1:end)';
 r2   = r2  (ne+1:end)';
 psi2 = psi2(ne+1:end)';
 
+x = sin(h1);   % oscillator signals
+y = mean(x,2); % aggregate signal
+
 t = linspace(0,T,n)';
 
 % Display order parameters
 
 figure(1); clf;
+sgtitle(sprintf('Kuramoto system: N = %d',N));
+
+subplot(4,1,1);
 plot(t,[r1 r2]);
 legend({'Euler','RK4'});
 xlim([t(1) t(end)]);
 ylim([0,1]);
 xlabel('time');
 ylabel('r','Rotation',0);
-title(sprintf('\nKuramoto system: N = %d - order parameter magnitudes (r)\n',N));
+title(sprintf('order parameter magnitudes (r)\n'));
 
 % Display oscillator phases
 
-figure(2); clf;
-subplot(3,1,1);
+subplot(4,1,2);
 if unwrp % Unwrapped, detrended
 	h = ldetrend(h1,t);
 	plot(t,h);
-	title(sprintf('\nKuramoto system: N = %d - oscillator phases (unwrapped/detrended)\n',N));
+	title(sprintf('\noscillator phases (unwrapped/detrended)\n'));
 	xlabel('time');
 	ylabel('phase');
 else      % On cylinder
 	cylinder_plot(t,h1);
-	title(sprintf('\nKuramoto system: N = %d - oscillator phases\n',N));
+	title(sprintf('\noscillator phases\n'));
 end
 xlim([t(1) t(end)]);
 
 % Display oscillator agregate signal
 
-x = sin(h1);
-y = mean(x,2);
-
-subplot(3,1,2);
+subplot(4,1,3);
 plot(t,y);
-title(sprintf('\nKuramoto system: N = %d - oscillator agregate signal\n',N));
+title(sprintf('\noscillator agregate signal\n'));
 xlabel('time');
 ylabel('magnitude');
 xlim([t(1) t(end)]);
@@ -134,9 +136,9 @@ ylim([-1.05,+1.05]);
 
 % Display all oscillator signals
 
-subplot(3,1,3);
+subplot(4,1,4);
 plot(t,x);
-title(sprintf('\nKuramoto system: N = %d - oscillator signals\n',N));
+title(sprintf('\noscillator signals\n'));
 xlabel('time');
 ylabel('magnitude');
 xlim([t(1) t(end)]);
@@ -159,7 +161,7 @@ ylabel('power (dB)');
 % Optionally display complex order parameter (animation)
 
 if anim
-	figure(3); clf;
+	figure(2); clf;
 	title(sprintf('\nKuramoto system: N = %d - complex order parameters (z)\n',N));
 	clock_plot(t,[r1 r2],[psi1 psi2],{'Euler','RK4'},{'b','r'})
 end
