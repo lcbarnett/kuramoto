@@ -18,6 +18,7 @@ defvar('nmean', 0.01         ); % oscillator input noise magnitude mean (zero fo
 defvar('nsdev', nmean/5      ); % oscillator input noise magnitude std. dev.
 defvar('nseed', []           ); % oscillator input noise magnitude random seed (empty for no seeding)
 defvar('Iseed', []           ); % oscillator input noise random seed (empty for no seeding)
+defvar('smode', 'Euler'      ); % simulation mode: 'Euler' or 'RK4'
 defvar('wwin',  []           ); % Welch PSD window size (if empty set to number of samples/50)
 defvar('codec', 'flac'       ); % audio codec
 defvar('afseq', []           ); % audio file sequence number (empty to increment)
@@ -80,9 +81,10 @@ if ~isempty(hseed), rng(rstate); end
 
 % Run Kuramoto Euler and Rung-Kutta simulations with specified parameters
 
+fprintf('simulation: %s method ...',smode);
 st = tic;
-[h,r] = kuramoto(N,n,1/fs,w,K,[],h0,I,'Euler');
-et = toc(st); fprintf('Euler method : %g seconds\n',et);
+[h,r] = kuramoto(N,n,1/fs,w,K,[],h0,I,smode);
+et = toc(st); fprintf(' %g seconds\n',et);
 
 h = h';
 r = r';
