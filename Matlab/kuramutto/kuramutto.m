@@ -100,7 +100,7 @@ p = p./max(abs(p));
 
 % Signal
 
-x = p.*sin(h); % modulate with detrended phases :-)
+x = p(:,randperm(N)).*sin(h); % modulate with detrended phases :-)
 x = x./max(abs(x));
 
 left = 1:N/2;
@@ -123,11 +123,11 @@ sgtitle(sprintf('Kuramoto synth: %d oscillators',N));
 
 subplot(2,2,1);
 plot(td,rd);
+title(sprintf('\nOrder parameter magnitudes\n'));
 xlim([0 Td]);
 ylim([0,1]);
 xlabel('time');
 ylabel('r','Rotation',0);
-title(sprintf('\norder parameter magnitudes\n'));
 
 % Display all oscillator signals
 
@@ -152,8 +152,8 @@ ylim([-1.05,+1.05]);
 % Display detrended phases PSD
 
 subplot(2,2,4);
-title(sprintf('\nDetrended phases\n'));
 plot(t,p);
+title(sprintf('\nDetrended phases\n'));
 xlabel('time');
 ylabel('detrended phases');
 xlim([0 T]);
