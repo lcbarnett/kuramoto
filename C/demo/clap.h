@@ -5,11 +5,13 @@
 //
 // Variables registered with CLAP may be optionally overriden by
 // switches on the command line (see main.c and demo.c for usage).
-// Variables may be registered as either const or non-const.
+//
+// Variables (except C string variables, which are always const)
+// may be registered as either const or non-const.
 //
 // Invocation:
 //
-// kuramoto clapfun -argname1 argval1 -argname2 argval2 ...
+// progname clapfun -argname1 argval1 -argname2 argval2 ...
 
 #define CLAP_ARGTYPE_MAX 100
 #define CLAP_ARGNAME_MAX 100
@@ -38,7 +40,6 @@ else if (strncmp(#argtype,"size_t",  CLAP_ARGTYPE_MAX) == 0) printf("%-12s = %-2
 else if (strncmp(#argtype,"float",   CLAP_ARGTYPE_MAX) == 0) printf("%-12s = %-24g %s\n",  #argname, *(float*)   clap_v##argname, argdesc); \
 else if (strncmp(#argtype,"double",  CLAP_ARGTYPE_MAX) == 0) printf("%-12s = %-24lg %s\n", #argname, *(double*)  clap_v##argname, argdesc); \
 else if (strncmp(#argtype,"ldouble", CLAP_ARGTYPE_MAX) == 0) printf("%-12s = %-24Lg %s\n", #argname, *(ldouble*) clap_v##argname, argdesc); \
-else if (strncmp(#argtype,"cstr",    CLAP_ARGTYPE_MAX) == 0) printf("%-12s = %-24s %s\n",  #argname, *(cstr*)    clap_v##argname, argdesc); \
 else {fprintf(stderr,"CLAP ERROR: unhandled arg type \"%s\"\n",#argtype); exit(EXIT_FAILURE);} \
 fflush(stdout)
 

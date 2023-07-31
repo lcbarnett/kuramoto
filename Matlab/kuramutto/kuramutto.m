@@ -19,10 +19,10 @@ defvar('nsdev', nmean/5      ); % oscillator input noise magnitude std. dev.
 defvar('nseed', []           ); % oscillator input noise magnitude random seed (empty for no seeding)
 defvar('Iseed', []           ); % oscillator input noise random seed (empty for no seeding)
 defvar('smode', 'Euler'      ); % simulation mode: 'Euler' or 'RK4'
-defvar('wwin',  []           ); % Welch PSD window size (if empty set to number of samples/50)
+defvar('pdto',  1            ); % polynomial detrend order
 defvar('codec', 'flac'       ); % audio codec
 defvar('afseq', []           ); % audio file sequence number (empty to increment)
-defvar('play',  false        ); % play audio?
+defvar('play',  true         ); % play audio?
 
 assert(2*(N/2) == N,'Must be an even number of oscillators');
 
@@ -33,10 +33,12 @@ if isempty(afseq), seqno = seqno+1; else, seqno = afseq; end
 n = round(T*fs);
 assert(n > 0,'Simulation time too short!');
 T = n/fs; % adjusted simulation time
+t = linspace(0,T,n)';
 
 nd = round(Td*fs);
 assert(nd > 0,'Display time too short!');
 Td = nd/fs; % adjusted display time
+td = linspace(0,Td,nd)';
 
 % Oscillator frequencies uniform random on [wmin,wmax)
 
@@ -89,19 +91,28 @@ et = toc(st); fprintf(' %g seconds\n',et);
 h = h';
 r = r';
 
+% Detrended phases
+
+fprintf('\nPolynomial detrend at order %d\n',pdto);
+p = detrend(h,pdto);
+p = (p-mean(p))./std(p);
+p = p./max(abs(p));
+
 % Signal
 
-x = sin(h);
+x = p.*sin(h); % modulate with detrended phases :-)
+x = x./max(abs(x));
 
 left = 1:N/2;
 right = N/2+1:N;
 y = [mean(x(:,left), 2) mean(x(:,right),2)]; % left/right aggregate signal
+y = y./max(abs(y));
 
 % truncated for display
 
-td = linspace(0,Td,nd)';
 hd = h(1:nd,:);
 rd = r(1:nd  );
+pd = p(1:nd,:);
 xd = x(1:nd,:);
 yd = y(1:nd,:);
 
@@ -138,22 +149,20 @@ ylabel('magnitude');
 xlim([0 Td]);
 ylim([-1.05,+1.05]);
 
-% Display aggregate signal PSD
+% Display detrended phases PSD
 
 subplot(2,2,4);
-if isempty(wwin), wwin = n/50; end
-[psd,f] = pwelch(y,wwin,[],[],fs);
-semilogy(f,psd);
-title(sprintf('\nPower spectral density\n'));
-xline(w);
-xlim([0,2*wmax]);
-xlabel('frequency (Hz)');
-ylabel('power (dB)');
+title(sprintf('\nDetrended phases\n'));
+plot(t,p);
+xlabel('time');
+ylabel('detrended phases');
+xlim([0 T]);
+ylim([-1.05,+1.05]);
 
 % Encode aggregate signal
 
 if ~isempty(codec)
-	afid = sprintf('kurasynth_mono_%03d.%s',seqno,codec);
+	afid = sprintf('kuramutto_%03d.%s',seqno,codec);
 	audiofile = fullfile(tempdir,afid);
 	fprintf('\nWriting audio data to %s ...',audiofile);
 	audiowrite(audiofile,y,fs);
