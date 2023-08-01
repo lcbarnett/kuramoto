@@ -6,10 +6,8 @@ kmbody;
 
 % Default parameters (override on command line - see 'defvar.h')
 
-defvar('N',     8            ); % number of oscillators
 defvar('T',     5            ); % sample time (seconds)
 defvar('Td',    0.1          ); % sample display time (seconds)
-defvar('fs',    CD_SRATE     ); % sampling frequency (Hz)
 defvar('wmin',  0            ); % oscillator frequencies minimum (Hz)
 defvar('wmax',  3*MIDDLE_C   ); % oscillator frequencies maximum (Hz)
 defvar('wseed', []           ); % oscillator frequencies random seed (empty for no seeding)
@@ -29,6 +27,8 @@ defvar('afseq', []           ); % audio file sequence number (empty to increment
 defvar('play',  true         ); % play audio?
 
 N = size(C,1);
+
+fs = CD_SRATE;
 
 if isempty(afseq), seqno = seqno+1; else, seqno = afseq; end
 
@@ -96,23 +96,22 @@ et = toc(st); fprintf(' %g seconds\n',et);
 h = h';
 r = r';
 
-% Detrended phases
-
-fprintf('\nPolynomial detrend at order %d\n',pdto);
-p = detrend(h,pdto);
-p = (p-mean(p))./std(p);
-p = p./max(abs(p));
-
-% Signal
+% Voice
 
 lhead = 1:3;
 rhead = 4:6;
 head = [lhead rhead];
 nhead = length(head);
+arse  = 28-nhead+1:28
 
-pmod = p(:,28-nhead+1:28);
+% Detrended phases
 
-x = pmod.*sin(h(:,head)); % modulate with detrended phases :-)
+fprintf('\nPolynomial detrend at order %d\n',pdto);
+p = detrend(h(:,arse),pdto);
+p = (p-mean(p))./std(p);
+p = p./max(abs(p));
+
+x = p.*sin(h(:,head)); % modulate with detrended phases :-)
 x = x./max(abs(x));
 
 y = [mean(x(:,lhead), 2) mean(x(:,rhead),2)]; % left/right aggregate signal
@@ -120,7 +119,6 @@ y = y./max(abs(y));
 
 % truncated for display
 
-hd = h(1:nd,:);
 rd = r(1:nd  );
 pd = p(1:nd,:);
 xd = x(1:nd,:);
@@ -162,7 +160,7 @@ ylim([-1.05,+1.05]);
 % Display detrended phases PSD
 
 subplot(2,2,4);
-plot(t,pmod);
+plot(t,p);
 title(sprintf('\nDetrended phases\n'));
 xlabel('time');
 ylabel('detrended phases');
