@@ -1,5 +1,9 @@
 global seqno CD_SRATE MIDDLE_C
 
+% Construct the mutt
+
+kmbody;
+
 % Default parameters (override on command line - see 'defvar.h')
 
 defvar('N',     8            ); % number of oscillators
@@ -24,7 +28,7 @@ defvar('codec', 'flac'       ); % audio codec
 defvar('afseq', []           ); % audio file sequence number (empty to increment)
 defvar('play',  true         ); % play audio?
 
-assert(2*(N/2) == N,'Must be an even number of oscillators');
+N = size(C,1);
 
 if isempty(afseq), seqno = seqno+1; else, seqno = afseq; end
 
@@ -58,6 +62,7 @@ K(1:N+1:N^2) = 0;  % zero-out self-connections
 kinhib = rand(N)<kinhp;
 K(kinhib) = -K(kinhib);
 if ~isempty(kseed), rng(rstate); end
+K = C.*K;
 fprintf('Oscillator coupling constants =\n\n');
 disp(K)
 
@@ -100,12 +105,17 @@ p = p./max(abs(p));
 
 % Signal
 
-x = p(:,randperm(N)).*sin(h); % modulate with detrended phases :-)
+lhead = 1:3;
+rhead = 4:6;
+head = [lhead rhead];
+nhead = length(head);
+
+pmod = p(:,28-nhead+1:28);
+
+x = pmod.*sin(h(:,head)); % modulate with detrended phases :-)
 x = x./max(abs(x));
 
-left = 1:N/2;
-right = N/2+1:N;
-y = [mean(x(:,left), 2) mean(x(:,right),2)]; % left/right aggregate signal
+y = [mean(x(:,lhead), 2) mean(x(:,rhead),2)]; % left/right aggregate signal
 y = y./max(abs(y));
 
 % truncated for display
@@ -152,7 +162,7 @@ ylim([-1.05,+1.05]);
 % Display detrended phases PSD
 
 subplot(2,2,4);
-plot(t,p);
+plot(t,pmod);
 title(sprintf('\nDetrended phases\n'));
 xlabel('time');
 ylabel('detrended phases');
@@ -162,7 +172,7 @@ ylim([-1.05,+1.05]);
 % Encode aggregate signal
 
 if ~isempty(codec)
-	afid = sprintf('kuramutto_%03d.%s',seqno,codec);
+	afid = sprintf('kmutt_%03d.%s',seqno,codec);
 	audiofile = fullfile(tempdir,afid);
 	fprintf('\nWriting audio data to %s ...',audiofile);
 	audiowrite(audiofile,y,fs);
