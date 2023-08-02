@@ -4,6 +4,8 @@ global seqno CD_SRATE MIDDLE_C
 
 kmbody;
 
+kmbody;
+
 % Default parameters (override on command line - see 'defvar.h')
 
 defvar('T',     5            ); % sample time (seconds)
