@@ -2,7 +2,6 @@
 %
 % To draw, use drawdog (hacked from wgraph2dot (see https://github.com/lcbarnett/gvmat)
 
-
 % Body parts
 
 % head
@@ -93,14 +92,4 @@ elist{ihleg( 1)} = [elist{ihleg( 1)} ibodi([8])];
 elist{ibodi(11)} = [elist{ibodi(11)} itail([1])];
 elist{itail( 1)} = [elist{itail( 1)} ibodi([11])];
 
-[C,nosc] = elist2conmat(elist);
-
-function [C,n] = elist2conmat(elist)
-
-	n = length(elist);
-	C = zeros(n);
-	for e = 1:n
-		C(elist{e},e) = 1;
-	end
-
-end
+[C,nosc,ncon] = elist2conmat(elist);
