@@ -89,12 +89,16 @@ dotfile = [gvfile '.dot'];
 df = fopen(dotfile,'wt');
 
 fprintf(df,'digraph\n{\n');
-fprintf(df,'\tgraph [fontsize = 10, scale = %g, overlap = true];\n',gscale);
-fprintf(df,'\tnode [shape = circle, style = filled, fixedsize = true, width = %g, fontsize = %d];\n',nwidth,nfontsize);
+
+fprintf(df,'\tlandscape=true\n\n');
+
+fprintf(df,'\tgraph [fontsize = 20, scale = %g, overlap = true];\n',gscale);
+fprintf(df,'\tnode [shape = circle, style = filled, fixedsize = true, width = %g, fontsize = %d, orientation = 90];\n',nwidth,nfontsize);
 fprintf(df,'\tedge [splines = true, penwidth = %g, arrowsize = %g];\n\n',cpendwidth,carrowsize);
 
+
 for k = 1:n
-	fprintf(df,'\t%d [fillcolor = "%6.8f,%6.8f,%6.8f"]\n',k,nHSV(k,1),nHSV(k,2),nHSV(k,3));
+	fprintf(df,'\t%2d [fillcolor = "%6.8f,%6.8f,%6.8f"]\n',k,nHSV(k,1),nHSV(k,2),nHSV(k,3));
 end
 fprintf(df,'\n');
 
@@ -103,10 +107,10 @@ for i = 1:n
 		if eweight(i,j) > 0
 			if j == i
 				if selfcon
-					fprintf(df,'\t%d -> %d [color = "%6.8f,%6.8f,%6.8f"]\n',j,i,eHSV(i,i,1),eHSV(i,i,2),eHSV(i,i,3));
+					fprintf(df,'\t%2d -> %2d [color = "%6.8f,%6.8f,%6.8f"]\n',j,i,eHSV(i,i,1),eHSV(i,i,2),eHSV(i,i,3));
 				end
 			else
-				fprintf(df,'\t%d -> %d [color = "%6.8f,%6.8f,%6.8f"]\n',j,i,eHSV(i,j,1),eHSV(i,j,2),eHSV(i,j,3));
+				fprintf(df,'\t%2d -> %2d [color = "%6.8f,%6.8f,%6.8f"]\n',j,i,eHSV(i,j,1),eHSV(i,j,2),eHSV(i,j,3));
 			end
 		end
 	end

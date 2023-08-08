@@ -2,7 +2,7 @@
 
 % Default parameters (override on command line - see 'defvar.m')
 
-defvar('mmean', 0.01    ); % oscillator input noise magnitude mean (zero for no inoise)
+defvar('mmean', 0       ); % oscillator input noise magnitude mean (zero for no inoise)
 defvar('msdev', mmean/5 ); % oscillator input noise magnitude std. dev.
 defvar('mseed', []      ); % oscillator input noise magnitude random seed (empty for no seeding)
 defvar('nseed', []      ); % oscillator input noise random seed (empty for no seeding)

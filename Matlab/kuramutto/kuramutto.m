@@ -79,15 +79,18 @@ p = detrend(h(:,arse),pdto);
 p = (p-mean(p))./std(p);
 p = p./max(abs(p));
 
-x = p.*sin(h(:,head)); % modulate with detrended phases :-)
+X = sin(h(:,head));
+x = p.*X; % modulate with detrended phases :-)
 x = x./max(abs(x));
 
 y = [mean(x(:,lhead), 2) mean(x(:,rhead),2)]; % left/right aggregate signal
 y = y./max(abs(y));
 
-vfreq = 4;
+%{
+vfreq = 1;
 venv = abs(sin(vfreq*2*pi*fs*t));
 y = venv.*y;
+%}
 
 % truncated for display
 
@@ -99,7 +102,7 @@ yd = y(1:nddt,:);
 % Display order parameters
 
 figure(1); clf;
-sgtitle('Kuro-mutt-o');
+sgtitle('Kura-Mutt-O');
 
 subplot(2,2,1);
 plot(td,rd);
@@ -132,13 +135,32 @@ ylim([-1.05,+1.05]);
 % Display detrended phases PSD
 
 subplot(2,2,4);
-%plot(t,p);
-plot(t,venv);
+plot(t,p);
+%plot(t,venv);
 title(sprintf('\nDetrended phases\n'));
 xlabel('time');
 ylabel('detrended phases');
 xlim([0 T]);
 ylim([-1.05,+1.05]);
+
+%[ydb,f] = pspectrum(X,fs);
+window = floor(ndt/30);
+noverlap = round(0.5*window);
+nfft = 2^nextpow2(10*window);
+[ydb,f] = pwelch(X,window,noverlap,nfft,fs);
+ydb = 10*log10(ydb);
+
+fmax = 2000;
+f = f(f<fmax);
+ydb = ydb(f<fmax,:);
+
+figure(2); clf;
+sgtitle('Power spectrum');
+semilogx(f,ydb);
+xlim([f(1),f(end)]);
+xlabel('Hz (logscale)');
+ylabel('dB');
+grid on
 
 % Encode aggregate signal
 
