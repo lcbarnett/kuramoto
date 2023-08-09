@@ -14,6 +14,7 @@ defvar('nspec', 'kmnois.m'   ); % nois specs file
 defvar('hseed', []           ); % oscillator initial phases random seed (empty for no seeding)
 defvar('smode', 'Euler'      ); % simulation mode: 'Euler' or 'RK4'
 defvar('pdto',  1            ); % polynomial detrend order
+defvar('pmix',  0.5          ); % phase modulation mix
 defvar('codec', 'flac'       ); % audio codec
 defvar('afseq', []           ); % audio file sequence number (empty to increment)
 defvar('play',  true         ); % play audio?
@@ -80,7 +81,7 @@ p = (p-mean(p))./std(p);
 p = p./max(abs(p));
 
 X = sin(h(:,head));
-x = p.*X; % modulate with detrended phases :-)
+x = abs(p).*X; % modulate with detrended phases :-)
 x = x./max(abs(x));
 
 y = [mean(x(:,lhead), 2) mean(x(:,rhead),2)]; % left/right aggregate signal
@@ -91,6 +92,13 @@ vfreq = 1;
 venv = abs(sin(vfreq*2*pi*fs*t));
 y = venv.*y;
 %}
+
+%[ydb,f] = pspectrum(X,fs);
+window = floor(ndt/30);
+noverlap = round(0.5*window);
+nfft = 2^nextpow2(10*window);
+[ydb,f] = pwelch(X,window,noverlap,nfft,fs);
+ydb = 10*log10(ydb);
 
 % truncated for display
 
@@ -104,7 +112,7 @@ yd = y(1:nddt,:);
 figure(1); clf;
 sgtitle('Kura-Mutt-O');
 
-subplot(2,2,1);
+subplot(3,2,1);
 plot(td,rd);
 title(sprintf('\nOrder parameter magnitudes\n'));
 xlim([0 Td]);
@@ -112,19 +120,9 @@ ylim([0,1]);
 xlabel('time');
 ylabel('r','Rotation',0);
 
-% Display all oscillator signals
-
-subplot(2,2,3);
-plot(td,xd);
-title(sprintf('\nOscillator signals\n'));
-xlabel('time');
-ylabel('magnitude');
-xlim([0 Td]);
-ylim([-1.05,+1.05]);
-
 % Display aggregate signal
 
-subplot(2,2,2);
+subplot(3,2,2);
 plot(td,yd);
 title(sprintf('\nStereo signal\n'));
 xlabel('time');
@@ -132,9 +130,19 @@ ylabel('magnitude');
 xlim([0 Td]);
 ylim([-1.05,+1.05]);
 
+% Display all oscillator signals
+
+subplot(3,2,3);
+plot(td,xd);
+title(sprintf('\nOscillator signals\n'));
+xlabel('time');
+ylabel('magnitude');
+xlim([0 Td]);
+ylim([-1.05,+1.05]);
+
 % Display detrended phases PSD
 
-subplot(2,2,4);
+subplot(3,2,4);
 plot(t,p);
 %plot(t,venv);
 title(sprintf('\nDetrended phases\n'));
@@ -143,19 +151,12 @@ ylabel('detrended phases');
 xlim([0 T]);
 ylim([-1.05,+1.05]);
 
-%[ydb,f] = pspectrum(X,fs);
-window = floor(ndt/30);
-noverlap = round(0.5*window);
-nfft = 2^nextpow2(10*window);
-[ydb,f] = pwelch(X,window,noverlap,nfft,fs);
-ydb = 10*log10(ydb);
-
 fmax = 2000;
 f = f(f<fmax);
 ydb = ydb(f<fmax,:);
 
-figure(2); clf;
-sgtitle('Power spectrum');
+subplot(3,2,5);
+title('Power spectrum');
 semilogx(f,ydb);
 xlim([f(1),f(end)]);
 xlabel('Hz (logscale)');
