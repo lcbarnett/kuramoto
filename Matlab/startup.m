@@ -3,7 +3,6 @@ fprintf('[kuramoto startup] Initialising kuramoto Matlab interface\n');
 global kuramoto_root;
 kuramoto_root = fileparts(mfilename('fullpath')); % directory containing this file
 addpath(kuramoto_root);
-addpath(fullfile(kuramoto_root,'kuramutto'));
 fprintf('[kuramoto startup] Added path %s and appropriate subpaths\n',kuramoto_root);
 
 if exist('kuramoto_mex','file') ~= 3;
