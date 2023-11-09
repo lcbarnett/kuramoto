@@ -66,7 +66,7 @@ int audio(int argc, char *argv[])
 	// random frequencies (normal distribution)
 
 	for (size_t i=0; i<N; ++i) {
-		wdt[i] = dt*TWOPI*(wmean+wsdev*mt_randn(&rng));
+		wdt[i] = (wmean+wsdev*mt_randn(&rng))*dt;
 	}
 
 	// random coupling constants (normal distribution); note that we take incoming couplings as
@@ -112,13 +112,9 @@ int audio(int argc, char *argv[])
 
 	kuramoto_order_param(N,n,h,r,NULL);
 
-	// wrap oscillator phases to [-pi,pi) [if that's is what you want]
-	//
-	// phase_wrap(m,h);
-
 	// generate signal from phases
 
-	for (size_t j=0; j<m; ++j) x[j] = sin(h[j]);
+	for (size_t j=0; j<m; ++j) x[j] = sin(TWOPI*h[j]);
 
 	// aggregate signal
 

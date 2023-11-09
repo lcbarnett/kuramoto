@@ -4,8 +4,13 @@
 
 #include "kuramoto.h"
 
-// NOTE:  C is row-major; bear in mind when writing interfaces! E.g. for
+// NOTE 1: C is row-major; bear in mind when writing interfaces! E.g. for
 // Matlab (column-major) you should transpose the matrices K and a before calling.
+//
+// NOTE 2: All phases (including h) are dimensionless; multiply by 2π for radians.
+//
+// NOTE 3: To initialise input phase variables with Wiener noise, scale by sqrt(dt).
+// For other (deterministic) input scale by dt.
 
 // Experimental /////////////////////////////////////////////////////////////////
 
@@ -13,9 +18,9 @@ void kuramoto_euler_alt	// Euler method
 (
 	const   size_t        N,   // number of oscillators
 	const   size_t        n,   // number of integration increments
-	const   double* const wdt, // frequencies x dt (radians)
-	const   darray* const Kdt, // coupling constants x dt (radians)
-	darray* const         h    // oscillator phases, initialised with input (radians)
+	const   double* const wdt, // frequencies x dt (dimensionless)
+	const   darray* const Kdt, // coupling constants x dt (dimensionless)
+	darray* const         h    // oscillator phases, initialised with input (dimensionless)
 )
 {
 	// ODE solver
@@ -35,9 +40,9 @@ void kuramoto_euler	// Euler method
 (
 	const   size_t        N,   // number of oscillators
 	const   size_t        n,   // number of integration increments
-	const   double* const wdt, // frequencies x dt (radians)
-	const   double* const Kdt, // coupling constants x dt (radians)
-	double* const         h    // oscillator phases, initialised with input (radians)
+	const   double* const wdt, // frequencies x dt (dimensionless)
+	const   double* const Kdt, // coupling constants x dt (dimensionless)
+	double* const         h    // oscillator phases, initialised with input (dimensionless)
 )
 {
 	// ODE solver
@@ -58,10 +63,10 @@ void kuramoto_eulerpl // Euler method with phase lags
 (
 	const   size_t        N,   // number of oscillators
 	const   size_t        n,   // number of integration increments
-	const   double* const wdt, // frequencies x dt (radians)
-	const   double* const Kdt, // coupling constants x dt (radians)
-	const   double* const a,   // phase lags (radians)
-	double* const         h    // oscillator phases, initialised with input (radians)
+	const   double* const wdt, // frequencies x dt (dimensionless)
+	const   double* const Kdt, // coupling constants x dt (dimensionless)
+	const   double* const a,   // phase lags (dimensionless)
+	double* const         h    // oscillator phases, initialised with input (dimensionless)
 )
 {
 	// ODE solver
@@ -83,10 +88,10 @@ void kuramoto_rk4 // Classic Runge-Kutta (RK4)
 (
 	const   size_t  N,          // number of oscillators
 	const   size_t  n,          // number of integration increments
-	const   double* const  wdt, // frequencies x dt (radians)
-	const   double* const  Kdt, // coupling constants x dt (radians)
+	const   double* const  wdt, // frequencies x dt (dimensionless)
+	const   double* const  Kdt, // coupling constants x dt (dimensionless)
 	double* const   k1,         // buffer for RK4 coefficients (size must be 4*N)
-	double* const   h           // oscillator phases, initialised with input (radians)
+	double* const   h           // oscillator phases, initialised with input (dimensionless)
 )
 {
 	// set up coefficients buffers
@@ -145,11 +150,11 @@ void kuramoto_rk4pl // Classic Runge-Kutta (RK4) with phase lags
 (
 	const   size_t        N,   // number of oscillators
 	const   size_t        n,   // number of integration increments
-	const   double* const wdt, // frequencies x dt (radians)
-	const   double* const Kdt, // coupling constants x dt (radians)
-	const   double* const a,   // phase lags (radians)
+	const   double* const wdt, // frequencies x dt (dimensionless)
+	const   double* const Kdt, // coupling constants x dt (dimensionless)
+	const   double* const a,   // phase lags (dimensionless)
 	double* const         k1,  // buffer for RK4 coefficients (size must be 4*N)
-	double* const         h    // oscillator phases, initialised with input (radians)
+	double* const         h    // oscillator phases, initialised with input (dimensionless)
 )
 {
 	double* const k2 = k1+N;
@@ -427,7 +432,7 @@ void stulan_rk4 // Classic Runge-Kutta (RK4)
 
 // Utilities
 
-void phase_wrap(const size_t m, double* const h)
+void phase_wrap(const size_t m, double* const h, const double u) // wrap to [-u,u)
 {
-	for (size_t k=0; k<m; ++k) h[k] = wmpi2pi(h[k]);
+	for (size_t k=0; k<m; ++k) h[k] = phasewrap(h[k],u);
 }

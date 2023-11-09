@@ -146,11 +146,11 @@ void stulan_order_param // calculate order parameter magnitude/phase
 
 // Utilities
 
-static inline double wmpi2pi(const double x) // wrap to [-pi,pi)
+static inline double phasewrap(const double x, const double u) // wrap to [-u,u)
 {
-	return x > 0.0 ? fmod(x+M_PI,2.0*M_PI)-M_PI : fmod(x-M_PI,2.0*M_PI)+M_PI;
+	return x > 0.0 ? fmod(x+u,2.0*u)-u : fmod(x-u,2.0*u)+u;
 }
 
-void phase_wrap(const size_t m, double* const h);
+void phase_wrap(const size_t m, double* const h, const double u); // wrap to [-u,u)
 
 #endif // KURAMATO_H
