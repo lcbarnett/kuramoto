@@ -1,4 +1,4 @@
-function [h,r,psi] = kuramoto(N,w,K,a,n,dt,I,mode)
+function [h,r,psi] = kuramoto(N,n,dt,w,K,a,h0,I,mode)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -7,23 +7,24 @@ function [h,r,psi] = kuramoto(N,w,K,a,n,dt,I,mode)
 % To compile "mex" files, see Makefile in this directory
 %
 % N     number of oscillators                 (positive integer)
-% w     oscillator frequencies                (scalar or vector of length N)
-% K     oscillator coupling constants         (scalar or square matrix of size N)
-% a     phase lags                            (scalar or square matrix of size N)
 % n     number of time increments             (positive integer)
-% dt    integration time increment            (positive double)
-% I     input                                 (N x n matrix or empty for no input)
-% mode  simulation mode                       ('Euler' or 'RK4')
+% dt    time integration step                 (scalar)                             : seconds
+% w     oscillator frequencies                (scalar or vector of length N)       : Hz
+% K     oscillator coupling constants         (scalar or square matrix of size N)  : Hz
+% a     phase lags                            (scalar or square matrix of size N)  : radians
+% h0    initial phases                        (vector of length N)                 : radians
+% I     input noise                           (n x N matrix or empty for no input) : sqrt(Hz)
+% mode  simulation mode                       ('Euler' or 'RK4')                   : string
 %
-% h     oscillator phases (unwrapped)         (N x n matrix)
-% r     order parameter magnitude             (row vector of length n)
-% psi   order parameter phase (wrapped)       (row vector of length n)
+% h     oscillator phases (unwrapped)         (N x n matrix)                       : radians
+% r     order parameter magnitude             (row vector of length n)             : dimensionless
+% psi   order parameter phase (wrapped)       (row vector of length n)             : radians
 %
-% NOTE 1: K(i,j) is connection strength from oscillator j to oscillator i.
+% NOTE 1: Phases are in radians on [0,2*pi), and frequencies angular; i.e., in radians/unit time
 %
-% NOTE 2: Euler method is faster (by a factor of about 5), but RK4 is more accurate.
+% NOTE 2: K(i,j) is connection strength from oscillator j to oscillator i.
 %
-% NOTE 3: Input is scaled by sqrt(dt), as per Ito SDE simulation (cf. Ornstein-Uhlenbeck)
+% NOTE 3: Euler method is faster (by a factor of about 5), but RK4 is more accurate.
 %
 % NOTE 4: To wrap the oscillator phases h to [-pi,pi), do:
 %
@@ -37,6 +38,11 @@ function [h,r,psi] = kuramoto(N,w,K,a,n,dt,I,mode)
 
 N = double(N);
 assert(isscalar(N) && floor(N) == N && N > 0,'Number of oscillators must be a positive scalar integer');
+
+n = double(n);
+assert(isscalar(n) && floor(n) == n && n > 0,'Number of time increments must be a positive scalar integer');
+
+assert(isa(dt,'double') && isscalar(dt) && dt > 0,'Integration increment must be a positive scalar double');
 
 assert(isa(w,'double'),'Frequencies must be a scalar double or a vector of doubles matching the specified number of oscillators');
 if isscalar(w)
@@ -63,12 +69,9 @@ if ~isempty(a)
 	end
 end
 
-n = double(n);
-assert(isscalar(n) && floor(n) == n && n > 0,'Number of time increments must be a positive scalar integer');
+assert(isempty(h0) || (isa(h0,'double') && isvector(h0) && length(h0) == N),'Initial phases must be empty, or a vector of doubles of length N');
 
-assert(isa(dt,'double') && isscalar(dt) && dt > 0,'Integration increment must be a positive scalar double');
-
-assert(isempty(I) || (isa(I,'double') && ismatrix(I) && size(I,1) == N && size(I,2) == n),'Input must be empty, or an N x n matrix of doubles');
+assert(isempty(I) || (isa(I,'double') && ismatrix(I) && size(I,1) == n && size(I,2) == N),'Input noise must be empty, or an n x N matrix of doubles');
 
 if isempty(mode)
 	RK4 = 1;
@@ -81,17 +84,20 @@ else
 	end
 end
 
-% Call mex ODE simulation (returned phase matrix h is N x n)
+% Call mex ODE simulation (returned phase matrix h is n x N)
 %
-% Note: we transpose K so that K(i,j) is connection strength j --> i, same for a
+% We transpose K so that K(i,j) is connection strength j --> i, same for a
+%
+% Input noise is Weiner (Brownian), so scaled by sqrt(dt); cf. Ito simulation of Ornstein-Uhlenbeck process
 
-h = kuramoto_mex(N,n,dt,w,K',a',I,RK4);
+ffac = 2*pi*dt;
+h = kuramoto_mex(N,n,ffac*w,ffac*K',a',h0,sqrt(ffac)*I,RK4);
 
 % Order parameter (if requested)
 
 if nargout > 1
-	x = mean(cos(h));
-	y = mean(sin(h));
+	x = mean(cos(h),1);
+	y = mean(sin(h),1);
 	r = hypot(x,y);
 	if nargout > 2
 		psi = atan2(y,x); % wrapped on [-pi,pi)

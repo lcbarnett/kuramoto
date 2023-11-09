@@ -12,24 +12,23 @@
 int demo(int argc, char *argv[])
 {
 	// CLAP (command-line argument parser). Default values may
-	// be overriden on the command line as switches; e.g.:
+	// be overriden on the command line as switches.
 	//
-	// kuramoto demo -N 10 -T 1000 -dt 0.001 -Isdev 0
-	//
-	// Arg:  name    type    default    description
+	// Arg:   name    type    default    description
 	puts("\n---------------------------------------------------------------------------------------");
-	CLAP_ARG(N,      size_t, 4,         "number of oscillators");
-	CLAP_ARG(T,      double, 200.0,     "total integration time");
-	CLAP_ARG(dt,     double, 0.01,      "integration step size");
-	CLAP_ARG(wmean,  double, 0.0,       "oscillator frequencies mean");
-	CLAP_ARG(wsdev,  double, 1/8.0,     "oscillator frequencies std. dev.");
-	CLAP_ARG(Kmean,  double, 1/10.0,    "coupling constants mean");
-	CLAP_ARG(Ksdev,  double, Kmean/6.0, "coupling constants std. dev.");
-	CLAP_ARG(Isdev,  double, 1/80.0,    "input noise intensity (zero for deterministic)");
-	CLAP_ARG(RK4,    int,    0,         "RK4 solver flag (else Euler)");
-	CLAP_ARG(rseed,  ulong,  0,         "random seed (or 0 for random random seed)");
+	CLAP_CARG(N,      size_t, 4,         "number of oscillators");
+	CLAP_CARG(T,      double, 1.0,       "total time (secs)");
+	CLAP_CARG(fs,     double, 1000.0,    "Sampling frequency (Hz)");
+	CLAP_CARG(wmax,   double, 20.0,      "oscillator frequency max (Hz)");
+	CLAP_CARG(wmin,   double, 0.0,       "oscillator frequency min (Hz)");
+	CLAP_CARG(Kmean,  double, 3.0,       "coupling constants mean (Hz)");
+	CLAP_CARG(Ksdev,  double, Kmean/5.0, "coupling constants std. dev. (Hz)");
+	CLAP_CARG(nmean,  double, 0.1,       "oscillator input noise magnitude mean (zero for no noise)");
+	CLAP_CARG(nsdev,  double, nmean/5.0, "oscillator input noise magnitude std. dev.");
+	CLAP_CARG(RK4,    int,    0,         "RK4 solver flag (else Euler)");
+	CLAP_CARG(rseed,  ulong,  0,         "random seed (or 0 for random random seed)");
 #ifdef _HAVE_GNUPLOT
-	CLAP_ARG(gpterm, cstr,   GPTERM,    "Gnuplot terminal type (if available)");
+	CLAP_CARG(gpterm, cstr,   GPTERM,    "Gnuplot terminal type");
 #endif
 	puts("---------------------------------------------------------------------------------------");
 
@@ -41,62 +40,71 @@ int demo(int argc, char *argv[])
 
 	// some convenient constants
 
-	const size_t n   = (size_t)ceil(T/dt); // number of integration steps
-	const size_t m   = N*n; // size of oscillator buffers
-	const size_t M   = N*N; // number of coupling constants
-	const double ooN = 1.0/(double)N;
+	const size_t n    = (size_t)ceil(T*fs); // number of integration steps
+	const size_t m    = N*n;                // size of oscillator buffers
+	const size_t M    = N*N;                // number of coupling constants
+	const double ooN  = 1.0/(double)N;      // 1/N
+	const double ffac = (2.0*M_PI)/fs;      // frequency scaling factor
+	const double nfac = sqrt(ffac);         // Wiener noise scaling factor
+	const double ffoN = ffac*ooN;           // coupling constants scaling factor
 
 	// allocate memory
 
-	double* const w = calloc(N,sizeof(double)); // oscillator frequencies
-	double* const K = calloc(M,sizeof(double)); // coupling constants
-	double* const h = calloc(m,sizeof(double)); // oscillator phases
-	double* const r = calloc(n,sizeof(double)); // order parameter
-	double* const x = calloc(m,sizeof(double)); // oscillator signal
-	double* const y = calloc(n,sizeof(double)); // oscillator agregated signal
+	double* const wdt = calloc(N,sizeof(double)); // oscillator frequencies
+	double* const Kdt = calloc(M,sizeof(double)); // coupling constants
+	double* const h   = calloc(m,sizeof(double)); // oscillator phases
+	double* const r   = calloc(n,sizeof(double)); // order parameter
+	double* const x   = calloc(m,sizeof(double)); // oscillator signal
+	double* const y   = calloc(n,sizeof(double)); // oscillator agregated signal
 
-	// random frequencies (normal distribution)
+	// random frequencies (uniform)
 
-	for (size_t i=0; i<N; ++i) w[i] = TWOPI*(wmean+wsdev*mt_randn(&rng));
+	for (size_t i=0; i<N; ++i) wdt[i] = ffac*(wmin+(wmax-wmin)*mt_rand(&rng));
 
-	// random coupling constants (normal distribution)
+	// random coupling constants (normal distribution), scaled by number of oscillators
 
 	for (size_t i=0; i<N; ++i) {
-		for (size_t j=0; j<N; ++j) {
-			if (i == j) {
-				K[N*i+j] = 0.0; // no "self-connections"!
-			}
-			else {
-				K[N*i+j] = TWOPI*ooN*(Kmean+Ksdev*mt_randn(&rng)); // scale coupling constants by N
-			}
-		}
+		for (size_t j=0; j<N; ++j) Kdt[N*i+j] = i == j ? 0.0 : ffoN*(Kmean+Ksdev*mt_randn(&rng)); // no "self-connections"!
 	}
 
-	// initialise oscillator phases with input (zero-mean Gaussian white noise)
+	// oscillator input noise (Wiener, with magnitudes log-normally distributed per oscillator)
 
-	if (Isdev > 0.0) {
-		for (size_t k=0; k<m; ++k) h[k] = TWOPI*Isdev*mt_randn(&rng);
+	if (nmean > 0.0) {
+		const double lnv = log(1.0+(nsdev*nsdev)/(nmean*nmean));
+		const double mu  = log(nmean)-0.5*lnv;
+		const double sig = sqrt(lnv);
+		for (size_t i=0; i<N; ++i) {
+			const double nmagi = nfac*exp(mu+sig*mt_randn(&rng)); // log-normal magnitude, Wiener scaling
+			for (size_t k=i; k<m+i; k += N) h[k] = nmagi*mt_randn(&rng);
+		}
 	}
 	else {
 		memset(h,0,m*sizeof(double)); // zero-fill for no input [in fact here calloc will have done that]
 	}
 
+	// initial phases uniformly distributed on [0,2pi)
+
+	for (size_t i=0; i<N; ++i) h[i] = 2.0*M_PI*mt_rand(&rng);
+
+
 	// integrate Kuramoto ODE
 
 	if (RK4) {
 		double* const kbuff = calloc(4*N,sizeof(double)); // see kuramoto_rk4()
-		kuramoto_rk4(N,n,dt,w,K,h,kbuff);
+printf("before\n");
+		kuramoto_rk4(N,n,wdt,Kdt,kbuff,h);
+printf("after\n");
 		free(kbuff);
 	}
 	else {
-		kuramoto_euler(N,n,dt,w,K,h);
+		kuramoto_euler(N,n,wdt,Kdt,h);
 	}
 
 	// calculate order parameter
 
 	kuramoto_order_param(N,n,h,r,NULL);
 
-	// wrap oscillator phases to [-pi,pi) [if that's is what you want]
+	// wrap oscillator phases to [-pi,pi) [if that's what you want]
 	//
 	// phase_wrap(m,h);
 
@@ -118,7 +126,7 @@ int demo(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 	for (size_t k=0; k<n; ++k) {
-		fprintf(fp,"%17.8f",(double)(k+1)*dt); // time stamp
+		fprintf(fp,"%17.8f",(double)(k+1)/fs); // time stamp
 		fprintf(fp," %17.8f",r[k]);            // order parameter
 		fprintf(fp," %17.8f",y[k]);            // aggregate signal
 		for (size_t i=0; i<N; ++i) fprintf(fp," %17.8f",x[N*k+i]); // signal
@@ -140,6 +148,7 @@ int demo(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 	fprintf(gp,"set term \"%s\" title \"Kuramoto oscillator demo\" size 1600,1200\n",gpterm);
+	fprintf(gp,"datfile = \"%s\"\n",ofile);
 	fprintf(gp,"set xlabel \"time\"\n");
 	fprintf(gp,"set ylabel \"mean phase\"\n");
 	fprintf(gp,"set key right bottom Left rev\n");
@@ -149,14 +158,14 @@ int demo(int argc, char *argv[])
 	fprintf(gp,"set ytics 0.5\n");
 	fprintf(gp,"set multiplot layout 3,1\n");
 	fprintf(gp,"set title \"Order parameter\"\n");
-	fprintf(gp,"plot \"%s\" u 1:2 w l not\n",ofile);
+	fprintf(gp,"plot datfile u 1:2 w l not\n");
 	fprintf(gp,"set yr [-1.05:1.05]\n");
 	fprintf(gp,"set title \"Aggregate oscillator signal (waveform)\"\n");
-	fprintf(gp,"plot \"%s\" u 1:3 w l not\n",ofile);
+	fprintf(gp,"plot datfile u 1:3 w l not\n");
 	fprintf(gp,"set title \"Oscillator signals (waveforms)\"\n");
 	fprintf(gp,"set ylabel \"amplitude\"\n");
 	fprintf(gp,"plot \\\n");
-	for (size_t i=0; i<N; ++i) fprintf(gp,"\"%s\" u 1:%zu w l not ,\\\n",ofile,4+i);
+	for (size_t i=0; i<N; ++i) fprintf(gp,"datfile u 1:%zu w l not ,\\\n",4+i);
 	fprintf(gp,"NaN not\n");
 	fprintf(gp,"unset multiplot\n");
 	if (fclose(gp) != 0) {
@@ -180,8 +189,8 @@ int demo(int argc, char *argv[])
 	free(x);
 	free(r);
 	free(h);
-	free(K);
-	free(w);
+	free(Kdt);
+	free(wdt);
 
 	return EXIT_SUCCESS;
 }

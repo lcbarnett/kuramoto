@@ -15,29 +15,27 @@
 int audio(int argc, char *argv[])
 {
 	// CLAP (command-line argument parser). Default values may
-	// be overriden on the command line as switches; e.g.:
+	// be overriden on the command line as switches.
 	//
-	// kuramoto audio -N 10 -T 5 -f 20000 -Isdev 0
-	//
-	// Arg:  name    type    default       description
+	// Arg:   name    type    default       description
 	puts("\n---------------------------------------------------------------------------------------");
-	CLAP_ARG(N,      size_t, 6,            "number of oscillators");
-	CLAP_ARG(T,      double, 5.0,          "total time (seconds)");
-	CLAP_ARG(f,      double, CD_SRATE,     "sampling frequency (Hz)");
-	CLAP_ARG(wmean,  double, 0.0,          "oscillator frequencies mean (Hz)");
-	CLAP_ARG(wsdev,  double, 2.0*MIDDLE_C, "oscillator frequencies std. dev. (Hz)");
-	CLAP_ARG(Kmean,  double, 4.0,          "coupling constants mean (dimensionless)");
-	CLAP_ARG(Ksdev,  double, Kmean/6.0,    "coupling constants std. dev. (dimensionless)");
-	CLAP_ARG(Kbias,  double, 0.5,          "coupling constants bias (probability");
-	CLAP_ARG(Isdev,  double, 0.2,          "input noise intensity (Hz: zero for deterministic)");
-	CLAP_ARG(RK4,    int,    0,            "RK4 solver flag (else Euler)");
-	CLAP_ARG(rseed,  uint,   0,            "random seed (or 0 for random random seed)");
-	CLAP_ARG(pcm,    int,    16,           "PCM bits: 16 or 24 (unsigned), -32 or -64 (fp), or zero for no PCM");
-	CLAP_ARG(cagg,   int,    1,            "PCM aggregate channels?");
+	CLAP_CARG(N,      size_t, 6,            "number of oscillators");
+	CLAP_CARG(T,      double, 5.0,          "total time (seconds)");
+	CLAP_CARG(f,      double, CD_SRATE,     "sampling frequency (Hz)");
+	CLAP_CARG(wmean,  double, 0.0,          "oscillator frequencies mean (Hz)");
+	CLAP_CARG(wsdev,  double, 2.0*MIDDLE_C, "oscillator frequencies std. dev. (Hz)");
+	CLAP_CARG(Kmean,  double, 4.0,          "coupling constants mean (dimensionless)");
+	CLAP_CARG(Ksdev,  double, Kmean/6.0,    "coupling constants std. dev. (dimensionless)");
+	CLAP_CARG(Kbias,  double, 0.5,          "coupling constants bias (probability");
+	CLAP_CARG(Isdev,  double, 0.2,          "input noise intensity (Hz: zero for deterministic)");
+	CLAP_CARG(RK4,    int,    0,            "RK4 solver flag (else Euler)");
+	CLAP_CARG(rseed,  uint,   0,            "random seed (or 0 for random random seed)");
+	CLAP_CARG(pcm,    int,    16,           "PCM bits: 16 or 24 (unsigned), -32 or -64 (fp), or zero for no PCM");
+	CLAP_CARG(cagg,   int,    1,            "PCM aggregate channels?");
 #ifdef _HAVE_GNUPLOT
-	CLAP_ARG(Ts,     double, 1.0,          "display time start (seconds)");
-	CLAP_ARG(Te,     double, 1.1,          "display time end   (seconds)");
-	CLAP_ARG(gpterm, cstr,   GPTERM,       "Gnuplot terminal type (if available) or \"noplot\"");
+	CLAP_CARG(Ts,     double, 1.0,          "display time start (seconds)");
+	CLAP_CARG(Te,     double, 1.1,          "display time end   (seconds)");
+	CLAP_CARG(gpterm, cstr,   GPTERM,       "Gnuplot terminal type (or \"noplot\"");
 #endif
 	puts("---------------------------------------------------------------------------------------");
 
@@ -58,17 +56,17 @@ int audio(int argc, char *argv[])
 
 	// allocate memory
 
-	double* const w = calloc(N,sizeof(double)); // oscillator frequencies
-	double* const K = calloc(M,sizeof(double)); // coupling constants
-	double* const h = calloc(m,sizeof(double)); // oscillator phases
-	double* const r = calloc(n,sizeof(double)); // order parameter
-	double* const x = calloc(m,sizeof(double)); // oscillator signal
-	double* const y = calloc(n,sizeof(double)); // oscillator agregated signal
+	double* const wdt = calloc(N,sizeof(double)); // oscillator frequencies
+	double* const Kdt = calloc(M,sizeof(double)); // coupling constants
+	double* const h   = calloc(m,sizeof(double)); // oscillator phases
+	double* const r   = calloc(n,sizeof(double)); // order parameter
+	double* const x   = calloc(m,sizeof(double)); // oscillator signal
+	double* const y   = calloc(n,sizeof(double)); // oscillator agregated signal
 
 	// random frequencies (normal distribution)
 
 	for (size_t i=0; i<N; ++i) {
-		w[i] = TWOPI*(wmean+wsdev*mt_randn(&rng));
+		wdt[i] = dt*TWOPI*(wmean+wsdev*mt_randn(&rng));
 	}
 
 	// random coupling constants (normal distribution); note that we take incoming couplings as
@@ -76,21 +74,22 @@ int audio(int argc, char *argv[])
 	// dimensionless - and scale by the number of oscillators
 
 	for (size_t i=0; i<N; ++i) {
-		const double ooNwi = ooN*w[i]; // multiplier is w[i]/N
+		const double ooNwi = ooN*wdt[i]; // multiplier is wdt[i]/N
 		for (size_t j=0; j<N; ++j) {
 			if (i == j) {
-				K[N*i+j] = 0.0; // no "self-connections"!
+				Kdt[N*i+j] = 0.0; // no "self-connections"!
 			}
 			else {
-				K[N*i+j] = ooNwi*((mt_rand(&rng)<Kbias?Kmean:-Kmean)+Ksdev*mt_randn(&rng)); // scale coupling constants by w[i] and N
+				Kdt[N*i+j] = ooNwi*((mt_rand(&rng)<Kbias?Kmean:-Kmean)+Ksdev*mt_randn(&rng)); // scale coupling constants by wdt[i] and N
 			}
 		}
 	}
 
 	// initialise oscillator phases with input (zero-mean Gaussian white noise)
 
+	const double sqrtdt = sqrt(dt);
 	if (Isdev > 0.0) {
-		for (size_t k=0; k<m; ++k) h[k] = TWOPI*Isdev*mt_randn(&rng);
+		for (size_t k=0; k<m; ++k) h[k] = sqrtdt*TWOPI*Isdev*mt_randn(&rng);
 	}
 	else {
 		memset(h,0,m*sizeof(double)); // zero-fill for no input [in fact here calloc will have done that]
@@ -101,11 +100,11 @@ int audio(int argc, char *argv[])
 	const double ts1 = timer_start("simulating Kuramoto system");
 	if (RK4) {
 		double* const kbuff = calloc(4*N,sizeof(double)); // see kuramoto_rk4()
-		kuramoto_rk4(N,n,dt,w,K,h,kbuff);
+		kuramoto_rk4(N,n,wdt,Kdt,h,kbuff);
 		free(kbuff);
 	}
 	else {
-		kuramoto_euler(N,n,dt,w,K,h);
+		kuramoto_euler(N,n,wdt,Kdt,h);
 	}
 	timer_stop(ts1);
 
@@ -155,12 +154,12 @@ int audio(int argc, char *argv[])
 	//
 	// if you have SoX, you can play the adio by, e.g.:
 	//
-	//   play -t raw -r 44.1k -e unsigned -b 16 -c 1 kuramoto_audio_44100Hz_c8a.u16
-	//   play -t raw -r 44.1k -e float -b 32 -c 8 kuramoto_audio_44100Hz_c8.f32
+	//   play -t raw -r 44.1k -e unsigned -b 16 -c 1 kuramoto_audio_44100Hz_c6a.u16
+	//   play -t raw -r 44.1k -e float -b 32 -c 8 kuramoto_audio_44100Hz_c6.f32
 	//
 	// in the unaggregated case, you can play, e.g., just the 3rd channel with:
 	//
-	//   play -t raw -r 44.1k -e float -b 32 -c 8 kuramoto_audio_44100Hz_c8.f32 remix 3 0
+	//   play -t raw -r 44.1k -e float -b 32 -c 8 kuramoto_audio_44100Hz_c6.f32 remix 3 0
 
 	if (pcm) {
 		const size_t smaxlen = 100;
@@ -193,8 +192,8 @@ int audio(int argc, char *argv[])
 
 #ifdef _HAVE_GNUPLOT
 	if (strncmp(gpterm,"noplot",7) != 0) {
-		const size_t ns  = (size_t)ceil(Ts*f);  // start time step
-		const size_t ne  = (size_t)ceil(Te*f);  // start time step
+		const size_t ns  = (size_t)floor(Ts*f);  // start time step
+		const size_t ne  = (size_t)ceil (Te*f);  // end   time step
 		char gfile[] = "/tmp/kuramoto_audio.gp"; // Gnuplot command file
 		FILE* const gp = fopen(gfile,"w");
 		if (gp == NULL) {
@@ -243,8 +242,8 @@ int audio(int argc, char *argv[])
 	free(x);
 	free(r);
 	free(h);
-	free(K);
-	free(w);
+	free(Kdt);
+	free(wdt);
 
 	return EXIT_SUCCESS;
 }
