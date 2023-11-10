@@ -23,8 +23,8 @@ int demo(int argc, char *argv[])
 	CLAP_CARG(wmin,   double, 0.0,       "oscillator frequency min (Hz)");
 	CLAP_CARG(Kmean,  double, 3.0,       "coupling constants mean (Hz)");
 	CLAP_CARG(Ksdev,  double, Kmean/5.0, "coupling constants std. dev. (Hz)");
-	CLAP_CARG(nmean,  double, 0.1,       "oscillator input noise magnitude mean (zero for no noise)");
-	CLAP_CARG(nsdev,  double, nmean/5.0, "oscillator input noise magnitude std. dev.");
+	CLAP_CARG(nmean,  double, 0.1,       "oscillator input noise magnitude mean (sqrt(Hz) - zero for no noise)");
+	CLAP_CARG(nsdev,  double, nmean/5.0, "oscillator input noise magnitude std. dev. (sqrt(Hz))");
 	CLAP_CARG(RK4,    int,    0,         "RK4 solver flag (else Euler)");
 	CLAP_CARG(rseed,  ulong,  0,         "random seed (or 0 for random random seed)");
 #ifdef _HAVE_GNUPLOT
@@ -98,10 +98,6 @@ int demo(int argc, char *argv[])
 	// calculate order parameter
 
 	kuramoto_order_param(N,n,h,r,NULL);
-
-	// wrap oscillator phases to [-pi,pi) [if that's what you want]
-	//
-	// phase_wrap(m,h);
 
 	// generate signal from phases
 

@@ -60,10 +60,10 @@ else
 	I = []; % no input
 end
 
-% Initial phases, uniformly distributed on [0,2*pi)
+% Initial phases uniformly distributed on [-1,1)
 
 if ~isempty(hseed), rstate = rng(hseed); end
-h0 = 2*pi*rand(1,N);
+h0 = 2*rand(1,N)-1;
 if ~isempty(hseed), rng(rstate); end
 
 % Run Kuramoto Euler and Rung-Kutta simulations with specified parameters
@@ -90,7 +90,7 @@ h2   = h2(:,ne+1:end)';
 r2   = r2  (ne+1:end)';
 psi2 = psi2(ne+1:end)';
 
-x = sin(h1);   % oscillator signals
+x = sin(2*pi*h1);   % oscillator signals
 y = mean(x,2); % aggregate signal
 
 t = linspace(0,T,n)';

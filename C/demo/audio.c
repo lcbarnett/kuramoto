@@ -27,7 +27,7 @@ int audio(int argc, char *argv[])
 	CLAP_CARG(Kmean,  double, 4.0,          "coupling constants mean (dimensionless)");
 	CLAP_CARG(Ksdev,  double, Kmean/6.0,    "coupling constants std. dev. (dimensionless)");
 	CLAP_CARG(Kbias,  double, 0.5,          "coupling constants bias (probability");
-	CLAP_CARG(Isdev,  double, 0.2,          "input noise intensity (Hz: zero for deterministic)");
+	CLAP_CARG(Isdev,  double, 0.2,          "input noise intensity (sqrt(Hz): zero for deterministic)");
 	CLAP_CARG(RK4,    int,    0,            "RK4 solver flag (else Euler)");
 	CLAP_CARG(rseed,  uint,   0,            "random seed (or 0 for random random seed)");
 	CLAP_CARG(pcm,    int,    16,           "PCM bits: 16 or 24 (unsigned), -32 or -64 (fp), or zero for no PCM");
@@ -89,7 +89,7 @@ int audio(int argc, char *argv[])
 
 	const double sqrtdt = sqrt(dt);
 	if (Isdev > 0.0) {
-		for (size_t k=0; k<m; ++k) h[k] = sqrtdt*TWOPI*Isdev*mt_randn(&rng);
+		for (size_t k=0; k<m; ++k) h[k] = sqrtdt*Isdev*mt_randn(&rng);
 	}
 	else {
 		memset(h,0,m*sizeof(double)); // zero-fill for no input [in fact here calloc will have done that]
