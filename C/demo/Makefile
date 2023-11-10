@@ -18,7 +18,8 @@ RM ?= rm -f
 CC ?= gcc
 
 # If you don't have Gnuplot installed, omit the  -D_HAVE_GNUPLOT flag
-CFLAGS = -std=c99 -march=native -O2 -Wall -Wextra -Winline -pedantic-errors -D_DEFAULT_SOURCE -D_HAVE_GNUPLOT
+CFLAGS = -std=c99 -march=native -O3 -flto -Wall -Wextra -Winline -Wno-unused-parameter -pedantic-errors -D_DEFAULT_SOURCE -D_HAVE_GNUPLOT
+
 
 .PHONY: all clean
 

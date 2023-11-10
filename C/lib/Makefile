@@ -15,7 +15,7 @@ INCDIR ?= $(PREFIX)/include/kuramoto
 RM ?= rm -f
 CC ?= gcc
 
-CFLAGS = -std=c99 -march=native -O2 -Wall -Wextra -Winline -pedantic-errors -D_DEFAULT_SOURCE
+CFLAGS = -std=c99 -march=native -O3 -flto -Wall -Wextra -Winline -Wno-unused-parameter -pedantic-errors -D_DEFAULT_SOURCE
 
 .PHONY: all clean install uninstall
 
