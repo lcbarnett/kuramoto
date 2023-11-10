@@ -23,8 +23,8 @@ int demo(int argc, char *argv[])
 	CLAP_CARG(wmin,   double, 0.0,       "oscillator frequency min (Hz)");
 	CLAP_CARG(Kmean,  double, 3.0,       "coupling constants mean (Hz)");
 	CLAP_CARG(Ksdev,  double, Kmean/5.0, "coupling constants std. dev. (Hz)");
-	CLAP_CARG(nmean,  double, 0.1,       "oscillator input noise magnitude mean (zero for no noise)");
-	CLAP_CARG(nsdev,  double, nmean/5.0, "oscillator input noise magnitude std. dev.");
+	CLAP_CARG(nmean,  double, 0.1,       "oscillator input noise magnitude mean (sqrt(Hz) - zero for no noise)");
+	CLAP_CARG(nsdev,  double, nmean/5.0, "oscillator input noise magnitude std. dev. (sqrt(Hz))");
 	CLAP_CARG(RK4,    int,    0,         "RK4 solver flag (else Euler)");
 	CLAP_CARG(rseed,  ulong,  0,         "random seed (or 0 for random random seed)");
 #ifdef _HAVE_GNUPLOT
@@ -43,10 +43,8 @@ int demo(int argc, char *argv[])
 	const size_t n    = (size_t)ceil(T*fs); // number of integration steps
 	const size_t m    = N*n;                // size of oscillator buffers
 	const size_t M    = N*N;                // number of coupling constants
-	const double ooN  = 1.0/(double)N;      // 1/N
-	const double ffac = (2.0*M_PI)/fs;      // frequency scaling factor
-	const double nfac = sqrt(ffac);         // Wiener noise scaling factor
-	const double ffoN = ffac*ooN;           // coupling constants scaling factor
+	const double dt   = 1.0/fs;             // sample time step
+	const double srdt = sqrt(dt);           // Wiener noise scaling factor
 
 	// allocate memory
 
@@ -59,12 +57,12 @@ int demo(int argc, char *argv[])
 
 	// random frequencies (uniform)
 
-	for (size_t i=0; i<N; ++i) wdt[i] = ffac*(wmin+(wmax-wmin)*mt_rand(&rng));
+	for (size_t i=0; i<N; ++i) wdt[i] = (wmin+(wmax-wmin)*mt_rand(&rng))*dt;
 
 	// random coupling constants (normal distribution), scaled by number of oscillators
 
 	for (size_t i=0; i<N; ++i) {
-		for (size_t j=0; j<N; ++j) Kdt[N*i+j] = i == j ? 0.0 : ffoN*(Kmean+Ksdev*mt_randn(&rng)); // no "self-connections"!
+		for (size_t j=0; j<N; ++j) Kdt[N*i+j] = i == j ? 0.0 : (Kmean+Ksdev*mt_randn(&rng))*dt/(double)N; // no "self-connections"!
 	}
 
 	// oscillator input noise (Wiener, with magnitudes log-normally distributed per oscillator)
@@ -74,26 +72,23 @@ int demo(int argc, char *argv[])
 		const double mu  = log(nmean)-0.5*lnv;
 		const double sig = sqrt(lnv);
 		for (size_t i=0; i<N; ++i) {
-			const double nmagi = nfac*exp(mu+sig*mt_randn(&rng)); // log-normal magnitude, Wiener scaling
-			for (size_t k=i; k<m+i; k += N) h[k] = nmagi*mt_randn(&rng);
+			const double nmagi = exp(mu+sig*mt_randn(&rng)); // log-normal magnitude
+			for (size_t k=i; k<m+i; k += N) h[k] = srdt*nmagi*mt_randn(&rng); // Wiener scaling
 		}
 	}
 	else {
 		memset(h,0,m*sizeof(double)); // zero-fill for no input [in fact here calloc will have done that]
 	}
 
-	// initial phases uniformly distributed on [0,2pi)
+	// initial phases uniformly distributed on [-1,1)
 
-	for (size_t i=0; i<N; ++i) h[i] = 2.0*M_PI*mt_rand(&rng);
-
+	for (size_t i=0; i<N; ++i) h[i] = 2.0*mt_rand(&rng)-1.0;
 
 	// integrate Kuramoto ODE
 
 	if (RK4) {
 		double* const kbuff = calloc(4*N,sizeof(double)); // see kuramoto_rk4()
-printf("before\n");
 		kuramoto_rk4(N,n,wdt,Kdt,kbuff,h);
-printf("after\n");
 		free(kbuff);
 	}
 	else {
@@ -104,17 +99,13 @@ printf("after\n");
 
 	kuramoto_order_param(N,n,h,r,NULL);
 
-	// wrap oscillator phases to [-pi,pi) [if that's what you want]
-	//
-	// phase_wrap(m,h);
-
 	// generate signal from phases
 
-	for (size_t j=0; j<m; ++j) x[j] = sin(h[j]);
+	for (size_t j=0; j<m; ++j) x[j] = sin(TWOPI*h[j]);
 	for (size_t k=0; k<n; ++k) {
 		double yk = 0.0;
 		for (size_t i=0; i<N; ++i) yk += x[N*k+i];
-		y[k] = ooN*yk;
+		y[k] = yk/(double)N;
 	}
 
 	// write time stamp, order parameter and oscillator signals to file

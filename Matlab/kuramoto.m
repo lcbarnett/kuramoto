@@ -11,26 +11,22 @@ function [h,r,psi] = kuramoto(N,n,dt,w,K,a,h0,I,mode)
 % dt    time integration step                 (scalar)                             : seconds
 % w     oscillator frequencies                (scalar or vector of length N)       : Hz
 % K     oscillator coupling constants         (scalar or square matrix of size N)  : Hz
-% a     phase lags                            (scalar or square matrix of size N)  : radians
-% h0    initial phases                        (vector of length N)                 : radians
+% a     phase lags                            (scalar or square matrix of size N)  : dimensionless
+% h0    initial phases                        (vector of length N)                 : dimensionless
 % I     input noise                           (n x N matrix or empty for no input) : sqrt(Hz)
 % mode  simulation mode                       ('Euler' or 'RK4')                   : string
 %
-% h     oscillator phases (unwrapped)         (N x n matrix)                       : radians
+% h     oscillator phases (unwrapped)         (N x n matrix)                       : dimensionless
 % r     order parameter magnitude             (row vector of length n)             : dimensionless
-% psi   order parameter phase (wrapped)       (row vector of length n)             : radians
+% psi   order parameter phase (wrapped)       (row vector of length n)             : dimensionless
 %
-% NOTE 1: Phases are in radians on [0,2*pi), and frequencies angular; i.e., in radians/unit time
+% NOTE 1: Phases are dimensionless; multiply by 2*pi for radians
 %
 % NOTE 2: K(i,j) is connection strength from oscillator j to oscillator i.
 %
 % NOTE 3: Euler method is faster (by a factor of about 5), but RK4 is more accurate.
 %
-% NOTE 4: To wrap the oscillator phases h to [-pi,pi), do:
-%
-%     h = mod(h+pi,2*pi)-pi;
-%
-% See kuramoto_demo.m script for example usage.
+% See kuramoto_demo.m, kuramoto_synth.m scripts for example usage.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -90,8 +86,7 @@ end
 %
 % Input noise is Weiner (Brownian), so scaled by sqrt(dt); cf. Ito simulation of Ornstein-Uhlenbeck process
 
-ffac = 2*pi*dt;
-h = kuramoto_mex(N,n,ffac*w,ffac*K',a',h0,sqrt(ffac)*I,RK4);
+h = kuramoto_mex(N,n,w*dt,K'*dt,a',h0,I*sqrt(dt),RK4);
 
 % Order parameter (if requested)
 
