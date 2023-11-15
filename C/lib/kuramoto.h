@@ -8,25 +8,6 @@
 
 #define SLMAGIC (0.887)
 
-// Experimental /////////////////////////////////////////////////////////////////
-
-typedef double* darray;
-
-darray* matalloc(size_t rows, size_t cols, const darray buffer); // allocate a (row-major indexed) matrix of doubles
-
-void matfree(darray* x);
-
-void kuramoto_euler_alt	// Euler method
-(
-	const   size_t        N,   // number of oscillators
-	const   size_t        n,   // number of integration increments
-	const   double* const wdt, // frequencies x dt (radians)
-	const   darray* const Kdt, // coupling constants x dt (radians)
-	darray* const         h    // oscillator phases, initialised with input (radians)
-);
-
-/////////////////////////////////////////////////////////////////////////////////
-
 // Kuramoto model
 
 void kuramoto_euler	// Euler method

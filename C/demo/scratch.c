@@ -7,6 +7,56 @@
 #include "mt64.h"
 #include "kuramoto.h"
 
+typedef double* darray;
+
+darray* matalloc(size_t rows, size_t cols, const darray buffer) // allocate a (row-major indexed) matrix of doubles
+{
+	// If a buffer is supplied, it is *essential* that it is of length at least rows*cols
+	darray* x = malloc(rows*sizeof(double*));
+	if (x == NULL) {
+		perror("memory allocation failed\n");
+		return NULL;
+	}
+	if (buffer == NULL) { // allocate buffer - x must be deallocated by matfree(x)
+		x[0] = calloc(rows*cols,sizeof(double)); // zero-initialises
+		if (x[0] == NULL) {
+			perror("memory allocation failed\n");
+			return NULL;
+		}
+	}
+	else {
+		x[0] = buffer; // attach to supplied buffer - x must be deallocated by free(x)
+	}
+	for (size_t i=1; i<rows; ++i) x[i] = x[i-1] + cols;
+	return x; // so x[i][j] is entry in i-th row, j-th column
+}
+
+void matfree(darray* x)
+{
+	free(x[0]);
+	free(x);
+}
+
+void kuramoto_euler_alt	// Euler method
+(
+	const   size_t        N,   // number of oscillators
+	const   size_t        n,   // number of integration increments
+	const   double* const wdt, // frequencies x dt (dimensionless)
+	const   darray* const Kdt, // coupling constants x dt (dimensionless)
+	darray* const         h    // oscillator phases, initialised with input (dimensionless)
+)
+{
+	// ODE solver
+
+	for (size_t t=0; t<n-1; ++t) {
+		for (size_t i=0; i<N; ++i) {
+			double dhti = wdt[i];
+			for (size_t j=0; j<N; ++j) dhti += Kdt[i][j]*sin(h[t][j]-h[t][i]);
+			h[t+1][i] += h[t][i] + dhti; // update next time step (adding in input already in h[t+1][i])
+		}
+	}
+}
+
 // Program to demonstrate usage of Kuramoto C library.
 
 int scratch(int argc, char *argv[])
