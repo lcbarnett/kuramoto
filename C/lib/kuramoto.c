@@ -12,30 +12,6 @@
 // NOTE 3: To initialise input phase variables with Wiener noise, scale by sqrt(dt).
 // For other (deterministic) input scale by dt.
 
-// Experimental /////////////////////////////////////////////////////////////////
-
-void kuramoto_euler_alt	// Euler method
-(
-	const   size_t        N,   // number of oscillators
-	const   size_t        n,   // number of integration increments
-	const   double* const wdt, // frequencies x dt (dimensionless)
-	const   darray* const Kdt, // coupling constants x dt (dimensionless)
-	darray* const         h    // oscillator phases, initialised with input (dimensionless)
-)
-{
-	// ODE solver
-
-	for (size_t t=0; t<n-1; ++t) {
-		for (size_t i=0; i<N; ++i) {
-			double dhti = wdt[i];
-			for (size_t j=0; j<N; ++j) dhti += Kdt[i][j]*sin(h[t][j]-h[t][i]);
-			h[t+1][i] += h[t][i] + dhti; // update next time step (adding in input already in h[t+1][i])
-		}
-	}
-}
-
-/////////////////////////////////////////////////////////////////////////////////
-
 void kuramoto_euler	// Euler method
 (
 	const   size_t        N,   // number of oscillators

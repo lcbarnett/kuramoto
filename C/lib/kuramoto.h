@@ -8,49 +8,6 @@
 
 #define SLMAGIC (0.887)
 
-// Experimental /////////////////////////////////////////////////////////////////
-
-typedef double* darray;
-
-static inline darray* matalloc(size_t rows, size_t cols, const darray buffer) // allocate a (row-major indexed) matrix of doubles
-{
-	// If a buffer is supplied, it is *essential* that it is of length at least rows*cols
-	darray* x = malloc(rows*sizeof(double*));
-	if (x == NULL) {
-		perror("memory allocation failed\n");
-		return NULL;
-	}
-	if (buffer == NULL) { // allocate buffer - x must be deallocated by matfree(x)
-		x[0] = calloc(rows*cols,sizeof(double)); // zero-initialises
-		if (x[0] == NULL) {
-			perror("memory allocation failed\n");
-			return NULL;
-		}
-	}
-	else {
-		x[0] = buffer; // attach to supplied buffer - x must be deallocated by free(x)
-	}
-	for (size_t i=1; i<rows; ++i) x[i] = x[i-1] + cols;
-	return x; // so x[i][j] is entry in i-th row, j-th column
-}
-
-static inline void matfree(darray* x)
-{
-	free(x[0]);
-	free(x);
-}
-
-void kuramoto_euler_alt	// Euler method
-(
-	const   size_t        N,   // number of oscillators
-	const   size_t        n,   // number of integration increments
-	const   double* const wdt, // frequencies x dt (radians)
-	const   darray* const Kdt, // coupling constants x dt (radians)
-	darray* const         h    // oscillator phases, initialised with input (radians)
-);
-
-/////////////////////////////////////////////////////////////////////////////////
-
 // Kuramoto model
 
 void kuramoto_euler	// Euler method
