@@ -35,7 +35,7 @@ in the **kuramoto**/C/demo directory. To test the Matlab interface, run
 ```
 kuramoto_demo
 ```
-at the Matlab prompt in the **kuramoto**/matlab directory.
+at the Matlab prompt in the **kuramoto**/Matlab directory.
 
 ### Contributing
 If someone would like to contribute a Python (NumPy) interface, please contact the maintainer. This should be reasonably starightforward using  [ctypes](https://docs.python.org/3/library/ctypes.html).
