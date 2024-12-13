@@ -10,8 +10,9 @@ PREFIX ?= /usr/local
 
 MEXT = $(shell mexext)
 
-SRC = kuramoto_mex.c
+SRC = kuramoto_mex.c rossler_mex.c lorenz_mex.c
 BIN = kuramoto.$(MEXT)
+BIN = $(patsubst %.c,%.$(MEXT),$(SRC))
 
 RM      = rm -f
 MCFLAGS = CFLAGS
@@ -24,6 +25,8 @@ CFLAGS = -std=c99 -march=native -O2 -Wall -Wextra -Winline -pedantic-errors -I$(
 
 MEX = mex
 
+# NOTE: we want -R2018a as it guarantees zero-initialization for mxCreateDoubleMatrix
+
 MFLAGS = -O -R2018a
 
 .PHONY: all clean diag
@@ -33,7 +36,9 @@ all: $(BIN)
 clean:
 	$(RM) $(BIN)
 
-$(BIN): $(SRC)
+%.$(MEXT): %.c
+	@echo
+	@echo Building $@
 	$(MEX) $(MFLAGS) $(MCFLAGS)="\$$CFLAGS $(CFLAGS)" -lkuramoto $<
 
 diag:

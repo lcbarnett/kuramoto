@@ -406,6 +406,46 @@ void stulan_rk4 // Classic Runge-Kutta (RK4)
 }
 */
 
+void rossler_euler	// Euler method
+(
+	const   size_t n,    // number of integration increments
+	const   double dt,   // integration increment
+	const   double a,    // a parameter
+	const   double b,    // b parameter
+	const   double c,    // c parameter
+	double* const  x     // the 3D variable (apprpriately initialised with noise or other input)
+)
+{
+	// ODE solver
+
+	for (double* xt=x; xt<x+3*(n-1); xt+=3) {
+		double* const xtn = xt+3; // next step
+		xtn[1] += xt[1] - (xt[2]+xt[3])       * dt;
+		xtn[2] += xt[2] + (xt[1]+a*xt[2])     * dt;
+		xtn[3] += xt[3] + (b+xt[3]*(xt[1]-c)) * dt;
+	}
+}
+
+void lorenz_euler	// Euler method
+(
+	const   size_t n,    // number of integration increments
+	const   double dt,   // integration increment
+	const   double sig,  // Prandtl parameter
+	const   double rho,  // Rayleigh parameter
+	const   double beta, // dimensional parameter
+	double* const  x     // the 3D variable (appropriately initialised with noise or other input)
+)
+{
+	// ODE solver
+
+	for (double* xt=x; xt<x+3*(n-1); xt+=3) {
+		double* const xtn = xt+3; // next step
+		xtn[1] += xt[1] + (sig*(xt[2]-xt[1]))       * dt;
+		xtn[2] += xt[2] + (xt[1]*(rho-xt[3])-xt[2]) * dt;
+		xtn[3] += xt[3] + (xt[1]*xt[2]-beta*xt[3])  * dt;
+	}
+}
+
 // Utilities
 
 void phase_wrap(const size_t m, double* const h, const double u) // wrap to [-u,u)
