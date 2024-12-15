@@ -406,43 +406,37 @@ void stulan_rk4 // Classic Runge-Kutta (RK4)
 }
 */
 
-void rossler_euler	// Euler method
+void rossler_euler
 (
-	const   size_t n,    // number of integration increments
-	const   double dt,   // integration increment
-	const   double a,    // a parameter
-	const   double b,    // b parameter
-	const   double c,    // c parameter
-	double* const  x     // the 3D variable (apprpriately initialised with noise or other input)
+	const   size_t n, // number of integration steps
+	const   double h, // integration increment
+	const   double a, // a parameter
+	const   double b, // b parameter
+	const   double c, // c parameter
+	double* const  u  // the 3D variable (apprpriately initialised with noise or other input)
 )
 {
-	// ODE solver
-
-	for (double* xt=x; xt<x+3*(n-1); xt+=3) {
-		double* const xtn = xt+3; // next step
-		xtn[1] += xt[1] - (xt[2]+xt[3])       * dt;
-		xtn[2] += xt[2] + (xt[1]+a*xt[2])     * dt;
-		xtn[3] += xt[3] + (b+xt[3]*(xt[1]-c)) * dt;
+	for (double* v=u; v<u+3*(n-1); v+=3) {
+		v[3] += v[0] - h*(v[1]+v[2]);
+		v[4] += v[1] + h*(v[0]+a*v[1]);
+		v[5] += v[2] + h*(b+v[2]*(v[0]-c));
 	}
 }
 
-void lorenz_euler	// Euler method
+void lorenz_euler
 (
-	const   size_t n,    // number of integration increments
-	const   double dt,   // integration increment
-	const   double sig,  // Prandtl parameter
-	const   double rho,  // Rayleigh parameter
-	const   double beta, // dimensional parameter
-	double* const  x     // the 3D variable (appropriately initialised with noise or other input)
+	const   size_t n, // number of integration steps
+	const   double h, // integration increment
+	const   double s, // sigma parameter
+	const   double r, // rho   parameter
+	const   double b, // beta  parameter
+	double* const  u  // the 3D variable (appropriately initialised with noise or other input)
 )
 {
-	// ODE solver
-
-	for (double* xt=x; xt<x+3*(n-1); xt+=3) {
-		double* const xtn = xt+3; // next step
-		xtn[1] += xt[1] + (sig*(xt[2]-xt[1]))       * dt;
-		xtn[2] += xt[2] + (xt[1]*(rho-xt[3])-xt[2]) * dt;
-		xtn[3] += xt[3] + (xt[1]*xt[2]-beta*xt[3])  * dt;
+	for (double* v=u; v<u+3*(n-1); v+=3) {
+		v[3] += v[0] + h*(s*(v[1]-v[0]));
+		v[4] += v[1] + h*(v[0]*(r-v[2])-v[1]);
+		v[5] += v[2] + h*(v[0]*v[1]-b*v[2]);
 	}
 }
 

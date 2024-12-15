@@ -101,24 +101,24 @@ void stulan_order_param // calculate order parameter magnitude/phase
 	double* const  p  // order parameter phase (NULL if not required)
 );
 
-void rossler_euler	// Euler method
+void rossler_euler
 (
-	const   size_t n,    // number of integration increments
-	const   double dt,   // integration increment
-	const   double a,    // a parameter
-	const   double b,    // b parameter
-	const   double c,    // c parameter
-	double* const  x     // the 3D variable (appropriately initialised with noise or other input)
+	const   size_t n, // number of integration steps
+	const   double h, // integration increment
+	const   double a, // a parameter
+	const   double b, // b parameter
+	const   double c, // c parameter
+	double* const  u  // the 3D variable (apprpriately initialised with noise or other input)
 );
 
-void lorenz_euler	// Euler method
+void lorenz_euler
 (
-	const   size_t n,    // number of integration increments
-	const   double dt,   // integration increment
-	const   double sig,  // Prandtl parameter
-	const   double rho,  // Rayleigh parameter
-	const   double beta, // dimensional parameter
-	double* const  x     // the 3D variable (apprpriately initialised with noise or other input)
+	const   size_t n, // number of integration steps
+	const   double h, // integration increment
+	const   double s, // sigma parameter
+	const   double r, // rho   parameter
+	const   double b, // beta  parameter
+	double* const  u  // the 3D variable (appropriately initialised with noise or other input)
 );
 
 // Utilities
