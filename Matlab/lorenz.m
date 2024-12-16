@@ -1,4 +1,4 @@
-function x = rossler(n,dt,parms,x0,I)
+function x = rossler(n,dt,parms,x0,I,mode)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -11,6 +11,7 @@ function x = rossler(n,dt,parms,x0,I)
 % parms    Lorenz sigma, rho, beta parameters (3-vector)
 % x0       initial values (3-vector, or empty)
 % I        input noise (n x 3 matrix, or empty)
+% mode     simulation mode ('Euler' or 'RK4')
 %
 % x        Rossler 3D variable
 %
@@ -41,8 +42,19 @@ else
 	assert(isempty(I) || (isa(I,'double') && ismatrix(I) && size(I,1) == n && size(I,2) == 3),'Input noise must be empty, or an n x 3 matrix of doubles');
 end
 
+if nargin < 6 || isempty(mode)
+	RK4 = 1;
+else
+	assert(ischar(mode),'Simulation mode must be empty, ''Euler'' or ''RK4''');
+	switch upper(mode)
+		case 'RK4',   RK4 = 1;
+		case 'EULER', RK4 = 0;
+		otherwise,    error('Unknown simulation mode; must be empty, ''Euler'' or ''RK4''');
+	end
+end
+
 % Call mex ODE simulation (returned matrix x is n x 3)
 %
 % Input noise is Wiener (Brownian), so scaled by sqrt(dt); cf. Ito simulation of Ornstein-Uhlenbeck process
 
-x = lorenz_mex(n,dt,parms(1),parms(2),parms(3),x0,I*sqrt(dt));
+x = lorenz_mex(n,dt,parms(1),parms(2),parms(3),x0,I*sqrt(dt),RK4);
