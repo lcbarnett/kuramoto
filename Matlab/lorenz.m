@@ -1,4 +1,4 @@
-function x = rossler(n,dt,parms,x0,I,mode)
+function x = lorenz(n,dt,parms,x0,I,mode)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
