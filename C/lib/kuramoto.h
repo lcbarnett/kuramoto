@@ -111,6 +111,16 @@ void rossler_euler
 	double* const  u  // the 3D variable (apprpriately initialised with noise or other input)
 );
 
+void rossler_rk4 // Classic Runge-Kutta (RK4)
+(
+	const   size_t n, // number of integration steps
+	const   double h, // integration increment
+	const   double a, // a parameter
+	const   double b, // b parameter
+	const   double c, // c parameter
+	double* const  u  // the 3D variable (apprpriately initialised with noise or other input)
+);
+
 void lorenz_euler
 (
 	const   size_t n, // number of integration steps
@@ -119,6 +129,16 @@ void lorenz_euler
 	const   double r, // rho   parameter
 	const   double b, // beta  parameter
 	double* const  u  // the 3D variable (appropriately initialised with noise or other input)
+);
+
+void lorenz_rk4 // Classic Runge-Kutta (RK4)
+(
+	const   size_t n,  // number of integration steps
+	const   double h,  // integration increment
+	const   double s,  // sigma parameter
+	const   double r,  // rho   parameter
+	const   double b,  // beta  parameter
+	double* const  u   // the 3D variable (appropriately initialised with noise or other input)
 );
 
 // Utilities

@@ -423,6 +423,45 @@ void rossler_euler
 	}
 }
 
+void rossler_rk4 // Classic Runge-Kutta (RK4)
+(
+	const   size_t n, // number of integration steps
+	const   double h, // integration increment
+	const   double a, // a parameter
+	const   double b, // b parameter
+	const   double c, // c parameter
+	double* const  u  // the 3D variable (apprpriately initialised with noise or other input)
+)
+{
+	const double hh = h/2.0;
+	const double h6 = h/6.0;
+
+	double k10,k11,k12,k20,k21,k22,k30,k31,k32,k40,k41,k42;
+
+	for (double* v=u; v<u+3*(n-1); v+=3) {
+
+		k10 = -(v[1]+v[2]);
+		k11 =  v[0]+a*v[1];
+		k12 =  b+v[2]*(v[0]-c);
+
+		k20 = -((v[1]+hh*k11)+(v[2]+hh*k12));
+		k21 =  (v[0]+hh*k10)+a*(v[1]+hh*k11);
+		k22 =  b+(v[2]+hh*k12)*((v[0]+hh*k10)-c);
+
+		k30 = -((v[1]+hh*k21)+(v[2]+hh*k22));
+		k31 =  (v[0]+hh*k20)+a*(v[1]+hh*k21);
+		k32 =  b+(v[2]+hh*k22)*((v[0]+hh*k20)-c);
+
+		k40 = -((v[1]+h*k31)+(v[2]+h*k32));
+		k41 =  (v[0]+h*k30)+a*(v[1]+h*k31);
+		k42 =  b+(v[2]+h*k32)*((v[0]+h*k30)-c);
+
+		v[3] += v[0] + h6*(k10+2.0*k20+2.0*k30+k40);
+		v[4] += v[1] + h6*(k11+2.0*k21+2.0*k31+k41);
+		v[5] += v[2] + h6*(k12+2.0*k22+2.0*k32+k42);
+	}
+}
+
 void lorenz_euler
 (
 	const   size_t n, // number of integration steps
@@ -437,6 +476,45 @@ void lorenz_euler
 		v[3] += v[0] + h*(s*(v[1]-v[0]));
 		v[4] += v[1] + h*(v[0]*(r-v[2])-v[1]);
 		v[5] += v[2] + h*(v[0]*v[1]-b*v[2]);
+	}
+}
+
+void lorenz_rk4 // Classic Runge-Kutta (RK4)
+(
+	const   size_t n, // number of integration steps
+	const   double h, // integration increment
+	const   double s, // sigma parameter
+	const   double r, // rho   parameter
+	const   double b, // beta  parameter
+	double* const  u  // the 3D variable (appropriately initialised with noise or other input)
+)
+{
+	const double hh = h/2.0;
+	const double h6 = h/6.0;
+
+	double k10,k11,k12,k20,k21,k22,k30,k31,k32,k40,k41,k42;
+
+	for (double* v=u; v<u+3*(n-1); v+=3) {
+
+		k10 = s*(v[1]-v[0]);
+		k11 = v[0]*(r-v[2])-v[1];
+		k12 = v[0]*v[1]-b*v[2];
+
+		k20 = s*((v[1]+hh*k11)-(v[0]+hh*k10));
+		k21 = (v[0]+hh*k10)*(r-(v[2]+hh*k12))-(v[1]+hh*k11);
+		k22 = (v[0]+hh*k10)*(v[1]+hh*k11)-b*(v[2]+hh*k12);
+
+		k30 = s*((v[1]+hh*k21)-(v[0]+hh*k20));
+		k31 = (v[0]+hh*k20)*(r-(v[2]+hh*k22))-(v[1]+hh*k21);
+		k32 = (v[0]+hh*k20)*(v[1]+hh*k21)-b*(v[2]+hh*k22);
+
+		k40 = s*((v[1]+h*k31)-(v[0]+h*k30));
+		k41 = (v[0]+h*k30)*(r-(v[2]+h*k32))-(v[1]+h*k31);
+		k42 = (v[0]+h*k30)*(v[1]+h*k31)-b*(v[2]+h*k32);
+
+		v[3] += v[0] + h6*(k10+2.0*k20+2.0*k30+k40);
+		v[4] += v[1] + h6*(k11+2.0*k21+2.0*k31+k41);
+		v[5] += v[2] + h6*(k12+2.0*k22+2.0*k32+k42);
 	}
 }
 
