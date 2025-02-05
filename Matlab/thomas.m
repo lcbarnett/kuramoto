@@ -1,20 +1,20 @@
-function x = rossler(n,dt,parms,x0,I,mode)
+function x = thomas(n,dt,parm,x0,I,mode)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% Wrapper for Rossler C mex function - all input checking happens here!
+% Wrapper for Thomas C mex function - all input checking happens here!
 %
 % To compile "mex" files, see Makefile in this directory
 %
 % n        number of time increments
 % dt       time integration step
-% parms    Rossler a, b, c parameters (3-vector)
+% parm     Thomas b parameter (scalar)
 % x0       initial values (3-vector, or empty)
 % I        input noise (n x 3 matrix, or empty)
 % I        input noise (n x 3 matrix, or empty)
 % mode     simulation mode ('Euler' or 'RK4')
 %
-% x        Rossler 3D variable
+% x        Thomas 3D variable
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -25,14 +25,14 @@ assert(isscalar(n) && floor(n) == n && n > 0,'Number of time increments must be 
 
 assert(isa(dt,'double') && isscalar(dt) && dt > 0,'Integration increment must be a positive scalar double');
 
-if nargin < 3 || isempty(parms)
-	parms = [0.1, 0.1, 14];
+if nargin < 3 || isempty(parm)
+	parm = 0.2;
 else
-	assert(isa(parms,'double') && isvector(parms) && length(parms) == 3,'Rossler parameters must be empty (for defaults), or a 3-vector of doubles');
+	assert(isa(parm,'double') && isscalar(parm),'Thomas parameter must be empty (for default), or a scalar double');
 end
 
 if nargin < 4 || isempty(x0)
-	x0 = [1,1,1];
+	x0 = [1,2,3];
 else
 	assert(isempty(x0) || (isa(x0,'double') && isvector(x0) && length(x0) == 3),'Initial values must be empty, or a 3-vector of doubles');
 end
@@ -58,4 +58,4 @@ end
 %
 % Input noise is Wiener (Brownian), so scaled by sqrt(dt); cf. Ito simulation of Ornstein-Uhlenbeck process
 
-x = rossler_mex(n,dt,parms(1),parms(2),parms(3),x0,I*sqrt(dt),RK4);
+x = thomas_mex(n,dt,parm,x0,I*sqrt(dt),RK4);

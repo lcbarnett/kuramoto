@@ -30,8 +30,8 @@ else
 	assert(isa(parms,'double') && isvector(parms) && length(parms) == 3,'Rossler parameters must be empty (for defaults), or a 3-vector of doubles');
 end
 
-if nargin < 4
-	x0 = [];
+if nargin < 4 || isempty(x0)
+	x0 = [1,1,1];
 else
 	assert(isempty(x0) || (isa(x0,'double') && isvector(x0) && length(x0) == 3),'Initial values must be empty, or a 3-vector of doubles');
 end

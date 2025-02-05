@@ -141,6 +141,22 @@ void lorenz_rk4 // Classic Runge-Kutta (RK4)
 	double* const  u   // the 3D variable (appropriately initialised with noise or other input)
 );
 
+void thomas_euler
+(
+	const   size_t n, // number of integration steps
+	const   double h, // integration increment
+	const   double b, // b parameter
+	double* const  u  // the 3D variable (appropriately initialised with noise or other input)
+);
+
+void thomas_rk4 // Classic Runge-Kutta (RK4)
+(
+	const   size_t n, // number of integration steps
+	const   double h, // integration increment
+	const   double b, // b parameter
+	double* const  u  // the 3D variable (appropriately initialised with noise or other input)
+);
+
 // Utilities
 
 static inline double phasewrap(const double x, const double u) // wrap to [-u,u)

@@ -10,7 +10,7 @@ PREFIX ?= /usr/local
 
 MEXT = $(shell mexext)
 
-SRC = kuramoto_mex.c rossler_mex.c lorenz_mex.c
+SRC = kuramoto_mex.c rossler_mex.c lorenz_mex.c thomas_mex.c
 BIN = kuramoto.$(MEXT)
 BIN = $(patsubst %.c,%.$(MEXT),$(SRC))
 

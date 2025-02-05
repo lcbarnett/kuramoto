@@ -35,7 +35,7 @@ int chaos(int argc, char *argv[])
 
 	// which system?
 
-	const int sys = strncasecmp(csys,"lorenz", 6) == 0 ? 1 : strncasecmp(csys,"rossler",7) == 0 ? 2 : 0;
+	const int sys = strncasecmp(csys,"lorenz", 6) == 0 ? 1 : strncasecmp(csys,"rossler",7) == 0 ? 2 : strncasecmp(csys,"thomas",6) == 0 ? 3 : 0;
 	if (sys == 0) {
 		fprintf(stderr,"\nUnknown chaotic system \"%s\"\n\n",csys);
 		return EXIT_FAILURE;
@@ -59,6 +59,12 @@ int chaos(int argc, char *argv[])
 			if (isnan(x1)) x1 = 1.0;
 			if (isnan(x2)) x2 = 1.0;
 			if (isnan(x3)) x3 = 1.0;
+			break;
+		case 3:
+			if (isnan(p1)) p1 = 0.2;
+			if (isnan(x1)) x1 = 1.0;
+			if (isnan(x2)) x2 = 2.0;
+			if (isnan(x3)) x3 = 3.0;
 			break;
 	}
 
@@ -100,6 +106,7 @@ int chaos(int argc, char *argv[])
 	switch (sys) {
 		case 1: RK4 ? lorenz_rk4  (n,dt,p1,p2,p3,x) : lorenz_rk4    (n,dt,p1,p2,p3,x); break;
 		case 2: RK4 ? rossler_rk4 (n,dt,p1,p2,p3,x) : rossler_euler (n,dt,p1,p2,p3,x); break;
+		case 3: RK4 ? thomas_rk4  (n,dt,p1,x)       : thomas_euler  (n,dt,p1,x);       break;
 	}
 	timer_stop(ts);
 
