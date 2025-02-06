@@ -181,7 +181,7 @@ void thomas_rk4 // Classic Runge-Kutta (RK4)
 inline void lrnz96_fun(double* const xdot, const double* const x, const size_t N, const double F)
 {
 	xdot[0] = (x[1]-x[N-2])*x[N-1]-x[0]+F;
-	xdot[1] = (x[2]-x[N-1])*x[0]  -x[1]+F;
+	xdot[1] = (x[2]-x[N-1])*x[0]-x[1]+F;
 	for (size_t i=2; i<N-1; ++i) xdot[i] = (x[i+1]-x[i-2])*x[i-1]-x[i]+F;
 	xdot[N-1] = (x[0]-x[N-3])*x[N-2]-x[N-1]+F;
 }

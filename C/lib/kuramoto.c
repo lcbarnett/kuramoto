@@ -417,12 +417,12 @@ void rossler_euler
 )
 {
 	printf("\nrossler_euler\n");
-	double vinc[3];
-	for (double* v=u; v<u+3*(n-1); v+=3) {
+	const size_t N = 3;
+	double vinc[N];
+	for (double* v=u; v<u+N*(n-1); v+=N) {
 		rossler_fun(vinc,v,a,b,c);
-		v[3] += v[0] + h*vinc[0];
-		v[4] += v[1] + h*vinc[1];
-		v[5] += v[2] + h*vinc[2];
+		double* const v1 = v+N;
+		for (size_t i=0; i<N; ++i) v1[i] += v[i] + h*vinc[i];
 	}
 }
 
@@ -437,34 +437,21 @@ void rossler_rk4 // Classic Runge-Kutta (RK4)
 )
 {
 	printf("\nrossler_rk4\n");
+	const size_t N = 3;
 	const double h2 = h/2.0;
 	const double h6 = h/6.0;
-
-	double k1[3],k2[3],k3[3],k4[3];
-	double w[3];
-
-	for (double* v=u; v<u+3*(n-1); v+=3) {
-
+	double k1[N],k2[N],k3[N],k4[N];
+	double w[N];
+	for (double* v=u; v<u+N*(n-1); v+=N) {
 		rossler_fun(k1,v,a,b,c);
-
-		w[0] = v[0]+h2*k1[0];
-		w[1] = v[1]+h2*k1[1];
-		w[2] = v[2]+h2*k1[2];
+		for (size_t i=0; i<N; ++i) w[i] = v[i]+h2*k1[i];
 		rossler_fun(k2,w,a,b,c);
-
-		w[0] = v[0]+h2*k2[0];
-		w[1] = v[1]+h2*k2[1];
-		w[2] = v[2]+h2*k2[2];
+		for (size_t i=0; i<N; ++i) w[i] = v[i]+h2*k2[i];
 		rossler_fun(k3,w,a,b,c);
-
-		w[0] = v[0]+h*k3[0];
-		w[1] = v[1]+h*k3[1];
-		w[2] = v[2]+h*k3[2];
+		for (size_t i=0; i<N; ++i) w[i] = v[i]+h*k3[i];
 		rossler_fun(k4,w,a,b,c);
-
-		v[3] += v[0] + h6*(k1[0]+2.0*k2[0]+2.0*k3[0]+k4[0]);
-		v[4] += v[1] + h6*(k1[1]+2.0*k2[1]+2.0*k3[1]+k4[1]);
-		v[5] += v[2] + h6*(k1[2]+2.0*k2[2]+2.0*k3[2]+k4[2]);
+		double* const v1 = v+N;
+		for (size_t i=0; i<N; ++i) v1[i]  += v[i] + h6*(k1[i]+2.0*k2[i]+2.0*k3[i]+k4[i]);
 	}
 }
 
@@ -479,12 +466,12 @@ void lorenz_euler
 )
 {
 	printf("\nlorenz_euler\n");
-	double vinc[3];
-	for (double* v=u; v<u+3*(n-1); v+=3) {
+	const size_t N = 3;
+	double vinc[N];
+	for (double* v=u; v<u+N*(n-1); v+=N) {
 		lorenz_fun(vinc,v,s,r,b);
-		v[3] += v[0] + h*vinc[0];
-		v[4] += v[1] + h*vinc[1];
-		v[5] += v[2] + h*vinc[2];
+		double* const v1 = v+N;
+		for (size_t i=0; i<N; ++i) v1[i] += v[i] + h*vinc[i];
 	}
 }
 
@@ -499,34 +486,21 @@ void lorenz_rk4 // Classic Runge-Kutta (RK4)
 )
 {
 	printf("\nlorenz_rk4\n");
+	const size_t N = 3;
 	const double h2 = h/2.0;
 	const double h6 = h/6.0;
-
-	double k1[3],k2[3],k3[3],k4[3];
-	double w[3];
-
-	for (double* v=u; v<u+3*(n-1); v+=3) {
-
+	double k1[N],k2[N],k3[N],k4[N];
+	double w[N];
+	for (double* v=u; v<u+N*(n-1); v+=N) {
 		lorenz_fun(k1,v,s,r,b);
-
-		w[0] = v[0]+h2*k1[0];
-		w[1] = v[1]+h2*k1[1];
-		w[2] = v[2]+h2*k1[2];
+		for (size_t i=0; i<N; ++i) w[i] = v[i]+h2*k1[i];
 		lorenz_fun(k2,w,s,r,b);
-
-		w[0] = v[0]+h2*k2[0];
-		w[1] = v[1]+h2*k2[1];
-		w[2] = v[2]+h2*k2[2];
+		for (size_t i=0; i<N; ++i) w[i] = v[i]+h2*k2[i];
 		lorenz_fun(k3,w,s,r,b);
-
-		w[0] = v[0]+h*k3[0];
-		w[1] = v[1]+h*k3[1];
-		w[2] = v[2]+h*k3[2];
+		for (size_t i=0; i<N; ++i) w[i] = v[i]+h*k3[i];
 		lorenz_fun(k4,w,s,r,b);
-
-		v[3] += v[0] + h6*(k1[0]+2.0*k2[0]+2.0*k3[0]+k4[0]);
-		v[4] += v[1] + h6*(k1[1]+2.0*k2[1]+2.0*k3[1]+k4[1]);
-		v[5] += v[2] + h6*(k1[2]+2.0*k2[2]+2.0*k3[2]+k4[2]);
+		double* const v1 = v+N;
+		for (size_t i=0; i<N; ++i) v1[i]  += v[i] + h6*(k1[i]+2.0*k2[i]+2.0*k3[i]+k4[i]);
 	}
 }
 
@@ -539,12 +513,12 @@ void thomas_euler
 )
 {
 	printf("\nthomas_euler\n");
-	double vinc[3];
-	for (double* v=u; v<u+3*(n-1); v+=3) {
+	const size_t N = 3;
+	double vinc[N];
+	for (double* v=u; v<u+N*(n-1); v+=N) {
 		thomas_fun(vinc,v,b);
-		v[3] += v[0] + h*vinc[0];
-		v[4] += v[1] + h*vinc[1];
-		v[5] += v[2] + h*vinc[2];
+		double* const v1 = v+N;
+		for (size_t i=0; i<N; ++i) v1[i] += v[i] + h*vinc[i];
 	}
 }
 
@@ -557,34 +531,21 @@ void thomas_rk4 // Classic Runge-Kutta (RK4)
 )
 {
 	printf("\nthomas_rk4\n");
+	const size_t N = 3;
 	const double h2 = h/2.0;
 	const double h6 = h/6.0;
-
-	double k1[3],k2[3],k3[3],k4[3];
-	double w[3];
-
-	for (double* v=u; v<u+3*(n-1); v+=3) {
-
+	double k1[N],k2[N],k3[N],k4[N];
+	double w[N];
+	for (double* v=u; v<u+N*(n-1); v+=N) {
 		thomas_fun(k1,v,b);
-
-		w[0] = v[0]+h2*k1[0];
-		w[1] = v[1]+h2*k1[1];
-		w[2] = v[2]+h2*k1[2];
+		for (size_t i=0; i<N; ++i) w[i] = v[i]+h2*k1[i];
 		thomas_fun(k2,w,b);
-
-		w[0] = v[0]+h2*k2[0];
-		w[1] = v[1]+h2*k2[1];
-		w[2] = v[2]+h2*k2[2];
+		for (size_t i=0; i<N; ++i) w[i] = v[i]+h2*k2[i];
 		thomas_fun(k3,w,b);
-
-		w[0] = v[0]+h*k3[0];
-		w[1] = v[1]+h*k3[1];
-		w[2] = v[2]+h*k3[2];
+		for (size_t i=0; i<N; ++i) w[i] = v[i]+h*k3[i];
 		thomas_fun(k4,w,b);
-
-		v[3] += v[0] + h6*(k1[0]+2.0*k2[0]+2.0*k3[0]+k4[0]);
-		v[4] += v[1] + h6*(k1[1]+2.0*k2[1]+2.0*k3[1]+k4[1]);
-		v[5] += v[2] + h6*(k1[2]+2.0*k2[2]+2.0*k3[2]+k4[2]);
+		double* const v1 = v+N;
+		for (size_t i=0; i<N; ++i) v1[i]  += v[i] + h6*(k1[i]+2.0*k2[i]+2.0*k3[i]+k4[i]);
 	}
 }
 
@@ -618,23 +579,16 @@ void lrnz96_rk4
 	printf("\nlrnz96_rk4\n");
 	const double h2 = h/2.0;
 	const double h6 = h/6.0;
-
 	double k1[N],k2[N],k3[N],k4[N];
 	double w[N];
-
 	for (double* v=u; v<u+N*(n-1); v+=N) {
-
 		lrnz96_fun(k1,v,N,F);
-
 		for (size_t i=0; i<N; ++i) w[i] = v[i]+h2*k1[i];
 		lrnz96_fun(k2,w,N,F);
-
 		for (size_t i=0; i<N; ++i) w[i] = v[i]+h2*k2[i];
 		lrnz96_fun(k3,w,N,F);
-
 		for (size_t i=0; i<N; ++i) w[i] = v[i]+h*k3[i];
 		lrnz96_fun(k4,w,N,F);
-
 		double* const v1 = v+N;
 		for (size_t i=0; i<N; ++i) v1[i]  += v[i] + h6*(k1[i]+2.0*k2[i]+2.0*k3[i]+k4[i]);
 	}
