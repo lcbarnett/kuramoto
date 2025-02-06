@@ -101,6 +101,13 @@ void stulan_order_param // calculate order parameter magnitude/phase
 	double* const  p  // order parameter phase (NULL if not required)
 );
 
+inline void rossler_fun(double* const xdot, const double* const x, const double a, const double b, const double c)
+{
+	xdot[0] = -(x[1]+x[2]);
+	xdot[1] =  x[0]+a*x[1];
+	xdot[2] =  b+x[2]*(x[0]-c);
+}
+
 void rossler_euler
 (
 	const   size_t n, // number of integration steps
@@ -120,6 +127,13 @@ void rossler_rk4 // Classic Runge-Kutta (RK4)
 	const   double c, // c parameter
 	double* const  u  // the 3D variable (apprpriately initialised with noise or other input)
 );
+
+inline void lorenz_fun(double* const xdot, const double* const x, const double s, const double r, const double b)
+{
+	xdot[0] = s*(x[1]-x[0]);
+	xdot[1] = x[0]*(r-x[2])-x[1];
+	xdot[2] = x[0]*x[1]-b*x[2];
+}
 
 void lorenz_euler
 (
@@ -141,6 +155,13 @@ void lorenz_rk4 // Classic Runge-Kutta (RK4)
 	double* const  u   // the 3D variable (appropriately initialised with noise or other input)
 );
 
+inline void thomas_fun(double* const xdot, const double* const x, const double b)
+{
+	xdot[0] = -b*x[0] + sin(x[1]);
+	xdot[1] = -b*x[1] + sin(x[2]);
+	xdot[2] = -b*x[2] + sin(x[0]);
+}
+
 void thomas_euler
 (
 	const   size_t n, // number of integration steps
@@ -156,6 +177,33 @@ void thomas_rk4 // Classic Runge-Kutta (RK4)
 	const   double b, // b parameter
 	double* const  u  // the 3D variable (appropriately initialised with noise or other input)
 );
+
+inline void lrnz96_fun(double* const xdot, const double* const x, const size_t N, const double F)
+{
+	xdot[0] = (x[1]-x[N-2])*x[N-1]-x[0]+F;
+	xdot[1] = (x[2]-x[N-1])*x[0]  -x[1]+F;
+	for (size_t i=2; i<N-1; ++i) xdot[i] = (x[i+1]-x[i-2])*x[i-1]-x[i]+F;
+	xdot[N-1] = (x[0]-x[N-3])*x[N-2]-x[N-1]+F;
+}
+
+void lrnz96_euler
+(
+	const   size_t N, // number of variables
+	const   size_t n, // number of integration steps
+	const   double h, // integration increment
+	const   double F, // forcing parameter
+	double* const  u  // the 3D variable (appropriately initialised with noise or other input)
+);
+
+void lrnz96_rk4
+(
+	const   size_t N, // number of variables
+	const   size_t n, // number of integration steps
+	const   double h, // integration increment
+	const   double F, // forcing parameter
+	double* const  u  // the 3D variable (appropriately initialised with noise or other input)
+);
+
 
 // Utilities
 

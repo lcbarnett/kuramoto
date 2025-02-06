@@ -9,23 +9,20 @@
 
 // Program to demonstrate chaotic attractor system (Lorenz or Rossler).
 
-int chaos(int argc, char *argv[])
+int lorenz96(int argc, char *argv[])
 {
 	// CLAP (command-line argument parser). Default values may
 	// be overriden on the command line as switches.
 	//
 	// Arg:   name    type     default     description
 	puts("\n---------------------------------------------------------------------------------------");
-	CLAP_VARG(T,      double,  200.0,     "total integration time");
+	CLAP_VARG(T,      double,  1000.0,    "total integration time");
 	CLAP_CARG(dt,     double,  0.01,      "integration step size");
-	CLAP_CARG(csys,   cstr,   "Lorenz",   "chaotic system (lorenz or rossler)");
+	CLAP_CARG(N,      size_t,  7,         "number of variables");
 	CLAP_CARG(RK4,    int,     1,         "RK4 solver flag (else Euler)");
-	CLAP_VARG(p1,     double,  NAN,       "parameter 1     (NAN for system default)");
-	CLAP_VARG(p2,     double,  NAN,       "parameter 2     (NAN for system default)");
-	CLAP_VARG(p3,     double,  NAN,       "parameter 3     (NAN for system default)");
-	CLAP_VARG(x1,     double,  NAN,       "initial value 1 (NAN for system default)");
-	CLAP_VARG(x2,     double,  NAN,       "initial value 2 (NAN for system default)");
-	CLAP_VARG(x3,     double,  NAN,       "initial value 3 (NAN for system default)");
+	CLAP_VARG(F,      double,  8.0,       "Lorenz96 forcing parameter");
+	CLAP_CARG(x0m,    double,  0.0,       "initial value for variables - mean");
+	CLAP_CARG(x0s,    double,  2.0,       "initial value for variables - std. dev.");
 	CLAP_CARG(nmag,   double,  0.0,       "noise magnitude");
 	CLAP_CARG(rseed,  uint,    0,         "random seed (or 0 for random random seed)");
 #ifdef _HAVE_GNUPLOT
@@ -33,42 +30,9 @@ int chaos(int argc, char *argv[])
 #endif
 	puts("---------------------------------------------------------------------------------------");
 
-	// which system?
-
-	const int sys =
-		strncasecmp(csys,"lorenz", 6) == 0 ? 1 :
-		strncasecmp(csys,"rossler",7) == 0 ? 2 :
-		strncasecmp(csys,"thomas", 6) == 0 ? 3 : 0;
-	if (sys == 0) {
-		fprintf(stderr,"\nUnknown chaotic system \"%s\"\n\n",csys);
+	if (N < 4) {
+		fprintf(stderr,"\nMust be at least 4 variables\n\n");
 		return EXIT_FAILURE;
-	}
-
-	// parameter defaults
-
-	switch (sys) {
-		case 1:
-			if (isnan(p1)) p1 = 10.0;
-			if (isnan(p2)) p2 = 28.0;
-			if (isnan(p3)) p3 = 8.0/3.0;
-			if (isnan(x1)) x1 = 1.0;
-			if (isnan(x2)) x2 = 1.0;
-			if (isnan(x3)) x3 = 1.0;
-			break;
-		case 2:
-			if (isnan(p1)) p1 = 0.1;
-			if (isnan(p2)) p2 = 0.1;
-			if (isnan(p3)) p3 = 14.0;
-			if (isnan(x1)) x1 = 1.0;
-			if (isnan(x2)) x2 = 1.0;
-			if (isnan(x3)) x3 = 1.0;
-			break;
-		case 3:
-			if (isnan(p1)) p1 = 0.2;
-			if (isnan(x1)) x1 = 1.0;
-			if (isnan(x2)) x2 = 2.0;
-			if (isnan(x3)) x3 = 3.0;
-			break;
 	}
 
 	// seed random number generator (from command line if you want predictability)
@@ -85,32 +49,26 @@ int chaos(int argc, char *argv[])
 
 	// allocate memory
 
-	const size_t N = 3*n;
-	double* const x = calloc(N,sizeof(double)); // 3D variable
+	const size_t m = N*n;
+	double* const x = calloc(m,sizeof(double)); // 3D variable
 
 	// noise
 
 	if (nmag > 0.0) {
-		for (size_t i=0; i<N; ++i) x[i] = sqrt(dt)*nmag*mt_randn(&rng);
+		for (size_t i=0; i<m; ++i) x[i] = sqrt(dt)*nmag*mt_randn(&rng);
 	}
 	else {
-		memset(x,0,N*sizeof(double));  // zero-fill for no input [in fact here calloc will have done that]
+		memset(x,0,m*sizeof(double));  // zero-fill for no input [in fact here calloc will have done that]
 	}
 
 	// initialise
 
-	x[0] = x1;
-	x[1] = x2;
-	x[2] = x3;
+	for (size_t k=0; k<N; ++k) x[k] = x0m + x0s*mt_randn(&rng);
 
 	// run
 
 	const double ts = timer_start("Running ODE solver");
-	switch (sys) {
-		case 1: RK4 ? lorenz_rk4  (n,dt,p1,p2,p3,x) : lorenz_euler  (n,dt,p1,p2,p3,x); break;
-		case 2: RK4 ? rossler_rk4 (n,dt,p1,p2,p3,x) : rossler_euler (n,dt,p1,p2,p3,x); break;
-		case 3: RK4 ? thomas_rk4  (n,dt,p1,x)       : thomas_euler  (n,dt,p1,x);       break;
-	}
+	if (RK4) lrnz96_rk4(N,n,dt,F,x); else  lrnz96_euler(N,n,dt,F,x);
 	timer_stop(ts);
 
 	// write variables to file
@@ -121,9 +79,8 @@ int chaos(int argc, char *argv[])
 		perror("Failed to open output file");
 		return EXIT_FAILURE;
 	}
-	for (size_t k=0; k<n; ++k) {
-		const size_t r = 3*k;
-		fprintf(fp,"%17.8f %17.8f %17.8f\n",x[r],x[r+1],x[r+2]);
+	for (size_t k=0; k<n; k += N) {
+		fprintf(fp,"%17.8f %17.8f %17.8f\n",x[k],x[k+1],x[k+2]);
 	}
 	if (fclose(fp) != 0) {
 		perror("Failed to close output file");
@@ -148,7 +105,7 @@ int chaos(int argc, char *argv[])
 	fprintf(gp,"set mouse ruler\n");
 	fprintf(gp,"unset key\n");
 	fprintf(gp,"set grid\n");
-	fprintf(gp,"set title \"%s system (%s)\"\n",csys,RK4 ? "RK4" : "Euler");
+	fprintf(gp,"set title \"Lorenz 96 system (%s) : %zu variables, F = %g\"\n",RK4 ? "RK4" : "Euler", N,F);
 	fprintf(gp,"set xlabel \"x\"\n");
 	fprintf(gp,"set ylabel \"y\"\n");
 	fprintf(gp,"set zlabel \"z\"\n");

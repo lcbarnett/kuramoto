@@ -416,10 +416,13 @@ void rossler_euler
 	double* const  u  // the 3D variable (appropriately initialised with noise or other input)
 )
 {
+	printf("\nrossler_euler\n");
+	double vinc[3];
 	for (double* v=u; v<u+3*(n-1); v+=3) {
-		v[3] += v[0] - h*(v[1]+v[2]);
-		v[4] += v[1] + h*(v[0]+a*v[1]);
-		v[5] += v[2] + h*(b+v[2]*(v[0]-c));
+		rossler_fun(vinc,v,a,b,c);
+		v[3] += v[0] + h*vinc[0];
+		v[4] += v[1] + h*vinc[1];
+		v[5] += v[2] + h*vinc[2];
 	}
 }
 
@@ -433,32 +436,35 @@ void rossler_rk4 // Classic Runge-Kutta (RK4)
 	double* const  u  // the 3D variable (appropriately initialised with noise or other input)
 )
 {
-	const double hh = h/2.0;
+	printf("\nrossler_rk4\n");
+	const double h2 = h/2.0;
 	const double h6 = h/6.0;
 
-	double k10,k11,k12,k20,k21,k22,k30,k31,k32,k40,k41,k42;
+	double k1[3],k2[3],k3[3],k4[3];
+	double w[3];
 
 	for (double* v=u; v<u+3*(n-1); v+=3) {
 
-		k10 = -(v[1]+v[2]);
-		k11 =  v[0]+a*v[1];
-		k12 =  b+v[2]*(v[0]-c);
+		rossler_fun(k1,v,a,b,c);
 
-		k20 = -((v[1]+hh*k11)+(v[2]+hh*k12));
-		k21 =  (v[0]+hh*k10)+a*(v[1]+hh*k11);
-		k22 =  b+(v[2]+hh*k12)*((v[0]+hh*k10)-c);
+		w[0] = v[0]+h2*k1[0];
+		w[1] = v[1]+h2*k1[1];
+		w[2] = v[2]+h2*k1[2];
+		rossler_fun(k2,w,a,b,c);
 
-		k30 = -((v[1]+hh*k21)+(v[2]+hh*k22));
-		k31 =  (v[0]+hh*k20)+a*(v[1]+hh*k21);
-		k32 =  b+(v[2]+hh*k22)*((v[0]+hh*k20)-c);
+		w[0] = v[0]+h2*k2[0];
+		w[1] = v[1]+h2*k2[1];
+		w[2] = v[2]+h2*k2[2];
+		rossler_fun(k3,w,a,b,c);
 
-		k40 = -((v[1]+h*k31)+(v[2]+h*k32));
-		k41 =  (v[0]+h*k30)+a*(v[1]+h*k31);
-		k42 =  b+(v[2]+h*k32)*((v[0]+h*k30)-c);
+		w[0] = v[0]+h*k3[0];
+		w[1] = v[1]+h*k3[1];
+		w[2] = v[2]+h*k3[2];
+		rossler_fun(k4,w,a,b,c);
 
-		v[3] += v[0] + h6*(k10+2.0*k20+2.0*k30+k40);
-		v[4] += v[1] + h6*(k11+2.0*k21+2.0*k31+k41);
-		v[5] += v[2] + h6*(k12+2.0*k22+2.0*k32+k42);
+		v[3] += v[0] + h6*(k1[0]+2.0*k2[0]+2.0*k3[0]+k4[0]);
+		v[4] += v[1] + h6*(k1[1]+2.0*k2[1]+2.0*k3[1]+k4[1]);
+		v[5] += v[2] + h6*(k1[2]+2.0*k2[2]+2.0*k3[2]+k4[2]);
 	}
 }
 
@@ -472,10 +478,13 @@ void lorenz_euler
 	double* const  u  // the 3D variable (appropriately initialised with noise or other input)
 )
 {
+	printf("\nlorenz_euler\n");
+	double vinc[3];
 	for (double* v=u; v<u+3*(n-1); v+=3) {
-		v[3] += v[0] + h*(s*(v[1]-v[0]));
-		v[4] += v[1] + h*(v[0]*(r-v[2])-v[1]);
-		v[5] += v[2] + h*(v[0]*v[1]-b*v[2]);
+		lorenz_fun(vinc,v,s,r,b);
+		v[3] += v[0] + h*vinc[0];
+		v[4] += v[1] + h*vinc[1];
+		v[5] += v[2] + h*vinc[2];
 	}
 }
 
@@ -489,32 +498,35 @@ void lorenz_rk4 // Classic Runge-Kutta (RK4)
 	double* const  u  // the 3D variable (appropriately initialised with noise or other input)
 )
 {
-	const double hh = h/2.0;
+	printf("\nlorenz_rk4\n");
+	const double h2 = h/2.0;
 	const double h6 = h/6.0;
 
-	double k10,k11,k12,k20,k21,k22,k30,k31,k32,k40,k41,k42;
+	double k1[3],k2[3],k3[3],k4[3];
+	double w[3];
 
 	for (double* v=u; v<u+3*(n-1); v+=3) {
 
-		k10 = s*(v[1]-v[0]);
-		k11 = v[0]*(r-v[2])-v[1];
-		k12 = v[0]*v[1]-b*v[2];
+		lorenz_fun(k1,v,s,r,b);
 
-		k20 = s*((v[1]+hh*k11)-(v[0]+hh*k10));
-		k21 = (v[0]+hh*k10)*(r-(v[2]+hh*k12))-(v[1]+hh*k11);
-		k22 = (v[0]+hh*k10)*(v[1]+hh*k11)-b*(v[2]+hh*k12);
+		w[0] = v[0]+h2*k1[0];
+		w[1] = v[1]+h2*k1[1];
+		w[2] = v[2]+h2*k1[2];
+		lorenz_fun(k2,w,s,r,b);
 
-		k30 = s*((v[1]+hh*k21)-(v[0]+hh*k20));
-		k31 = (v[0]+hh*k20)*(r-(v[2]+hh*k22))-(v[1]+hh*k21);
-		k32 = (v[0]+hh*k20)*(v[1]+hh*k21)-b*(v[2]+hh*k22);
+		w[0] = v[0]+h2*k2[0];
+		w[1] = v[1]+h2*k2[1];
+		w[2] = v[2]+h2*k2[2];
+		lorenz_fun(k3,w,s,r,b);
 
-		k40 = s*((v[1]+h*k31)-(v[0]+h*k30));
-		k41 = (v[0]+h*k30)*(r-(v[2]+h*k32))-(v[1]+h*k31);
-		k42 = (v[0]+h*k30)*(v[1]+h*k31)-b*(v[2]+h*k32);
+		w[0] = v[0]+h*k3[0];
+		w[1] = v[1]+h*k3[1];
+		w[2] = v[2]+h*k3[2];
+		lorenz_fun(k4,w,s,r,b);
 
-		v[3] += v[0] + h6*(k10+2.0*k20+2.0*k30+k40);
-		v[4] += v[1] + h6*(k11+2.0*k21+2.0*k31+k41);
-		v[5] += v[2] + h6*(k12+2.0*k22+2.0*k32+k42);
+		v[3] += v[0] + h6*(k1[0]+2.0*k2[0]+2.0*k3[0]+k4[0]);
+		v[4] += v[1] + h6*(k1[1]+2.0*k2[1]+2.0*k3[1]+k4[1]);
+		v[5] += v[2] + h6*(k1[2]+2.0*k2[2]+2.0*k3[2]+k4[2]);
 	}
 }
 
@@ -526,10 +538,13 @@ void thomas_euler
 	double* const  u  // the 3D variable (appropriately initialised with noise or other input)
 )
 {
+	printf("\nthomas_euler\n");
+	double vinc[3];
 	for (double* v=u; v<u+3*(n-1); v+=3) {
-		v[3] += v[0] + h*(-b*v[0] + sin(v[1]));
-		v[4] += v[1] + h*(-b*v[1] + sin(v[2]));
-		v[5] += v[2] + h*(-b*v[2] + sin(v[0]));
+		thomas_fun(vinc,v,b);
+		v[3] += v[0] + h*vinc[0];
+		v[4] += v[1] + h*vinc[1];
+		v[5] += v[2] + h*vinc[2];
 	}
 }
 
@@ -541,32 +556,87 @@ void thomas_rk4 // Classic Runge-Kutta (RK4)
 	double* const  u  // the 3D variable (appropriately initialised with noise or other input)
 )
 {
-	const double hh = h/2.0;
+	printf("\nthomas_rk4\n");
+	const double h2 = h/2.0;
 	const double h6 = h/6.0;
 
-	double k10,k11,k12,k20,k21,k22,k30,k31,k32,k40,k41,k42;
+	double k1[3],k2[3],k3[3],k4[3];
+	double w[3];
 
 	for (double* v=u; v<u+3*(n-1); v+=3) {
 
-		k10 = -b*v[0]+sin(v[1]);
-		k11 = -b*v[1]+sin(v[2]);
-		k12 = -b*v[2]+sin(v[0]);
+		thomas_fun(k1,v,b);
 
-		k20 = -b*v[0]+sin(v[1]) + hh*(-b*k10+sin(k11));
-		k21 = -b*v[1]+sin(v[2]) + hh*(-b*k11+sin(k12));
-		k22 = -b*v[2]+sin(v[0]) + hh*(-b*k12+sin(k10));
+		w[0] = v[0]+h2*k1[0];
+		w[1] = v[1]+h2*k1[1];
+		w[2] = v[2]+h2*k1[2];
+		thomas_fun(k2,w,b);
 
-		k30 = -b*v[0]+sin(v[1]) + hh*(-b*k20+sin(k21));
-		k31 = -b*v[1]+sin(v[2]) + hh*(-b*k21+sin(k22));
-		k32 = -b*v[2]+sin(v[0]) + hh*(-b*k22+sin(k20));
+		w[0] = v[0]+h2*k2[0];
+		w[1] = v[1]+h2*k2[1];
+		w[2] = v[2]+h2*k2[2];
+		thomas_fun(k3,w,b);
 
-		k40 = -b*v[0]+sin(v[1]) + hh*(-b*k30+sin(k31));
-		k41 = -b*v[1]+sin(v[2]) + hh*(-b*k31+sin(k32));
-		k42 = -b*v[2]+sin(v[0]) + hh*(-b*k32+sin(k30));
+		w[0] = v[0]+h*k3[0];
+		w[1] = v[1]+h*k3[1];
+		w[2] = v[2]+h*k3[2];
+		thomas_fun(k4,w,b);
 
-		v[3] += v[0] + h6*(k10+2.0*k20+2.0*k30+k40);
-		v[4] += v[1] + h6*(k11+2.0*k21+2.0*k31+k41);
-		v[5] += v[2] + h6*(k12+2.0*k22+2.0*k32+k42);
+		v[3] += v[0] + h6*(k1[0]+2.0*k2[0]+2.0*k3[0]+k4[0]);
+		v[4] += v[1] + h6*(k1[1]+2.0*k2[1]+2.0*k3[1]+k4[1]);
+		v[5] += v[2] + h6*(k1[2]+2.0*k2[2]+2.0*k3[2]+k4[2]);
+	}
+}
+
+void lrnz96_euler
+(
+	const   size_t N, // number of variables
+	const   size_t n, // number of integration steps
+	const   double h, // integration increment
+	const   double F, // forcing parameter
+	double* const  u  // the 3D variable (appropriately initialised with noise or other input)
+)
+{
+	printf("\nlrnz96_euler\n");
+	double vinc[N];
+	for (double* v=u; v<u+N*(n-1); v+=N) {
+		lrnz96_fun(vinc,v,N,F);
+		double* const v1 = v+N;
+		for (size_t i=0; i<N; ++i) v1[i] += v[i] + h*vinc[i];
+	}
+}
+
+void lrnz96_rk4
+(
+	const   size_t N, // number of variables
+	const   size_t n, // number of integration steps
+	const   double h, // integration increment
+	const   double F, // forcing parameter
+	double* const  u  // the 3D variable (appropriately initialised with noise or other input)
+)
+{
+	printf("\nlrnz96_rk4\n");
+	const double h2 = h/2.0;
+	const double h6 = h/6.0;
+
+	double k1[N],k2[N],k3[N],k4[N];
+	double w[N];
+
+	for (double* v=u; v<u+N*(n-1); v+=N) {
+
+		lrnz96_fun(k1,v,N,F);
+
+		for (size_t i=0; i<N; ++i) w[i] = v[i]+h2*k1[i];
+		lrnz96_fun(k2,w,N,F);
+
+		for (size_t i=0; i<N; ++i) w[i] = v[i]+h2*k2[i];
+		lrnz96_fun(k3,w,N,F);
+
+		for (size_t i=0; i<N; ++i) w[i] = v[i]+h*k3[i];
+		lrnz96_fun(k4,w,N,F);
+
+		double* const v1 = v+N;
+		for (size_t i=0; i<N; ++i) v1[i]  += v[i] + h6*(k1[i]+2.0*k2[i]+2.0*k3[i]+k4[i]);
 	}
 }
 
