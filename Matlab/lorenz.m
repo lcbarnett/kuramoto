@@ -11,7 +11,7 @@ function x = lorenz(n,dt,parms,x0,I,mode)
 % parms    Lorenz sigma, rho, beta parameters (3-vector)
 % x0       initial values (3-vector, or empty)
 % I        input noise (n x 3 matrix, or empty)
-% mode     simulation mode ('Euler' or 'RK4')
+% mode     simulation mode: 'Euler', 'Heun', or 'RK4'
 %
 % x        Rossler 3D variable
 %
@@ -43,13 +43,14 @@ else
 end
 
 if nargin < 6 || isempty(mode)
-	RK4 = 1;
+	ode = 2;
 else
-	assert(ischar(mode),'Simulation mode must be empty, ''Euler'' or ''RK4''');
+	assert(ischar(mode),'Simulation mode must be empty, ''Euler'', ''Heun'', or ''RK4''');
 	switch upper(mode)
-		case 'RK4',   RK4 = 1;
-		case 'EULER', RK4 = 0;
-		otherwise,    error('Unknown simulation mode; must be empty, ''Euler'' or ''RK4''');
+		case 'EULER', ode = 1;
+		case 'HEUN',  ode = 2;
+		case 'RK4',   ode = 3;
+		otherwise,    error('Simulation mode must be empty, ''Euler'', ''Heun'', or ''RK4''');
 	end
 end
 
@@ -57,4 +58,4 @@ end
 %
 % Input noise is Wiener (Brownian), so scaled by sqrt(dt); cf. Ito simulation of Ornstein-Uhlenbeck process
 
-x = lorenz_mex(n,dt,parms(1),parms(2),parms(3),x0,I*sqrt(dt),RK4);
+x = lorenz_mex(n,dt,parms(1),parms(2),parms(3),x0,I*sqrt(dt),ode);

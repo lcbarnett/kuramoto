@@ -5,8 +5,8 @@
 
 PREFIX ?= /usr/local
 
-SRC = kuramoto.c
-INC = kuramoto.h
+SRC = kuramoto.c kuramoto_old.c
+INC = kuramoto.h kuramoto_old.h
 
 LIB = libkuramoto.so
 LIBDIR ?= $(PREFIX)/lib
@@ -27,10 +27,12 @@ $(LIB): $(SRC) $(INC)
 install:
 	install -m755 $(LIB) $(LIBDIR)
 	install -D -m644 kuramoto.h $(INCDIR)/kuramoto.h
+	install -D -m644 kuramoto_old.h $(INCDIR)/kuramoto_old.h
 
 uninstall:
 	$(RM) $(LIBDIR)/$(LIB)
 	$(RM) $(INCDIR)/kuramoto.h
+	$(RM) $(INCDIR)/kuramoto_old.h
 
 clean:
 	$(RM) $(LIB)

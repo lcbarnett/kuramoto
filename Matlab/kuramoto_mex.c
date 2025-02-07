@@ -3,7 +3,7 @@
 #include <stdio.h>    // for perror
 
 #include "matrix.h"   // for Matlab matrix stuff
-#include "kuramoto.h" // for Kuramoto ODE solvers
+#include "kuramoto_old.h" // for Kuramoto ODE solvers
 
 #define UNUSED __attribute__ ((unused))
 

@@ -16,7 +16,7 @@ void mexFunction(int UNUSED nlhs, mxArray *plhs[], int UNUSED nrhs, const mxArra
 	const double        b   =  mxGetScalar(prhs[2]);        // b parameter
 	const double* const x0  =  mxIsEmpty(prhs[3]) ? NULL :  mxGetDoubles(prhs[3]);    // initial values
 	const double* const I   =  mxIsEmpty(prhs[4]) ? NULL :  mxGetDoubles(prhs[4]);    // input (noise, etc.)
-	const int           RK4 =  mxIsEmpty(prhs[5]) ? 1    : (int)mxGetScalar(prhs[5]); // use RK4? (else Euler)
+	const int           ode =  mxIsEmpty(prhs[5]) ? 1    : (int)mxGetScalar(prhs[5]); // 1 - Euler, 2 - Heun, 3 - RK4
 
 	// allocate output (note that if compiling with -R2018a, mxCreateDoubleMatrix zero-initializes)
 
@@ -32,5 +32,9 @@ void mexFunction(int UNUSED nlhs, mxArray *plhs[], int UNUSED nrhs, const mxArra
 
 	// Run Rossler ODE solver
 
-	if (RK4) thomas_rk4(n,dt,b,x); else thomas_euler(n,dt,b,x);
+	switch (ode) {
+		case 1: thomas_euler (n,dt,b,x); break;
+		case 2: thomas_heun  (n,dt,b,x); break;
+		case 3: thomas_rk4   (n,dt,b,x); break;
+	}
 }

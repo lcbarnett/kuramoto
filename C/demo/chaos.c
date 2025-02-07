@@ -19,7 +19,7 @@ int chaos(int argc, char *argv[])
 	CLAP_VARG(T,      double,  200.0,     "total integration time");
 	CLAP_CARG(dt,     double,  0.01,      "integration step size");
 	CLAP_CARG(csys,   cstr,   "Lorenz",   "chaotic system (lorenz or rossler)");
-	CLAP_CARG(RK4,    int,     1,         "RK4 solver flag (else Euler)");
+	CLAP_CARG(ode,    int,     1,         "1 - Euler, 2 - Heun, 3 - RK4");
 	CLAP_VARG(p1,     double,  NAN,       "parameter 1     (NAN for system default)");
 	CLAP_VARG(p2,     double,  NAN,       "parameter 2     (NAN for system default)");
 	CLAP_VARG(p3,     double,  NAN,       "parameter 3     (NAN for system default)");
@@ -32,6 +32,13 @@ int chaos(int argc, char *argv[])
 	CLAP_CARG(gpterm, cstr,   "wxt",      "Gnuplot terminal type");
 #endif
 	puts("---------------------------------------------------------------------------------------");
+
+	// which ODE solver?
+
+	if (ode < 1 || ode > 3) {
+		fprintf(stderr,"\nUnknown ODE solver\n\n");
+		return EXIT_FAILURE;
+	}
 
 	// which system?
 
@@ -107,9 +114,27 @@ int chaos(int argc, char *argv[])
 
 	const double ts = timer_start("Running ODE solver");
 	switch (sys) {
-		case 1: RK4 ? lorenz_rk4  (n,dt,p1,p2,p3,x) : lorenz_euler  (n,dt,p1,p2,p3,x); break;
-		case 2: RK4 ? rossler_rk4 (n,dt,p1,p2,p3,x) : rossler_euler (n,dt,p1,p2,p3,x); break;
-		case 3: RK4 ? thomas_rk4  (n,dt,p1,x)       : thomas_euler  (n,dt,p1,x);       break;
+		case 1:
+			switch (ode) {
+				case 1: lorenz_euler (n,dt,p1,p2,p3,x); break;
+				case 2: lorenz_heun  (n,dt,p1,p2,p3,x); break;
+				case 3: lorenz_rk4   (n,dt,p1,p2,p3,x); break;
+			}
+			break;
+		case 2:
+			switch (ode) {
+				case 1: rossler_euler (n,dt,p1,p2,p3,x); break;
+				case 2: rossler_heun  (n,dt,p1,p2,p3,x); break;
+				case 3: rossler_rk4   (n,dt,p1,p2,p3,x); break;
+			}
+			break;
+		case 3:
+			switch (ode) {
+				case 1: thomas_euler (n,dt,p1,x); break;
+				case 2: thomas_heun  (n,dt,p1,x); break;
+				case 3: thomas_rk4   (n,dt,p1,x); break;
+			}
+			break;
 	}
 	timer_stop(ts);
 
@@ -148,7 +173,7 @@ int chaos(int argc, char *argv[])
 	fprintf(gp,"set mouse ruler\n");
 	fprintf(gp,"unset key\n");
 	fprintf(gp,"set grid\n");
-	fprintf(gp,"set title \"%s system (%s)\"\n",csys,RK4 ? "RK4" : "Euler");
+	fprintf(gp,"set title \"%s system (%s)\"\n",csys,ode == 1 ? "Euler" : ode == 2 ? "Heun" : ode == 3 ? "RK4" : "");
 	fprintf(gp,"set xlabel \"x\"\n");
 	fprintf(gp,"set ylabel \"y\"\n");
 	fprintf(gp,"set zlabel \"z\"\n");
