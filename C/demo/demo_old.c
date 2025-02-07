@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include <stdbool.h>
 
 #include "clap.h"
 #include "kutils.h"
@@ -24,19 +23,14 @@ int demo(int argc, char *argv[])
 	CLAP_CARG(wmin,   double, 0.0,       "oscillator frequency min (Hz)");
 	CLAP_CARG(Kmean,  double, 3.0,       "coupling constants mean (Hz)");
 	CLAP_CARG(Ksdev,  double, Kmean/5.0, "coupling constants std. dev. (Hz)");
-	CLAP_CARG(amean,  double, 0.0,       "phase lag mean (Hz)");
-	CLAP_CARG(asdev,  double, amean/5.0, "phase lag mean std. dev. (Hz)");
 	CLAP_CARG(nmean,  double, 0.1,       "oscillator input noise magnitude mean (sqrt(Hz) - zero for no noise)");
 	CLAP_CARG(nsdev,  double, nmean/5.0, "oscillator input noise magnitude std. dev. (sqrt(Hz))");
 	CLAP_CARG(RK4,    int,    0,         "RK4 solver flag (else Euler)");
 	CLAP_CARG(rseed,  ulong,  0,         "random seed (or 0 for random random seed)");
 #ifdef _HAVE_GNUPLOT
-	CLAP_CARG(gpterm, cstr,  "wxt",      "Gnuplot terminal type");
+	CLAP_CARG(gpterm, cstr,   GPTERM,    "Gnuplot terminal type");
 #endif
 	puts("---------------------------------------------------------------------------------------");
-
-	const bool withpl = (amean > 0.0); // with phase lags
-	const bool within = (nmean > 0.0); // with input noise
 
 	// seed random number generator (from command line if you want predictability)
 
@@ -54,35 +48,26 @@ int demo(int argc, char *argv[])
 
 	// allocate memory
 
-	double* const w = calloc(N,sizeof(double)); // oscillator frequencies
-	double* const K = calloc(M,sizeof(double)); // coupling constants
-	double* const a = withpl ? calloc(M,sizeof(double)) : NULL; // phase lags
-	double* const h = calloc(m,sizeof(double)); // oscillator phases
-	double* const r = calloc(n,sizeof(double)); // order parameter
-	double* const x = calloc(m,sizeof(double)); // oscillator signal
-	double* const y = calloc(n,sizeof(double)); // oscillator agregated signal
+	double* const wdt = calloc(N,sizeof(double)); // oscillator frequencies
+	double* const Kdt = calloc(M,sizeof(double)); // coupling constants
+	double* const h   = calloc(m,sizeof(double)); // oscillator phases
+	double* const r   = calloc(n,sizeof(double)); // order parameter
+	double* const x   = calloc(m,sizeof(double)); // oscillator signal
+	double* const y   = calloc(n,sizeof(double)); // oscillator agregated signal
 
 	// random frequencies (uniform)
 
-	for (size_t i=0; i<N; ++i) w[i] = wmin+(wmax-wmin)*mt_rand(&rng);
+	for (size_t i=0; i<N; ++i) wdt[i] = (wmin+(wmax-wmin)*mt_rand(&rng))*dt;
 
 	// random coupling constants (normal distribution), scaled by number of oscillators
 
 	for (size_t i=0; i<N; ++i) {
-		for (size_t j=0; j<N; ++j) K[N*i+j] = i == j ? 0.0 : (Kmean+Ksdev*mt_randn(&rng))/(double)N; // no "self-connections"!
-	}
-
-	// phase lags (normal distribution)
-
-	if (withpl) {
-		for (size_t i=0; i<N; ++i) {
-			for (size_t j=0; j<N; ++j) a[N*i+j] = amean + asdev*mt_randn(&rng);
-		}
+		for (size_t j=0; j<N; ++j) Kdt[N*i+j] = i == j ? 0.0 : (Kmean+Ksdev*mt_randn(&rng))*dt/(double)N; // no "self-connections"!
 	}
 
 	// oscillator input noise (Wiener, with magnitudes log-normally distributed per oscillator)
 
-	if (within) {
+	if (nmean > 0.0) {
 		const double lnv = log(1.0+(nsdev*nsdev)/(nmean*nmean));
 		const double mu  = log(nmean)-0.5*lnv;
 		const double sig = sqrt(lnv);
@@ -101,11 +86,13 @@ int demo(int argc, char *argv[])
 
 	// integrate Kuramoto ODE
 
-	if (withpl) {
-		if (RK4) kmotopl_rk4(N,n,dt,w,K,a,h); else kmotopl_euler(N,n,dt,w,K,a,h);
+	if (RK4) {
+		double* const kbuff = calloc(4*N,sizeof(double)); // see kuramoto_rk4()
+		kuramoto_rk4(N,n,wdt,Kdt,kbuff,h);
+		free(kbuff);
 	}
 	else {
-		if (RK4) kmoto_rk4(N,n,dt,w,K,h); else kmoto_euler(N,n,dt,w,K,h);
+		kuramoto_euler(N,n,wdt,Kdt,h);
 	}
 
 	// calculate order parameter
@@ -193,9 +180,8 @@ int demo(int argc, char *argv[])
 	free(x);
 	free(r);
 	free(h);
-	if (withpl) free(a);
-	free(K);
-	free(w);
+	free(Kdt);
+	free(wdt);
 
 	return EXIT_SUCCESS;
 }

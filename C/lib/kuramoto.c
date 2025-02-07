@@ -323,88 +323,101 @@ void stulan_order_param // calculate order parameter magnitude/phase
 	}
 }
 
-/*
-void stulan_rk4 // Classic Runge-Kutta (RK4)
+void kmoto_euler
 (
-	const size_t        N,  // number of oscillators
-	const size_t        n,  // number of integration increments
-	const double        dt, // time integration step
-	const double* const w,  // dt*frequencies
-	const double* const K,  // dt*frequencies*(coupling constants)/N
-	const double* const a,  // dt*(growth constants) - (K summed over 2nd index)
-	double*       const x,  // oscillator real part, to be computed by numerical ODE (pre-initialised with input)
-	double*       const y,  // oscillator imag part, to be computed by numerical ODE (pre-initialised with input)
-	double*       const k   // buffer for RK4 coefficients (size must be 8*N)
+	const   size_t        N, // number of oscillators
+	const   size_t        n, // number of integration increments
+	const   double        h, // integration increment
+	const   double* const w, // frequencies
+	const   double* const K, // coupling constants
+	double* const         x  // oscillator phases, initialised with input
 )
 {
-	double* const kx1 = k  +N;
-	double* const ky1 = kx1+N;
-	double* const kx2 = ky1+N;
-	double* const ky2 = kx2+N;
-	double* const kx3 = ky2+N;
-	double* const ky3 = kx3+N;
-	double* const kx4 = ky3+N;
-	double* const ky4 = kx4+N;
-
-	double* yt=y;
-	for (double* xt=x; xt<x+N*(n-1); xt+=N,yt+=N) {
-
-		// k1
-		for (size_t i=0; i<N; ++i) {
-			const double* const Ki = K+N*i;
-			const double xti = xt[i];
-			const double yti = yt[i];
-			const double vi = a[i]-dt*(xt[i]*xt[i]+yt[i]*yt[i]);
-			double kxi = vi*xti - w[i]*yt[i];
-			double kyi = vi*yti + w[i]*xt[i];
-			for (size_t j=0; j<N; ++j) kxi += Ki[j]*xt[j];
-			for (size_t j=0; j<N; ++j) kyi += Ki[j]*yt[j];
-			kx1[i] = kxi;
-			ky1[i] = kyi;
-
-		}
-
-		// k2
-		for (size_t i=0; i<N; ++i) {
-			const double* const Ki = K+N*i;
-			const double xti = xt[i];
-			const double yti = yt[i];
-			const double vi = a[i]-dt*(xt[i]*xt[i]+yt[i]*yt[i]);
-
-			const double xtk1i = xt[i]+kx1[i];
-			double kxi = vi*xti - w[i]*yt[i];
-			double kyi = vi*yti + w[i]*xt[i];
-			for (size_t j=0; j<N; ++j) kxi += Ki[j]*(xt[j]+kx1[j]-xtk1i);
-			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(xt[j]+k1[j]-htk1i);
-			k2[i] = ki/2.0;
-		}
-
-		// k3
-		for (size_t i=0; i<N; ++i) {
-			const double* const Ki = K+N*i;
-			const double htk2i = xt[i]+k2[i];
-			double ki = w[i];
-			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(xt[j]+k2[j]-htk2i);
-			k3[i] = ki/2.0;
-		}
-
-		// k4
-		for (size_t i=0; i<N; ++i) {
-			const double* const Ki = K+N*i;
-			const double htk3i = xt[i]+k3[i];
-			double ki = w[i];
-			for (size_t j=0; j<N; ++j) ki += Ki[j]*sin(xt[j]+k3[j]-htk3i);
-			k4[i] = ki;
-		}
-
-		// update next time step (adding in input already in xt1)
-		double* const xt1 = xt+N;
-		for (size_t i=0; i<N; ++i) {
-			xt1[i] += xt[i] + (k1[i]+4.0*k2[i]+4.0*k3[i]+k4[i])/6.0;
-		}
+	printf("\nkmoto_euler\n");
+	double uink[N];
+	for (double* u=x; u<x+N*(n-1); u+=N) {
+		kmoto_fun(uink,u,N,w,K);
+		double* const unext = u+N;
+		for (size_t i=0; i<N; ++i) unext[i] += u[i] + h*uink[i];
 	}
 }
-*/
+
+void kmoto_rk4 // Classic Runge-Kutta (RK4)
+(
+	const   size_t        N, // number of oscillators
+	const   size_t        n, // number of integration increments
+	const   double        h, // integration increment
+	const   double* const w, // frequencies
+	const   double* const K, // coupling constants
+	double* const         x  // oscillator phases, initialised with input
+)
+{
+	printf("\nkmoto_rk4\n");
+	const double h2 = h/2.0;
+	const double h6 = h/6.0;
+	double k1[N],k2[N],k3[N],k4[N];
+	double v[N];
+	for (double* u=x; u<x+N*(n-1); u+=N) {
+		kmoto_fun(k1,u,N,w,K);
+		for (size_t i=0; i<N; ++i) v[i] = u[i]+h2*k1[i];
+		kmoto_fun(k2,v,N,w,K);
+		for (size_t i=0; i<N; ++i) v[i] = u[i]+h2*k2[i];
+		kmoto_fun(k3,v,N,w,K);
+		for (size_t i=0; i<N; ++i) v[i] = u[i]+h*k3[i];
+		kmoto_fun(k4,v,N,w,K);
+		double* const unext = u+N;
+		for (size_t i=0; i<N; ++i) unext[i] += u[i] + h6*(k1[i]+2.0*k2[i]+2.0*k3[i]+k4[i]);
+	}
+}
+
+void kmotopl_euler
+(
+	const   size_t        N, // number of oscillators
+	const   size_t        n, // number of integration increments
+	const   double        h, // integration increment
+	const   double* const w, // frequencies
+	const   double* const K, // coupling constants
+	const   double* const a, // phase lags
+	double* const         x  // oscillator phases, initialised with input
+)
+{
+	printf("\nkmotopl_euler\n");
+	double uink[N];
+	for (double* u=x; u<x+N*(n-1); u+=N) {
+		kmotopl_fun(uink,u,N,w,K,a);
+		double* const unext = u+N;
+		for (size_t i=0; i<N; ++i) unext[i] += u[i] + h*uink[i];
+	}
+}
+
+void kmotopl_rk4 // Classic Runge-Kutta (RK4)
+(
+	const   size_t        N, // number of oscillators
+	const   size_t        n, // number of integration increments
+	const   double        h, // integration increment
+	const   double* const w, // frequencies
+	const   double* const K, // coupling constants
+	const   double* const a, // phase lags
+	double* const         x  // oscillator phases, initialised with input
+)
+{
+	printf("\nkmotopl_rk4\n");
+	const double h2 = h/2.0;
+	const double h6 = h/6.0;
+	double k1[N],k2[N],k3[N],k4[N];
+	double v[N];
+	for (double* u=x; u<x+N*(n-1); u+=N) {
+		kmotopl_fun(k1,u,N,w,K,a);
+		for (size_t i=0; i<N; ++i) v[i] = u[i]+h2*k1[i];
+		kmotopl_fun(k2,v,N,w,K,a);
+		for (size_t i=0; i<N; ++i) v[i] = u[i]+h2*k2[i];
+		kmotopl_fun(k3,v,N,w,K,a);
+		for (size_t i=0; i<N; ++i) v[i] = u[i]+h*k3[i];
+		kmotopl_fun(k4,v,N,w,K,a);
+		double* const unext = u+N;
+		for (size_t i=0; i<N; ++i) unext[i] += u[i] + h6*(k1[i]+2.0*k2[i]+2.0*k3[i]+k4[i]);
+	}
+}
 
 void rossler_euler
 (

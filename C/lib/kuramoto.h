@@ -101,6 +101,71 @@ void stulan_order_param // calculate order parameter magnitude/phase
 	double* const  p  // order parameter phase (NULL if not required)
 );
 
+inline void kmoto_fun(double* const xdot, const double* const x, const size_t N, const double* const w, const double* const K)
+{
+	for (size_t i=0; i<N; ++i) {
+		const double xi = x[i];
+		const double* const Ki = K+N*i;
+		double xdoti = w[i];
+		for (size_t j=0; j<N; ++j) xdoti += Ki[j]*sin(x[j]-xi);
+		xdot[i] = xdoti;
+	}
+}
+
+void kmoto_euler
+(
+	const   size_t        N, // number of oscillators
+	const   size_t        n, // number of integration increments
+	const   double        h, // integration increment
+	const   double* const w, // frequencies
+	const   double* const K, // coupling constants
+	double* const         x  // oscillator phases, initialised with input
+);
+
+void kmoto_rk4
+(
+	const   size_t        N, // number of oscillators
+	const   size_t        n, // number of integration increments
+	const   double        h, // integration increment
+	const   double* const w, // frequencies
+	const   double* const K, // coupling constants
+	double* const         x  // oscillator phases, initialised with input
+);
+
+inline void kmotopl_fun(double* const xdot, const double* const x, const size_t N, const double* const w, const double* const K, const double* const a)
+{
+	for (size_t i=0; i<N; ++i) {
+		const double xi = x[i];
+		const double* const Ki = K+N*i;
+		const double* const ai = a+N*i;
+		double xdoti = w[i];
+		for (size_t j=0; j<N; ++j) xdoti += Ki[j]*sin(x[j]-xi-ai[j]);
+		xdot[i] = xdoti;
+	}
+}
+
+void kmotopl_euler
+(
+	const   size_t        N, // number of oscillators
+	const   size_t        n, // number of integration increments
+	const   double        h, // integration increment
+	const   double* const w, // frequencies
+	const   double* const K, // coupling constants
+	const   double* const a, // phase lags
+	double* const         x  // oscillator phases, initialised with input
+);
+
+void kmotopl_rk4
+(
+	const   size_t        N, // number of oscillators
+	const   size_t        n, // number of integration increments
+	const   double        h, // integration increment
+	const   double* const w, // frequencies
+	const   double* const K, // coupling constants
+	const   double* const a, // phase lags
+	double* const         x  // oscillator phases, initialised with input
+);
+
 inline void rossler_fun(double* const xdot, const double* const x, const double a, const double b, const double c)
 {
 	xdot[0] = -(x[1]+x[2]);
@@ -203,7 +268,6 @@ void lrnz96_rk4
 	const   double F, // forcing parameter
 	double* const  u  // the 3D variable (appropriately initialised with noise or other input)
 );
-
 
 // Utilities
 
