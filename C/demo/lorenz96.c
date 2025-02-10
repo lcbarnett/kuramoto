@@ -5,7 +5,7 @@
 #include "clap.h"
 #include "kutils.h"
 #include "mt64.h"
-#include "kuramoto.h"
+#include "ode.h"
 
 // Program to demonstrate chaotic attractor system (Lorenz or Rossler).
 
@@ -16,10 +16,10 @@ int lorenz96(int argc, char *argv[])
 	//
 	// Arg:   name    type     default     description
 	puts("\n---------------------------------------------------------------------------------------");
+	CLAP_CARG(ode,    int,     1,         "1 - Euler, 2 - Heun, 3 - RK4");
+	CLAP_CARG(N,      size_t,  7,         "number of variables");
 	CLAP_VARG(T,      double,  1000.0,    "total integration time");
 	CLAP_CARG(dt,     double,  0.01,      "integration step size");
-	CLAP_CARG(N,      size_t,  7,         "number of variables");
-	CLAP_CARG(ode,    char,    1,         "1 - Euler, 2 - Heun, 3 - RK4");
 	CLAP_VARG(F,      double,  8.0,       "Lorenz96 forcing parameter");
 	CLAP_CARG(x0m,    double,  0.0,       "initial value for variables - mean");
 	CLAP_CARG(x0s,    double,  2.0,       "initial value for variables - std. dev.");
@@ -72,14 +72,10 @@ int lorenz96(int argc, char *argv[])
 
 	for (size_t k=0; k<N; ++k) x[k] = x0m + x0s*mt_randn(&rng);
 
-	// run
+	// integrate Lorenz96 ODE
 
 	const double ts = timer_start("Running ODE solver");
-	switch (ode) {
-		case 1: lrnz96_euler (N,n,dt,F,x); break;
-		case 2: lrnz96_heun  (N,n,dt,F,x); break;
-		case 3: lrnz96_rk4   (N,n,dt,F,x); break;
-	}
+	ODE(ode,lrnz96,x,N,n,dt,F);
 	timer_stop(ts);
 
 	// write variables to file

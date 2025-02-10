@@ -5,8 +5,8 @@
 
 PREFIX ?= /usr/local
 
-SRC = kuramoto.c kuramoto_old.c
-INC = kuramoto.h kuramoto_old.h
+SRC = kuramoto.c ode.c
+INC = kuramoto.h ode.h
 
 LIB = libkuramoto.so
 LIBDIR ?= $(PREFIX)/lib
@@ -15,7 +15,8 @@ INCDIR ?= $(PREFIX)/include/kuramoto
 RM ?= rm -f
 CC ?= gcc
 
-CFLAGS = -std=c99 -march=native -O3 -flto -Wall -Wextra -Winline -Wno-unused-parameter -pedantic-errors -D_DEFAULT_SOURCE
+# Deliberately NOT asking for -Winline (it is what it is)
+CFLAGS = -std=c99 -march=native -O3 -flto -Wall -Wextra -Wno-unused-parameter -pedantic-errors -D_DEFAULT_SOURCE
 
 .PHONY: all clean install uninstall
 
@@ -27,12 +28,12 @@ $(LIB): $(SRC) $(INC)
 install:
 	install -m755 $(LIB) $(LIBDIR)
 	install -D -m644 kuramoto.h $(INCDIR)/kuramoto.h
-	install -D -m644 kuramoto_old.h $(INCDIR)/kuramoto_old.h
+	install -D -m644 ode.h $(INCDIR)/ode.h
 
 uninstall:
 	$(RM) $(LIBDIR)/$(LIB)
 	$(RM) $(INCDIR)/kuramoto.h
-	$(RM) $(INCDIR)/kuramoto_old.h
+	$(RM) $(INCDIR)/ode.h
 
 clean:
 	$(RM) $(LIB)

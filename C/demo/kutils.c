@@ -82,6 +82,46 @@ void timer_stop(const double ts)
 	printf(" %.4f seconds\n\n",te-ts);
 }
 
+// Phase stuff
+
+void phase_wrap(const size_t m, double* const h, const double u) // wrap to [-u,u)
+{
+	for (size_t k=0; k<m; ++k) h[k] = phasewrap(h[k],u);
+}
+
+void kuramoto_order_param // calculate order parameter magnitude/phase
+(
+	const   size_t         N, // number of oscillators
+	const   size_t         n, // number of integration increments
+	const   double* const  h, // oscillator phases
+	double* const          r, // order parameter magnitude
+	double* const          p  // order parameter phase (NULL if not required)
+)
+{
+	const double OON = 1.0/(double)N;
+	double* rt = r;
+	double* pt = p;
+	for (const double* ht=h; ht<h+N*n; ht+=N) {
+		double xmt = 0.0;
+		double ymt = 0.0;
+		for (size_t i=0; i<N; ++i) {
+#ifdef _GNU_SOURCE
+			double c,s;
+			sincos(ht[i],&s,&c);
+			xmt += c;
+			ymt += s;
+#else
+			xmt += cos(ht[i]);
+			ymt += sin(ht[i]);
+#endif
+		}
+		xmt *= OON;
+		ymt *= OON;
+		*rt++ = hypot(xmt,ymt);
+		if (p) *pt++ = atan2(ymt,xmt);
+	}
+}
+
 // Linear PCM encoding
 
 int pcm_write(FILE* const fp, const double* const x, const size_t n, const int pcm, const double amin, const double amax)

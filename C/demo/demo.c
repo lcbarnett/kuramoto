@@ -6,8 +6,7 @@
 #include "clap.h"
 #include "kutils.h"
 #include "mt64.h"
-#include "kuramoto.h"
-#include "kuramoto_old.h"
+#include "ode.h"
 
 // Program to demonstrate usage of Kuramoto C library.
 
@@ -18,6 +17,7 @@ int demo(int argc, char *argv[])
 	//
 	// Arg:   name    type    default    description
 	puts("\n---------------------------------------------------------------------------------------");
+	CLAP_CARG(ode,    int,    1,         "1 - Euler, 2 - Heun, 3 - RK4");
 	CLAP_CARG(N,      size_t, 4,         "number of oscillators");
 	CLAP_CARG(T,      double, 1.0,       "total time (secs)");
 	CLAP_CARG(fs,     double, 1000.0,    "Sampling frequency (Hz)");
@@ -102,12 +102,14 @@ int demo(int argc, char *argv[])
 
 	// integrate Kuramoto ODE
 
+	const double ts = timer_start("Running ODE solver");
 	if (withpl) {
-		if (RK4) kmotopl_rk4(N,n,dt,w,K,a,h); else kmotopl_euler(N,n,dt,w,K,a,h);
+		ODE(ode,kmotopl,h,N,n,dt,w,K,a);
 	}
 	else {
-		if (RK4) kmoto_rk4(N,n,dt,w,K,h); else kmoto_euler(N,n,dt,w,K,h);
+		ODE(ode,kmoto,h,N,n,dt,w,K);
 	}
+	timer_stop(ts);
 
 	// calculate order parameter
 

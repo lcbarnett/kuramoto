@@ -5,7 +5,7 @@
 #include "clap.h"
 #include "kutils.h"
 #include "mt64.h"
-#include "kuramoto.h"
+#include "ode.h"
 
 // Program to demonstrate chaotic attractor system (Lorenz or Rossler).
 
@@ -114,27 +114,9 @@ int chaos(int argc, char *argv[])
 
 	const double ts = timer_start("Running ODE solver");
 	switch (sys) {
-		case 1:
-			switch (ode) {
-				case 1: lorenz_euler (n,dt,p1,p2,p3,x); break;
-				case 2: lorenz_heun  (n,dt,p1,p2,p3,x); break;
-				case 3: lorenz_rk4   (n,dt,p1,p2,p3,x); break;
-			}
-			break;
-		case 2:
-			switch (ode) {
-				case 1: rossler_euler (n,dt,p1,p2,p3,x); break;
-				case 2: rossler_heun  (n,dt,p1,p2,p3,x); break;
-				case 3: rossler_rk4   (n,dt,p1,p2,p3,x); break;
-			}
-			break;
-		case 3:
-			switch (ode) {
-				case 1: thomas_euler (n,dt,p1,x); break;
-				case 2: thomas_heun  (n,dt,p1,x); break;
-				case 3: thomas_rk4   (n,dt,p1,x); break;
-			}
-			break;
+		case 1: ODE(ode,lorenz, x,3,n,dt,p1,p2,p3); break;
+		case 2: ODE(ode,rossler,x,3,n,dt,p1,p2,p3); break;
+		case 3: ODE(ode,thomas, x,3,n,dt,p1);       break;
 	}
 	timer_stop(ts);
 

@@ -6,7 +6,6 @@
 #include "kutils.h"
 #include "mt64.h"
 #include "kuramoto.h"
-#include "kuramoto_old.h"
 
 // Program to demonstrate usage of coupled Stuart-Landau oscillators.
 

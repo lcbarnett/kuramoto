@@ -6,7 +6,6 @@
 #include "kutils.h"
 #include "mt64.h"
 #include "kuramoto.h"
-#include "kuramoto_old.h"
 
 #define CD_SRATE 44100.0
 #define MIDDLE_C 261.625565
