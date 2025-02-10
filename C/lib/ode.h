@@ -1,6 +1,8 @@
 #ifndef ODE_H
 #define ODE_H
 
+#define UNUSED __attribute__ ((unused))
+
 // ODE solver macros; __VA_ARGS__ are the parameters to the ODE fun
 
 #define ODE(ode,odefun,x,N,n,h,...) \
@@ -51,21 +53,21 @@
 
 // Chaotic systems
 
-static inline void rossler(double* const xdot, const double* const x, const size_t N, const double a, const double b, const double c)
+static inline void rossler(double* const xdot, const double* const x, const size_t UNUSED N, const double a, const double b, const double c)
 {
 	xdot[0] = -(x[1]+x[2]);
 	xdot[1] =  x[0]+a*x[1];
 	xdot[2] =  b+x[2]*(x[0]-c);
 }
 
-static inline void lorenz(double* const xdot, const double* const x, const size_t N, const double s, const double r, const double b)
+static inline void lorenz(double* const xdot, const double* const x, const size_t UNUSED N, const double s, const double r, const double b)
 {
 	xdot[0] = s*(x[1]-x[0]);
 	xdot[1] = x[0]*(r-x[2])-x[1];
 	xdot[2] = x[0]*x[1]-b*x[2];
 }
 
-static inline void thomas(double* const xdot, const double* const x, const size_t N, const double b)
+static inline void thomas(double* const xdot, const double* const x, const size_t UNUSED N, const double b)
 {
 	xdot[0] = -b*x[0] + sin(x[1]);
 	xdot[1] = -b*x[1] + sin(x[2]);
