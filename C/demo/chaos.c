@@ -18,8 +18,8 @@ int chaos(int argc, char *argv[])
 	puts("\n---------------------------------------------------------------------------------------");
 	CLAP_VARG(T,      double,  200.0,     "total integration time");
 	CLAP_CARG(dt,     double,  0.01,      "integration step size");
-	CLAP_CARG(csys,   cstr,   "Lorenz",   "chaotic system (lorenz or rossler)");
-	CLAP_CARG(ode,    int,     1,         "1 - Euler, 2 - Heun, 3 - RK4");
+	CLAP_CARG(sys,    int,     LORENZ,    "system type : 0 - LORENZ, 1 - ROSSLER, 2 - THOMAS");
+	CLAP_CARG(ode,    int,     EULER,     "ode solver  : 0 - EULER , 1 - HEUN,    2 - RKFOUR");
 	CLAP_VARG(p1,     double,  NAN,       "parameter 1     (NAN for system default)");
 	CLAP_VARG(p2,     double,  NAN,       "parameter 2     (NAN for system default)");
 	CLAP_VARG(p3,     double,  NAN,       "parameter 3     (NAN for system default)");
@@ -33,28 +33,17 @@ int chaos(int argc, char *argv[])
 #endif
 	puts("---------------------------------------------------------------------------------------");
 
-	// which ODE solver?
+	const char* odename = ode2str(ode);
+	if (odename == NULL) error(EXIT_FAILURE,0,"Unknown ODE solver");
 
-	if (ode < 1 || ode > 3) {
-		fprintf(stderr,"\nUnknown ODE solver\n\n");
-		return EXIT_FAILURE;
-	}
-
-	// which system?
-
-	const int sys =
-		strncasecmp(csys,"lorenz", 6) == 0 ? 1 :
-		strncasecmp(csys,"rossler",7) == 0 ? 2 :
-		strncasecmp(csys,"thomas", 6) == 0 ? 3 : 0;
-	if (sys == 0) {
-		fprintf(stderr,"\nUnknown chaotic system \"%s\"\n\n",csys);
-		return EXIT_FAILURE;
-	}
+	const char* sysname = sys2str(sys);
+	if (sysname == NULL) error(EXIT_FAILURE,0,"Unknown system type");
+	if (sys > THOMAS)    error(EXIT_FAILURE,0,"Unhandled system type");
 
 	// parameter defaults
 
 	switch (sys) {
-		case 1:
+		case LORENZ:
 			if (isnan(p1)) p1 = 10.0;
 			if (isnan(p2)) p2 = 28.0;
 			if (isnan(p3)) p3 = 8.0/3.0;
@@ -62,7 +51,7 @@ int chaos(int argc, char *argv[])
 			if (isnan(x2)) x2 = 1.0;
 			if (isnan(x3)) x3 = 1.0;
 			break;
-		case 2:
+		case ROSSLER:
 			if (isnan(p1)) p1 = 0.1;
 			if (isnan(p2)) p2 = 0.1;
 			if (isnan(p3)) p3 = 14.0;
@@ -70,8 +59,8 @@ int chaos(int argc, char *argv[])
 			if (isnan(x2)) x2 = 1.0;
 			if (isnan(x3)) x3 = 1.0;
 			break;
-		case 3:
-			if (isnan(p1)) p1 = 0.2;
+		case THOMAS:
+			if (isnan(p1)) p1 = 0.1;
 			if (isnan(x1)) x1 = 1.0;
 			if (isnan(x2)) x2 = 2.0;
 			if (isnan(x3)) x3 = 3.0;
@@ -114,9 +103,9 @@ int chaos(int argc, char *argv[])
 
 	const double ts = timer_start("Running ODE solver");
 	switch (sys) {
-		case 1: ODE(ode,lorenz, x,3,n,dt,p1,p2,p3); break;
-		case 2: ODE(ode,rossler,x,3,n,dt,p1,p2,p3); break;
-		case 3: ODE(ode,thomas, x,3,n,dt,p1);       break;
+		case LORENZ  : ODE(ode,lorenz, x,3,n,dt,p1,p2,p3); break;
+		case ROSSLER : ODE(ode,rossler,x,3,n,dt,p1,p2,p3); break;
+		case THOMAS  : ODE(ode,thomas, x,3,n,dt,p1);       break;
 	}
 	timer_stop(ts);
 
@@ -155,7 +144,7 @@ int chaos(int argc, char *argv[])
 	fprintf(gp,"set mouse ruler\n");
 	fprintf(gp,"unset key\n");
 	fprintf(gp,"set grid\n");
-	fprintf(gp,"set title \"%s system (%s)\"\n",csys,ode == 1 ? "Euler" : ode == 2 ? "Heun" : ode == 3 ? "RK4" : "");
+	fprintf(gp,"set title \"%s system (%s)\"\n",sysname,odename);
 	fprintf(gp,"set xlabel \"x\"\n");
 	fprintf(gp,"set ylabel \"y\"\n");
 	fprintf(gp,"set zlabel \"z\"\n");

@@ -3,12 +3,19 @@
 
 #define UNUSED __attribute__ ((unused))
 
+typedef enum {EULER = 0, HEUN, RKFOUR} ode_t;
+
+typedef enum {LORENZ = 0, ROSSLER, THOMAS, KMOTO, KMOTOPL, LNINESIX} sys_t;
+
+const char* ode2str(const ode_t ode);
+const char* sys2str(const sys_t sys);
+
 // ODE solver macros; __VA_ARGS__ are the parameters to the ODE fun
 
 #define ODE(ode,odefun,x,N,n,h,...) \
 { \
 	switch (ode) { \
-		case 1: { \
+		case EULER: { \
 			printf("EULER : "#odefun); \
 			double udot[N]; \
 			for (double* u=x; u<x+N*(n-1); u+=N) { \
@@ -17,7 +24,7 @@
 				for (size_t i=0; i<N; ++i) u1[i] += u[i] + h*udot[i]; \
 			}} \
 			break; \
-		case 2: { \
+		case HEUN: { \
 			printf("HEUN : "#odefun); \
 			const double h2 = h/2.0; \
 			double udot1[N], udot2[N]; \
@@ -30,7 +37,7 @@
 				for (size_t i=0; i<N; ++i) u1[i] += u[i] + h2*(udot1[i]+udot2[i]); \
 			}} \
 			break; \
-		case 3: { \
+		case RKFOUR: { \
 			printf("RK4 : "#odefun); \
 			const double h2 = h/2.0; \
 			const double h6 = h/6.0; \
@@ -53,18 +60,18 @@
 
 // Chaotic systems
 
-static inline void rossler(double* const xdot, const double* const x, const size_t UNUSED N, const double a, const double b, const double c)
-{
-	xdot[0] = -(x[1]+x[2]);
-	xdot[1] =  x[0]+a*x[1];
-	xdot[2] =  b+x[2]*(x[0]-c);
-}
-
 static inline void lorenz(double* const xdot, const double* const x, const size_t UNUSED N, const double s, const double r, const double b)
 {
 	xdot[0] = s*(x[1]-x[0]);
 	xdot[1] = x[0]*(r-x[2])-x[1];
 	xdot[2] = x[0]*x[1]-b*x[2];
+}
+
+static inline void rossler(double* const xdot, const double* const x, const size_t UNUSED N, const double a, const double b, const double c)
+{
+	xdot[0] = -(x[1]+x[2]);
+	xdot[1] =  x[0]+a*x[1];
+	xdot[2] =  b+x[2]*(x[0]-c);
 }
 
 static inline void thomas(double* const xdot, const double* const x, const size_t UNUSED N, const double b)
