@@ -1,8 +1,9 @@
 #include <math.h>     // for maths functions
 #include <string.h>   // for memcpy
-#include <stdio.h>    // for perror
 
 #include "matrix.h"   // for Matlab matrix stuff
+#include "mex.h"   // for Matlab matrix stuff
+
 #include "ode.h"      // for chaotic ODE solvers
 
 #define UNUSED __attribute__ ((unused))
@@ -11,13 +12,13 @@ void mexFunction(int UNUSED nlhs, mxArray *plhs[], int UNUSED nrhs, const mxArra
 {
 	// read input parameters
 
-	const int           sys = (int)mxGetScalar(prhs[1]);    // 1 - Lorenz, 2 - Rossler, 3 - Thomas
-	const int           ode = (int)mxGetScalar(prhs[2]);    // 1 - Euler,  2 - Heun,    3 - RK4
-	const size_t        n   = (size_t)mxGetScalar(prhs[3]); // number of integration increments
-	const double        dt  =  mxGetScalar(prhs[4]);        // integration increment
-	const double* const p   =  mxGetDoubles(prhs[5]);       // parameters
-	const double* const x0  =  mxIsEmpty(prhs[6]) ? NULL :  mxGetDoubles(prhs[6]);  // initial values
-	const double* const I   =  mxIsEmpty(prhs[7]) ? NULL :  mxGetDoubles(prhs[7]);  // input (noise, etc.)
+	const sys_t         sys = (sys_t)mxGetScalar(prhs[0]);  // LORENZ = 0, ROSSLER = 1, THOMAS = 2
+	const ode_t         ode = (ode_t)mxGetScalar(prhs[1]);  // EULER  = 0, HEUN    = 1, RKFOUR = 2
+	const size_t        n   = (size_t)mxGetScalar(prhs[2]); // number of integration increments
+	const double        dt  =  mxGetScalar(prhs[3]);        // integration increment
+	const double* const p   =  mxGetDoubles(prhs[4]);       // parameters
+	const double* const x0  =  mxIsEmpty(prhs[5]) ? NULL :  mxGetDoubles(prhs[5]);  // initial values
+	const double* const I   =  mxIsEmpty(prhs[6]) ? NULL :  mxGetDoubles(prhs[6]);  // input (noise, etc.)
 
 	// allocate output (note that if compiling with -R2018a, mxCreateDoubleMatrix zero-initializes)
 
@@ -32,11 +33,10 @@ void mexFunction(int UNUSED nlhs, mxArray *plhs[], int UNUSED nrhs, const mxArra
 	if (x0) memcpy(x,x0,3*sizeof(double));
 
 	// Run ODE solver
-
 	switch (sys) {
-		case 1: ODE(ode,lorenz, x,3,n,dt,p[0],p[1],p[2]); break;
-		case 2: ODE(ode,rossler,x,3,n,dt,p[0],p[1],p[2]); break;
-		case 3: ODE(ode,thomas, x,3,n,dt,p[0]);           break;
+		case LORENZ  : {ODE(ode,lorenz, x,3,n,dt,p[0],p[1],p[2]);} break;
+		case ROSSLER : {ODE(ode,rossler,x,3,n,dt,p[0],p[1],p[2]);} break;
+		case THOMAS  : {ODE(ode,thomas, x,3,n,dt,p[0]);}           break;
+		default      : mexErrMsgIdAndTxt("chaos_mex:badsys","Unknown system type");
 	}
-
 }
