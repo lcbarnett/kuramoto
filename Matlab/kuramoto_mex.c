@@ -37,9 +37,7 @@ void mexFunction(int UNUSED nlhs, mxArray *plhs[], int UNUSED nrhs, const mxArra
 	// run Kuramoto ODE solver
 
 	if (RK4) {
-		double* const k1 = mxCalloc(4*N,sizeof(double));
-		if (a) kuramoto_rk4pl(N,n,wdt,Kdt,a,k1,h); else kuramoto_rk4(N,n,wdt,Kdt,k1,h);
-		mxFree(k1);
+		if (a) kuramoto_rk4pl(N,n,wdt,Kdt,a,h); else kuramoto_rk4(N,n,wdt,Kdt,h);
 	}
 	else {
 		if (a) kuramoto_eulerpl(N,n,wdt,Kdt,a,h); else kuramoto_euler(N,n,wdt,Kdt,h);

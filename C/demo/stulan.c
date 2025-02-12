@@ -5,7 +5,7 @@
 #include "clap.h"
 #include "kutils.h"
 #include "mt64.h"
-#include "kuramoto.h"
+#include "stulan.h"
 
 // Program to demonstrate usage of coupled Stuart-Landau oscillators.
 
@@ -104,9 +104,7 @@ int stulan(int argc, char *argv[])
 	// integrate Kuramoto ODE
 
 //	if (RK4) {
-//		double* const kbuff = calloc(4*N,sizeof(double)); // see kuramoto_rk4()
-//		kuramoto_rk4(N,n,w,K,h,kbuff);
-//		free(kbuff);
+		stulan_rk4(N,n,dt,w,K,a,x,y);
 //	}
 //	else {
 		stulan_euler(N,n,dt,w,K,a,x,y);

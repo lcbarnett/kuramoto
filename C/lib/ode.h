@@ -1,6 +1,8 @@
 #ifndef ODE_H
 #define ODE_H
 
+#include <math.h> // for maths functions
+
 #define UNUSED __attribute__ ((unused))
 
 typedef enum {EULER = 0, HEUN, RKFOUR} ode_t;

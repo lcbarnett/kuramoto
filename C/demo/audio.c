@@ -99,9 +99,7 @@ int audio(int argc, char *argv[])
 
 	const double ts1 = timer_start("simulating Kuramoto system");
 	if (RK4) {
-		double* const kbuff = calloc(4*N,sizeof(double)); // see kuramoto_rk4()
-		kuramoto_rk4(N,n,wdt,Kdt,h,kbuff);
-		free(kbuff);
+		kuramoto_rk4(N,n,wdt,Kdt,h);
 	}
 	else {
 		kuramoto_euler(N,n,wdt,Kdt,h);

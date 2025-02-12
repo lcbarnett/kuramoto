@@ -5,8 +5,8 @@
 
 PREFIX ?= /usr/local
 
-SRC = kuramoto.c ode.c
-INC = kuramoto.h ode.h
+SRC = kuramoto.c stulan.c ode.c
+INC = kuramoto.h stulan.h ode.h
 
 LIB = libkuramoto.so
 LIBDIR ?= $(PREFIX)/lib
@@ -28,11 +28,13 @@ $(LIB): $(SRC) $(INC)
 install:
 	install -m755 $(LIB) $(LIBDIR)
 	install -D -m644 kuramoto.h $(INCDIR)/kuramoto.h
+	install -D -m644 stulan.h $(INCDIR)/stulan.h
 	install -D -m644 ode.h $(INCDIR)/ode.h
 
 uninstall:
 	$(RM) $(LIBDIR)/$(LIB)
 	$(RM) $(INCDIR)/kuramoto.h
+	$(RM) $(INCDIR)/stulan.h
 	$(RM) $(INCDIR)/ode.h
 
 clean:
