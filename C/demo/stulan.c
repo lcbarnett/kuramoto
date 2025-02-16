@@ -104,7 +104,7 @@ int stulan(int argc, char *argv[])
 	// integrate Kuramoto ODE
 
 //	if (RK4) {
-		stulan_rk4(N,n,dt,w,K,a,x,y);
+//		stulan_rk4(N,n,dt,w,K,a,x,y);
 //	}
 //	else {
 		stulan_euler(N,n,dt,w,K,a,x,y);
